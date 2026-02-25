@@ -144,17 +144,30 @@ export const CentralRecords: React.FC = () => {
                         </div>
                         <ChevronRight size={18} className="text-brand-ink/20 group-hover:text-brand-olive transition-all" />
                     </Link>
-                    <Link to="/notes" className="flex items-center justify-between p-6 bg-brand-cream/20 rounded-3xl border border-brand-olive/5 hover:border-brand-olive/20 transition-all group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-olive">
-                                <FileText size={18} />
+                    <Link to="/notes" className="flex items-center justify-between p-4 bg-white rounded-2xl border border-brand-olive/10 hover:bg-brand-olive/5 transition-all group">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-brand-cream text-brand-olive">
+                                <BookOpen size={18} />
                             </div>
                             <div>
-                                <h4 className="font-bold text-brand-ink group-hover:text-brand-olive transition-colors">Community Notes</h4>
-                                <p className="text-xs text-brand-ink/40">Personal thoughts & content drafting</p>
+                                <h3 className="font-bold text-sm">Notes Archive</h3>
+                                <p className="text-[10px] text-brand-ink/40">Secondary drafting space</p>
                             </div>
                         </div>
-                        <ChevronRight size={18} className="text-brand-ink/20 group-hover:text-brand-olive transition-all" />
+                        <ExternalLink size={14} className="text-brand-ink/20 group-hover:text-brand-olive transition-all" />
+                    </Link>
+
+                    <Link to="/draft" className="flex items-center justify-between p-4 bg-brand-olive/5 rounded-2xl border border-brand-olive/20 hover:bg-brand-olive/10 transition-all group">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-brand-olive text-white">
+                                <Edit3 size={18} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-sm">Clear Sandbox</h3>
+                                <p className="text-[10px] text-brand-olive/60">Dedicated paste space</p>
+                            </div>
+                        </div>
+                        <ExternalLink size={14} className="text-brand-olive/40 group-hover:text-brand-olive transition-all" />
                     </Link>
                 </div>
             </div>

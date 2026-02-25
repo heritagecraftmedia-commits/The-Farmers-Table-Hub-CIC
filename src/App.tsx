@@ -32,6 +32,8 @@ import { MakersDirectory } from './pages/MakersDirectory';
 import { SupportMakers } from './pages/SupportMakers';
 import { BecomeAMaker } from './pages/BecomeAMaker';
 import { Notes } from './pages/Notes';
+import { JamGuide } from './pages/guides/JamGuide';
+import { DraftSpace } from './pages/DraftSpace';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -88,6 +90,8 @@ export default function App() {
                 <Route path="/support-the-makers" element={<PageWrapper><SupportMakers /></PageWrapper>} />
                 <Route path="/become-a-maker" element={<PageWrapper><BecomeAMaker /></PageWrapper>} />
                 <Route path="/notes" element={<PageWrapper><Notes /></PageWrapper>} />
+                <Route path="/guides/jam" element={<PageWrapper><JamGuide /></PageWrapper>} />
+                <Route path="/draft" element={<PageWrapper><DraftSpace /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />

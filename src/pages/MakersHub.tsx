@@ -146,8 +146,8 @@ export const MakersHub: React.FC = () => {
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`px-8 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${activeCategory === cat
-                  ? 'bg-brand-olive text-white border-brand-olive shadow-lg shadow-brand-olive/20'
-                  : 'bg-white text-brand-olive border-brand-olive/10 hover:border-brand-olive/30'
+                ? 'bg-brand-olive text-white border-brand-olive shadow-lg shadow-brand-olive/20'
+                : 'bg-white text-brand-olive border-brand-olive/10 hover:border-brand-olive/30'
                 }`}
             >
               {cat}
@@ -215,10 +215,20 @@ export const MakersHub: React.FC = () => {
               </div>
 
               <div className="p-8 md:p-10 pt-0 space-y-3">
-                <button className="w-full flex items-center justify-between p-5 bg-brand-cream text-brand-olive rounded-2xl font-bold text-sm hover:bg-brand-olive hover:text-white transition-all group/btn">
-                  View Guide — Coming Soon
-                  <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                </button>
+                {project.id === 1 ? (
+                  <Link
+                    to="/guides/jam"
+                    className="w-full flex items-center justify-between p-5 bg-brand-olive text-white rounded-2xl font-bold text-sm hover:bg-brand-olive/90 transition-all group/btn shadow-lg shadow-brand-olive/10"
+                  >
+                    View Guided Project
+                    <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </Link>
+                ) : (
+                  <button className="w-full flex items-center justify-between p-5 bg-brand-cream text-brand-olive rounded-2xl font-bold text-sm hover:bg-brand-olive hover:text-white transition-all group/btn">
+                    View Guide — Coming Soon
+                    <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
+                )}
 
                 <div className="space-y-2">
                   {project.links.map((link, i) => (

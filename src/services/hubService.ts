@@ -323,6 +323,43 @@ export const hubService = {
     if (error) console.error('unlinkMakerFromEvent:', error);
   },
 
+  // --- External API Integrations (Skeletons) ---
+  getXeroInvoices: async () => {
+    const key = import.meta.env.VITE_XERO_CLIENT_ID;
+    if (!key || key === 'placeholder') {
+      return [
+        { id: '1', contact: 'Thompson & Morgan', amount: 150.00, status: 'PAID', date: '2026-02-20' },
+        { id: '2', contact: 'Lakeland', amount: 45.50, status: 'PENDING', date: '2026-02-25' }
+      ];
+    }
+    // Real fetch logic would go here
+    return [];
+  },
+
+  getHubSpotContacts: async () => {
+    const key = import.meta.env.VITE_HUBSPOT_KEY;
+    if (!key || key === 'placeholder') {
+      return [
+        { id: '1', name: 'Sarah Willow', email: 'sarah@willowcraft.com', type: 'Maker' },
+        { id: '2', name: 'John Tools', email: 'john@forgedtools.co.uk', type: 'Supplier' }
+      ];
+    }
+    // Real fetch logic would go here
+    return [];
+  },
+
+  getNotionPages: async () => {
+    const key = import.meta.env.VITE_NOTION_KEY;
+    if (!key || key === 'placeholder') {
+      return [
+        { id: '1', title: 'Marketing Strategy 2026', url: 'https://notion.so/1' },
+        { id: '2', title: 'Maker Onboarding Flow', url: 'https://notion.so/2' }
+      ];
+    }
+    // Real fetch logic would go here
+    return [];
+  },
+
   getSystemSettings: () => mockSystemSettings,
   updateSystemSettings: (settings: Partial<typeof mockSystemSettings>) => {
     mockSystemSettings = { ...mockSystemSettings, ...settings };
