@@ -1,4 +1,4 @@
-import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, EventCategory } from '../types';
+import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, EventCategory, DirectoryListing } from '../types';
 import { supabase } from '../lib/supabase';
 
 const isConfigured = () => {
@@ -67,10 +67,45 @@ const mockJobs: FounderJob[] = [
   { id: '4', task: 'Complete Make.com Automation Setup (Refer to make_automation_guide.md)', priority: 'High', status: 'pending' }
 ];
 
-const mockListings: any[] = [
-  { id: 'l1', vendorName: 'Farnham Ironworks', craftCategory: 'Blacksmithing', location: 'Farnham', listingTier: 'featured', approved: true, published: true, website: 'https://example.com/iron', bio: 'Traditional blacksmithing in the heart of Surrey.', socialLinks: { instagram: 'farnhamiron' }, claimedAt: new Date().toISOString(), affiliateLinks: [] },
-  { id: 'l2', vendorName: 'Surrey Willow', craftCategory: 'Basketry', location: 'Guildford', listingTier: 'supporter', approved: false, published: false, website: 'https://example.com/willow', bio: 'Handwoven willow baskets using local materials.', socialLinks: {}, claimedAt: new Date().toISOString(), affiliateLinks: [] }
+import { foodVendors } from '../data/foodVendors';
+import { makerListings } from '../data/makerListings';
+
+const titleCase = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
+
+const realListings: DirectoryListing[] = [
+  ...foodVendors.map(v => ({
+    id: v.id,
+    vendorName: titleCase(v.name),
+    craftCategory: v.type,
+    location: `${v.location} (${v.postcode})`,
+    bio: `${v.type} producer in ${v.location}.`,
+    website: v.website,
+    email: v.email,
+    phone: v.phone,
+    socialLinks: {},
+    listingTier: v.tier as any,
+    approved: true,
+    published: true,
+    claimedAt: new Date().toISOString()
+  })),
+  ...makerListings.map(m => ({
+    id: m.id,
+    vendorName: m.businessName || m.name,
+    craftCategory: m.craft,
+    location: 'Surrey Area',
+    bio: `${m.craft} by ${m.name}.`,
+    website: '',
+    email: '', // Not in data file yet
+    phone: '',
+    socialLinks: { instagram: m.instagram },
+    listingTier: m.tier as any,
+    approved: true,
+    published: true,
+    claimedAt: new Date().toISOString()
+  }))
 ];
+
+let mockListings: DirectoryListing[] = [...realListings];
 
 const mockStories: MakerStory[] = [
   {

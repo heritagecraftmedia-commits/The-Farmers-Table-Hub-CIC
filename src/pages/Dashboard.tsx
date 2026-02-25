@@ -6,7 +6,7 @@ import {
   ArrowRight, ExternalLink, ShieldCheck, Zap, Mail, CheckSquare, Map, Coins,
   Calendar, BookOpen, Bot, Battery, Coffee, Trash2, UserPlus, Clock, Download,
   ToggleLeft, ToggleRight, ShieldAlert, Edit, PlayCircle, Check, Circle,
-  Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown
+  Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown, Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { aiAgentService } from '../services/aiAgentService';
@@ -729,6 +729,18 @@ export const Dashboard: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-xs text-brand-ink/50">{listing.craftCategory} · {listing.location}</p>
+                      <div className="flex gap-4 mt-2">
+                        {listing.email && (
+                          <a href={`mailto:${listing.email}`} className="text-[10px] font-bold text-brand-olive flex items-center gap-1 hover:underline">
+                            <Mail size={10} /> {listing.email}
+                          </a>
+                        )}
+                        {listing.phone && (
+                          <div className="text-[10px] font-bold text-brand-ink/50 flex items-center gap-1">
+                            <Phone size={10} /> {listing.phone}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       {!listing.approved && (

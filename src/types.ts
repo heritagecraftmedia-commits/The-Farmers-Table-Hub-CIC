@@ -115,6 +115,8 @@ export interface DirectoryListing {
   approved: boolean;
   published: boolean;
   claimedAt: string;
+  email?: string;
+  phone?: string;
   affiliateLinks?: { label: string; url: string }[];
 }
 
