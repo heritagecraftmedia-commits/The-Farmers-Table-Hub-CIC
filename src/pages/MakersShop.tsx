@@ -182,6 +182,14 @@ export const MakersShop: React.FC = () => {
                         </Link>
                     </div>
                 </div>
+
+                {/* Legal / GDPR disclaimer */}
+                <div className="mt-12 text-center">
+                    <p className="text-xs text-brand-ink/30 max-w-xl mx-auto leading-relaxed">
+                        This directory features independent artisans and makers. Listings are created with permission or at the maker's request.
+                        If you believe any information is incorrect or would like a listing removed, please <a href="mailto:hello@thefarmerstable.co.uk" className="underline hover:text-brand-olive">contact us</a> and we will act promptly.
+                    </p>
+                </div>
             </div>
         </div>
     );

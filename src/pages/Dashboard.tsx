@@ -309,6 +309,33 @@ export const Dashboard: React.FC = () => {
               <p className="text-[11px] text-brand-ink/30 mt-2">Uses Gemini AI to suggest fictional example profiles. No real data is scraped.</p>
             </div>
 
+            {/* Safe Search Tips */}
+            <div className="bg-brand-cream/50 rounded-[32px] p-6 border border-brand-olive/5">
+              <h4 className="font-bold text-sm mb-3 flex items-center gap-2"><Search size={14} className="text-brand-olive" /> Safe Source Search Tips</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-xs text-brand-ink/60">
+                <div>
+                  <p className="font-bold text-brand-ink/80 mb-1">Best search terms:</p>
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>"handmade [craft] workshop"</li>
+                    <li>"[location] artisan maker"</li>
+                    <li>"makers market [area]"</li>
+                    <li>"traditional [craft] tools"</li>
+                    <li>"craft market Surrey / Hampshire"</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-bold text-brand-ink/80 mb-1">Best platforms:</p>
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>YouTube (visible making process)</li>
+                    <li>Instagram (#surreymakers, #handmadeUK)</li>
+                    <li>Google Maps (studio / workshop)</li>
+                    <li>Craft guild & association member lists</li>
+                    <li>Etsy/Folksy → follow to their website</li>
+                  </ul>
+                </div>
+              </div>
+              <p className="text-[10px] text-brand-ink/30 mt-3 italic">✅ Include if 2+ visible: tools in use · materials worked · hands-on making · workshop context. ❌ Skip private groups, anything behind a login, or scraped contacts.</p>
+            </div>
             {rawLeads.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-[40px]">
                 <Search size={40} className="text-brand-ink/20 mx-auto mb-4" />
@@ -390,6 +417,23 @@ export const Dashboard: React.FC = () => {
             <div>
               <h2 className="text-3xl font-serif mb-1">Outreach Log</h2>
               <p className="text-brand-ink/60">Track invitations sent to artisans and makers.</p>
+            </div>
+
+            {/* Outreach message template */}
+            <div className="bg-brand-olive/5 p-6 rounded-[32px] border border-brand-olive/10">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="font-bold text-sm">📋 Copy-Paste Outreach Template</h3>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(`Hello [Name],\n\nI came across your work through your publicly shared [videos / posts / website] and really appreciated the craft you're showing.\n\nI help curate a local directory celebrating independent makers. There's no obligation at all — I just wanted to ask whether you'd like to be included.\n\nIf not, no problem whatsoever.\nThanks for sharing your work publicly.\n\nBest wishes,\n[Your Name]`); }}
+                  className="px-3 py-1.5 bg-brand-olive text-white rounded-full text-[11px] font-bold hover:bg-brand-olive/80 transition-all"
+                >
+                  Copy Message
+                </button>
+              </div>
+              <div className="text-sm text-brand-ink/70 bg-white p-4 rounded-2xl whitespace-pre-line leading-relaxed">
+                Hello [Name],{"\n\n"}I came across your work through your publicly shared [videos / posts / website] and really appreciated the craft you're showing.{"\n\n"}I help curate a local directory celebrating independent makers. There's no obligation at all — I just wanted to ask whether you'd like to be included.{"\n\n"}If not, no problem whatsoever.{"\n"}Thanks for sharing your work publicly.{"\n\n"}Best wishes,{"\n"}[Your Name]
+              </div>
+              <p className="text-[10px] text-brand-ink/30 mt-2">⚠️ Always send manually. No auto-DMs. No follow-ups unless invited. One message only.</p>
             </div>
             {outreachLogs.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-[40px]">
