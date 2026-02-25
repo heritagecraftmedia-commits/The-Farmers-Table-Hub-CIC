@@ -59,6 +59,8 @@ export interface ClaimedVendor {
   claimedAt: string;
 }
 
+export type EventCategory = 'Wood & Furniture' | 'Textiles & Clothing' | 'Pottery & Ceramics' | 'Metal & Tools' | 'Heritage & Skills' | 'Workshops & Talks' | 'Food & Produce' | 'Community' | 'Other';
+
 export interface HubEvent {
   id: string;
   title: string;
@@ -68,9 +70,26 @@ export interface HubEvent {
   location: string;
   venue: string;
   websiteUrl: string;
+  craftType: EventCategory;
   source: string;
   approved: boolean;
   createdAt: string;
+}
+
+export interface DirectoryListing {
+  id: string;
+  enrichedLeadId?: string;
+  vendorName: string;
+  craftCategory: string;
+  location: string;
+  bio: string;
+  website: string;
+  socialLinks: Record<string, string>;
+  listingTier: 'free' | 'supporter' | 'featured';
+  featuredUntil?: string;
+  approved: boolean;
+  published: boolean;
+  claimedAt: string;
 }
 
 export interface StaffMember {

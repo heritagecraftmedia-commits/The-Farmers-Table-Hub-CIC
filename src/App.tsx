@@ -20,6 +20,8 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { WhatsOn } from './pages/WhatsOn';
 import { MakerStories } from './pages/MakerStories';
+import { ClaimListing } from './pages/ClaimListing';
+import { SubmitStory } from './pages/SubmitStory';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -64,6 +66,8 @@ export default function App() {
                 <Route path="/maker-stories" element={<PageWrapper><MakerStories /></PageWrapper>} />
                 <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
                 <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
+                <Route path="/claim/:id" element={<PageWrapper><ClaimListing /></PageWrapper>} />
+                <Route path="/submit-story" element={<PageWrapper><SubmitStory /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />

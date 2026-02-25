@@ -1,4 +1,4 @@
-import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory } from '../types';
+import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, EventCategory } from '../types';
 import { supabase } from '../lib/supabase';
 
 const isConfigured = () => {
@@ -13,16 +13,40 @@ const mockEvents: HubEvent[] = [
     description: 'A monthly gathering of the finest local makers and producers.',
     startDate: '2026-03-15T10:00:00', endDate: '2026-03-15T16:00:00',
     location: 'Farnham Town Centre', venue: 'Market Square',
-    websiteUrl: 'https://example.com/artisan-market', source: 'Manual',
-    approved: true, createdAt: new Date().toISOString()
+    websiteUrl: 'https://example.com/artisan-market', craftType: 'Community',
+    source: 'Manual', approved: true, createdAt: new Date().toISOString()
   },
   {
     id: '2', title: 'Willow Weaving Workshop',
     description: 'Learn the ancient craft of willow weaving with master artisan Sarah.',
     startDate: '2026-03-20T11:00:00', endDate: '2026-03-20T14:00:00',
     location: 'The Farmers Table Hub', venue: 'Makers Studio',
-    websiteUrl: 'https://example.com/weaving-workshop', source: 'Manual',
-    approved: false, createdAt: new Date().toISOString()
+    websiteUrl: 'https://example.com/weaving-workshop', craftType: 'Workshops & Talks',
+    source: 'Manual', approved: false, createdAt: new Date().toISOString()
+  },
+  {
+    id: '3', title: 'Surrey Pottery Open Day',
+    description: 'Watch potters at work, try throwing a pot, and browse handmade ceramics.',
+    startDate: '2026-04-05T09:30:00', endDate: '2026-04-05T17:00:00',
+    location: 'Wrecclesham', venue: 'Wrecclesham Pottery',
+    websiteUrl: 'https://example.com/pottery-open-day', craftType: 'Pottery & Ceramics',
+    source: 'Manual', approved: true, createdAt: new Date().toISOString()
+  },
+  {
+    id: '4', title: 'Blacksmithing Demonstration',
+    description: 'See traditional forging techniques and hand-made tool making by a local blacksmith.',
+    startDate: '2026-04-12T11:00:00', endDate: '2026-04-12T15:00:00',
+    location: 'Farnham', venue: 'The Rural Life Centre',
+    websiteUrl: 'https://example.com/blacksmith-demo', craftType: 'Metal & Tools',
+    source: 'Manual', approved: true, createdAt: new Date().toISOString()
+  },
+  {
+    id: '5', title: 'Heritage Textile Fair',
+    description: 'Natural dyes, handspun wool, and heritage weaving from Surrey and Hampshire makers.',
+    startDate: '2026-04-20T10:00:00', endDate: '2026-04-20T16:00:00',
+    location: 'Guildford', venue: 'Guildford Museum',
+    websiteUrl: 'https://example.com/textile-fair', craftType: 'Textiles & Clothing',
+    source: 'Manual', approved: true, createdAt: new Date().toISOString()
   }
 ];
 

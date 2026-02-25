@@ -69,6 +69,9 @@ export const Dashboard: React.FC = () => {
   const [editingShow, setEditingShow] = useState<RadioShow | null>(null);
   const [showManagerOpen, setShowManagerOpen] = useState(false);
   const [newJobText, setNewJobText] = useState('');
+  const [discoveryLocation, setDiscoveryLocation] = useState('Farnham, Surrey');
+  const [discoveryCraft, setDiscoveryCraft] = useState('');
+  const [discoveryLoading, setDiscoveryLoading] = useState(false);
 
   // Roadmap state
   const [roadmapProgress, setRoadmapProgress] = useState<Record<string, boolean[]>>(() => {
@@ -117,6 +120,13 @@ export const Dashboard: React.FC = () => {
   const handleAddJob = async () => { if (!newJobText.trim()) return; await hubService.addJob(newJobText.trim(), 'Medium'); setNewJobText(''); await refreshData(); };
   const handleUpdateRadio = async (show: RadioShow) => { await hubService.updateRadioStatus(show.id, show.status); await refreshData(); };
   const handleAddArtisan = async (lead: Omit<RawLead, 'id' | 'discoveredAt'>) => { await aiAgentService.addRawLeads([lead]); await refreshData(); };
+  const handleRunDiscovery = async () => {
+    if (!discoveryLocation.trim() || !discoveryCraft.trim()) return;
+    setDiscoveryLoading(true);
+    await aiAgentService.runDiscoveryAgent(discoveryLocation.trim(), discoveryCraft.trim());
+    await refreshData();
+    setDiscoveryLoading(false);
+  };
 
   if (!user) return <div className="p-24 text-center">Please login to access this area.</div>;
 
@@ -259,17 +269,47 @@ export const Dashboard: React.FC = () => {
             <div className="flex justify-between items-start flex-wrap gap-4">
               <div>
                 <h2 className="text-3xl font-serif mb-1">AI Discovery Pipeline</h2>
-                <p className="text-brand-ink/60">Review new leads. Enrich to promote to directory pipeline.</p>
+                <p className="text-brand-ink/60">Run the AI agent to find new makers, or add manually.</p>
               </div>
               <button onClick={() => setShowAddArtisan(true)} className="flex items-center gap-2 px-5 py-3 bg-brand-olive text-white rounded-full text-sm font-bold">
                 <Plus size={16} /> Add Artisan Manually
               </button>
             </div>
+
+            {/* Run Discovery Agent */}
+            <div className="bg-white rounded-[32px] p-6 border border-brand-olive/10 shadow-sm">
+              <h4 className="font-bold text-sm mb-4 flex items-center gap-2"><Bot size={16} className="text-brand-olive" /> Run Discovery Agent</h4>
+              <div className="flex flex-col md:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Location (e.g. Farnham, Surrey)"
+                  value={discoveryLocation}
+                  onChange={e => setDiscoveryLocation(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-brand-olive/10 text-sm focus:ring-2 focus:ring-brand-olive/20"
+                />
+                <input
+                  type="text"
+                  placeholder="Craft (e.g. Woodwork, Pottery)"
+                  value={discoveryCraft}
+                  onChange={e => setDiscoveryCraft(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-brand-olive/10 text-sm focus:ring-2 focus:ring-brand-olive/20"
+                />
+                <button
+                  onClick={handleRunDiscovery}
+                  disabled={discoveryLoading || !discoveryLocation.trim() || !discoveryCraft.trim()}
+                  className="flex items-center gap-2 px-6 py-3 bg-brand-olive text-white rounded-full text-sm font-bold disabled:opacity-40"
+                >
+                  {discoveryLoading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Searching…</> : <><Zap size={16} /> Find Makers</>}
+                </button>
+              </div>
+              <p className="text-[11px] text-brand-ink/30 mt-2">Uses Gemini AI to suggest fictional example profiles. No real data is scraped.</p>
+            </div>
+
             {rawLeads.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-[40px]">
                 <Search size={40} className="text-brand-ink/20 mx-auto mb-4" />
                 <p className="font-serif text-xl mb-2">No new leads</p>
-                <p className="text-brand-ink/50 text-sm mb-6">Add one manually or run the AI discovery agent</p>
+                <p className="text-brand-ink/50 text-sm mb-6">Use the discovery agent above or add one manually</p>
                 <button onClick={() => setShowAddArtisan(true)} className="px-6 py-3 bg-brand-olive text-white rounded-full font-bold text-sm">
                   <Plus size={16} className="inline mr-2" />Add Manually
                 </button>
