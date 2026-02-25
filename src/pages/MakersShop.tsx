@@ -3,7 +3,8 @@ import { makerListings } from '../data/makerListings';
 import { Search, Instagram, Crown, Star, ArrowRight, Palette } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { MakerListing } from '../types';
+import { MakerListing, HubEvent } from '../types';
+import { hubService } from '../services/hubService';
 
 const CRAFT_CATEGORIES = ['All', 'Ceramics', 'Jewellery', 'Paintings', 'Illustration', 'Textiles', 'Design', 'Other'] as const;
 
@@ -44,6 +45,20 @@ const makerColor = (name: string) => {
 export const MakersShop: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCraft, setSelectedCraft] = useState<string>('All');
+    const [events, setEvents] = useState<HubEvent[]>([]);
+    const [links, setLinks] = useState<{ eventId: string, makerId: string, makerName?: string }[]>([]);
+
+    React.useEffect(() => {
+        const load = async () => {
+            const [allEvents, allLinks] = await Promise.all([
+                hubService.getEvents(),
+                hubService.getEventMakerLinks()
+            ]);
+            setEvents(allEvents.filter(e => e.approved));
+            setLinks(allLinks);
+        };
+        load();
+    }, []);
 
     const filtered = makerListings
         .filter(m => {
@@ -147,6 +162,25 @@ export const MakersShop: React.FC = () => {
                                             <Instagram size={14} />
                                             {maker.instagram}
                                         </a>
+                                    )}
+
+                                    {/* Upcoming Events */}
+                                    {links.filter(l => l.makerId === maker.id).length > 0 && (
+                                        <div className="mt-4 p-4 bg-brand-cream/40 rounded-2xl border border-brand-olive/5">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40 mb-2">Upcoming Events</p>
+                                            <div className="space-y-2">
+                                                {links.filter(l => l.makerId === maker.id).map(link => {
+                                                    const event = events.find(e => e.id === link.eventId);
+                                                    if (!event) return null;
+                                                    return (
+                                                        <div key={event.id} className="flex flex-col">
+                                                            <span className="text-xs font-bold text-brand-ink/80">{event.title}</span>
+                                                            <span className="text-[10px] text-brand-ink/40">{new Date(event.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {event.venue}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
                                     )}
 
                                     {/* Supporter / Featured extras */}

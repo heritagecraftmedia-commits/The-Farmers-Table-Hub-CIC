@@ -115,6 +115,7 @@ export interface DirectoryListing {
   approved: boolean;
   published: boolean;
   claimedAt: string;
+  affiliateLinks?: { label: string; url: string }[];
 }
 
 export interface StaffMember {
@@ -152,4 +153,19 @@ export interface MakerStory {
   q2: string; // What tools?
   q3: string; // Good making day?
   published: boolean;
+}
+
+export interface EventMakerLink {
+  eventId: string;
+  makerId: string;
+  makerName?: string; // Fallback for makers not yet in directory
+}
+
+// Update existing types with linkage hints
+export interface HubEventWithMakers extends HubEvent {
+  attendingMakers?: DirectoryListing[];
+}
+
+export interface MakerWithEvents extends DirectoryListing {
+  upcomingEvents?: HubEvent[];
 }

@@ -63,17 +63,39 @@ const mockRadioShows: RadioShow[] = [
 const mockJobs: FounderJob[] = [
   { id: '1', task: 'Review Step 7 Ethical Monetisation rules', priority: 'High', status: 'pending', dueDate: '2026-03-01' },
   { id: '2', task: 'Approve 5 new artisan draft listings', priority: 'Medium', status: 'pending' },
-  { id: '3', task: 'Check radio logs for technical glitches', priority: 'Low', status: 'completed' }
+  { id: '3', task: 'Check radio logs for technical glitches', priority: 'Low', status: 'completed' },
+  { id: '4', task: 'Complete Make.com Automation Setup (Refer to make_automation_guide.md)', priority: 'High', status: 'pending' }
+];
+
+const mockListings: any[] = [
+  { id: 'l1', vendorName: 'Farnham Ironworks', craftCategory: 'Blacksmithing', location: 'Farnham', listingTier: 'featured', approved: true, published: true, website: 'https://example.com/iron', bio: 'Traditional blacksmithing in the heart of Surrey.', socialLinks: { instagram: 'farnhamiron' }, claimedAt: new Date().toISOString(), affiliateLinks: [] },
+  { id: 'l2', vendorName: 'Surrey Willow', craftCategory: 'Basketry', location: 'Guildford', listingTier: 'supporter', approved: false, published: false, website: 'https://example.com/willow', bio: 'Handwoven willow baskets using local materials.', socialLinks: {}, claimedAt: new Date().toISOString(), affiliateLinks: [] }
 ];
 
 const mockStories: MakerStory[] = [
   {
     id: '1', makerName: 'Thomas Ironworks', craft: 'Blacksmithing',
-    image: 'https://picsum.photos/seed/forge/800/600',
+    image: 'https://images.unsplash.com/photo-1504917595217-d4dc5f649771?auto=format&fit=crop&w=800&q=80',
     q1: 'I learned by watching my grandfather in his small workshop in the Surrey Hills.',
     q2: 'My 1920s Peter Wright anvil. It has a ring like a bell.',
     q3: 'A cold morning, the forge at full heat, and a complex commission taking shape.',
     published: true
+  },
+  {
+    id: '2', makerName: 'Sarah Willow', craft: 'Willow Weaving',
+    image: 'https://images.unsplash.com/photo-1590733479497-6a9bc276f571?auto=format&fit=crop&w=800&q=80',
+    q1: 'I took a weekend course 10 years ago and never stopped. The rhythm of weaving is meditative.',
+    q2: 'A sharp pair of Felco secateurs and my handmade bodkin.',
+    q3: 'Working outside in the sun, surrounded by fresh bundles of Somerset willow.',
+    published: true
+  },
+  {
+    id: '3', makerName: 'Oak & Ember', craft: 'Furniture Making',
+    image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=800&q=80',
+    q1: 'Self-taught mostly, through thousands of hours of trial and error in my garage.',
+    q2: 'My Japanese hand saws. The precision they offer is unmatched.',
+    q3: 'When the final coat of oil goes on a piece and the grain truly comes to life.',
+    published: false
   }
 ];
 
@@ -177,6 +199,80 @@ export const hubService = {
   publishStory: async (id: string) => {
     if (!isConfigured()) { mockStories.forEach(s => { if (s.id === id) s.published = true; }); return; }
     await supabase.from('maker_stories').update({ published: true }).eq('id', id);
+  },
+
+  addMakerStory: async (story: Omit<MakerStory, 'id'>): Promise<MakerStory | null> => {
+    if (!isConfigured()) {
+      const ns = { ...story, id: Math.random().toString(36).substr(2, 9) };
+      mockStories.push(ns); return ns;
+    }
+    const { data, error } = await supabase.from('maker_stories').insert({
+      maker_name: story.makerName,
+      craft: story.craft,
+      image: story.image,
+      q1: story.q1,
+      q2: story.q2,
+      q3: story.q3,
+      published: story.published
+    }).select().single();
+    if (error) { console.error('addMakerStory:', error); return null; }
+    return { ...story, id: data.id };
+  },
+
+  deleteMakerStory: async (id: string) => {
+    if (!isConfigured()) { const i = mockStories.findIndex(s => s.id === id); if (i > -1) mockStories.splice(i, 1); return; }
+    await supabase.from('maker_stories').delete().eq('id', id);
+  },
+
+  updateAffiliateLinks: async (listingId: string, links: { label: string, url: string }[]) => {
+    if (!isConfigured()) { mockListings.forEach(l => { if (l.id === listingId) l.affiliateLinks = links; }); return; }
+    await supabase.from('directory_listings').update({ affiliate_links: links }).eq('id', listingId);
+  },
+
+  getListings: async (): Promise<any[]> => {
+    if (!isConfigured()) return mockListings;
+    const { data, error } = await supabase.from('directory_listings').select('*').order('vendor_name');
+    if (error) { console.error('getListings:', error); return mockListings; }
+    return data.map((r: any) => ({
+      id: r.id, vendorName: r.vendor_name, craftCategory: r.craft_category,
+      location: r.location, website: r.website, bio: r.bio,
+      socialLinks: r.social_links, listingTier: r.listing_tier,
+      approved: r.approved, published: r.published,
+      claimedAt: r.claimed_at, affiliateLinks: r.affiliate_links || []
+    }));
+  },
+
+  approveListing: async (id: string) => {
+    if (!isConfigured()) { mockListings.forEach(l => { if (l.id === id) l.approved = true; }); return; }
+    await supabase.from('directory_listings').update({ approved: true }).eq('id', id);
+  },
+
+  deleteListing: async (id: string) => {
+    if (!isConfigured()) { const i = mockListings.findIndex(l => l.id === id); if (i > -1) mockListings.splice(i, 1); return; }
+    await supabase.from('directory_listings').delete().eq('id', id);
+  },
+
+  // --- Event-Maker Linkage ---
+  getEventMakerLinks: async (eventId?: string): Promise<{ eventId: string, makerId: string, makerName?: string }[]> => {
+    if (!isConfigured()) return [];
+    let query = supabase.from('event_makers').select('*');
+    if (eventId) query = query.eq('event_id', eventId);
+
+    const { data, error } = await query;
+    if (error) { console.error('getEventMakerLinks:', error); return []; }
+    return data.map((r: any) => ({ eventId: r.event_id, makerId: r.maker_id, makerName: r.maker_name }));
+  },
+
+  linkMakerToEvent: async (eventId: string, makerId: string, makerName?: string) => {
+    if (!isConfigured()) return;
+    const { error } = await supabase.from('event_makers').upsert({ event_id: eventId, maker_id: makerId, maker_name: makerName });
+    if (error) console.error('linkMakerToEvent:', error);
+  },
+
+  unlinkMakerFromEvent: async (eventId: string, makerId: string) => {
+    if (!isConfigured()) return;
+    const { error } = await supabase.from('event_makers').delete().match({ event_id: eventId, maker_id: makerId });
+    if (error) console.error('unlinkMakerFromEvent:', error);
   },
 
   getSystemSettings: () => mockSystemSettings,

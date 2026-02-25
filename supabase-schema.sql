@@ -180,7 +180,21 @@ create policy "admin_events" on events for all using (auth.role() = 'authenticat
 create policy "public_stories" on maker_stories for select using (published = true);
 create policy "admin_stories" on maker_stories for all using (auth.role() = 'authenticated');
 
--- Anyone can insert a story (submission form)
+-- 12. EVENT MAKERS (Junction table for cross-links)
+create table if not exists event_makers (
+  event_id uuid references events(id) on delete cascade,
+  maker_id uuid, -- Reference to claimed_vendors, enriched_leads, or directory_listing
+  maker_name text, -- Fallback name
+  primary key (event_id, maker_id)
+);
+
+alter table event_makers enable row level security;
+create policy "public_read_event_makers" on event_makers for select using (true);
+create policy "authenticated_full_event_makers" on event_makers for all using (auth.role() = 'authenticated');
+
+-- Everyone can insert a story (submission form) - but restricted to authenticated users for better security if preferred.
+-- If you want public (anon) submissions, keep 'with check (true)' but it's safer to use 'to authenticated'.
 create policy "public_story_insert" on maker_stories for insert with check (true);
--- Anyone can insert a claimed vendor (claim flow)
-create policy "public_claim_insert" on claimed_vendors for insert with check (true);
+
+-- Makers can only insert their own claim
+create policy "claimed_vendors_insert_owner" on claimed_vendors for insert to authenticated with check (auth.uid() = user_id);

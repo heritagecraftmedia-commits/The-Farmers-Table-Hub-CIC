@@ -53,27 +53,34 @@ export const Navbar: React.FC = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`text-sm font-bold transition-colors hover:text-brand-olive ${
-                  location.pathname === link.path ? 'text-brand-olive underline underline-offset-8' : 'text-brand-ink/70'
-                }`}
+                className={`text-sm font-bold transition-colors hover:text-brand-olive ${location.pathname === link.path ? 'text-brand-olive underline underline-offset-8' : 'text-brand-ink/70'
+                  }`}
               >
                 {link.name}
               </Link>
             ))}
-            
+
             <div className="h-6 w-px bg-brand-olive/20 mx-2"></div>
 
             <button
               onClick={toggleFogMode}
-              className={`p-2 rounded-full border transition-all ${
-                isFogMode 
-                  ? 'bg-brand-olive text-white border-brand-olive' 
+              className={`p-2 rounded-full border transition-all ${isFogMode
+                  ? 'bg-brand-olive text-white border-brand-olive'
                   : 'bg-white text-brand-olive border-brand-olive/30 hover:bg-brand-olive/5'
-              }`}
+                }`}
               title={isFogMode ? 'Clear Mind' : 'Fog Mode'}
             >
               {isFogMode ? <Sun size={18} /> : <Cloud size={18} />}
             </button>
+
+            {user && (
+              <Link
+                to="/command"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white text-brand-olive border border-brand-olive/20 rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm"
+              >
+                <LayoutDashboard size={16} /> Command
+              </Link>
+            )}
 
             {user ? (
               <Link
@@ -168,8 +175,8 @@ export const Navbar: React.FC = () => {
                   <p className="text-sm text-brand-ink/60 leading-relaxed mb-6">
                     A community-led social enterprise dedicated to supporting local food producers and fostering community through radio.
                   </p>
-                  <Link 
-                    to="/join" 
+                  <Link
+                    to="/join"
                     onClick={() => setIsOpen(false)}
                     className="inline-block px-6 py-3 bg-brand-olive text-white rounded-full font-bold text-sm"
                   >

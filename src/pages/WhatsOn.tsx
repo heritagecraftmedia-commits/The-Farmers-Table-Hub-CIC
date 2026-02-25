@@ -11,6 +11,7 @@ const categories: EventCategory[] = [
 
 export const WhatsOn: React.FC = () => {
   const [events, setEvents] = useState<HubEvent[]>([]);
+  const [links, setLinks] = useState<{ eventId: string, makerId: string, makerName?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'this-week' | 'this-month'>('all');
   const [categoryFilter, setCategoryFilter] = useState<EventCategory | 'all'>('all');
@@ -19,8 +20,12 @@ export const WhatsOn: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const all = await hubService.getEvents();
-      setEvents(all.filter(e => e.approved));
+      const [allEvents, allLinks] = await Promise.all([
+        hubService.getEvents(),
+        hubService.getEventMakerLinks()
+      ]);
+      setEvents(allEvents.filter(e => e.approved));
+      setLinks(allLinks);
       setLoading(false);
     };
     load();
@@ -183,6 +188,21 @@ export const WhatsOn: React.FC = () => {
                       <span>{event.venue}, {event.location}</span>
                     </div>
                   </div>
+
+                  {/* Attending Makers */}
+                  {links.filter(l => l.eventId === event.id).length > 0 && (
+                    <div className="mb-6 p-4 bg-brand-cream/50 rounded-2xl border border-brand-olive/5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40 mb-2">Makers Attending</p>
+                      <div className="flex flex-wrap gap-2">
+                        {links.filter(l => l.eventId === event.id).map(link => (
+                          <span key={link.makerId} className="text-[11px] font-bold text-brand-olive bg-white px-2 py-1 rounded-full border border-brand-olive/5 shadow-sm">
+                            {link.makerName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-sm text-brand-ink/70 mb-8 line-clamp-3 leading-relaxed">{event.description}</p>
                   <a
                     href={event.websiteUrl}

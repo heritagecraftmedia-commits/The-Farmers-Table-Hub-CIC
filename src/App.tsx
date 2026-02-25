@@ -23,6 +23,9 @@ import { MakerStories } from './pages/MakerStories';
 import { ClaimListing } from './pages/ClaimListing';
 import { SubmitStory } from './pages/SubmitStory';
 import { MakersShop } from './pages/MakersShop';
+import { Privacy } from './pages/Privacy';
+import { Terms } from './pages/Terms';
+import { CommandCenter } from './pages/CommandCenter';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -70,6 +73,9 @@ export default function App() {
                 <Route path="/claim/:id" element={<PageWrapper><ClaimListing /></PageWrapper>} />
                 <Route path="/submit-story" element={<PageWrapper><SubmitStory /></PageWrapper>} />
                 <Route path="/makers-shop" element={<PageWrapper><MakersShop /></PageWrapper>} />
+                <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
+                <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
+                <Route path="/command" element={<PageWrapper><CommandCenter /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />
