@@ -182,6 +182,26 @@ export const Dashboard: React.FC = () => {
     await refreshData();
   };
 
+  const handleStartRoadmapStep = async (stepId: string) => {
+    const step = ROADMAP_STEPS.find(s => s.id === stepId);
+    if (!step) return;
+    const checks = roadmapProgress[stepId] || new Array(step.checklist.length).fill(false);
+    const promises = step.checklist
+      .filter((_, idx) => !checks[idx])
+      .map(item => hubService.addJob(`${step.title}: ${item}`, 'Medium'));
+    await Promise.all(promises);
+    await refreshData();
+    setShowManagerOpen(true);
+    setActiveTab('overview');
+  };
+
+  const handleAddRoadmapItemAsJob = async (stepTitle: string, item: string) => {
+    await hubService.addJob(`${stepTitle}: ${item}`, 'Medium');
+    await refreshData();
+    setShowManagerOpen(true);
+    setActiveTab('overview');
+  };
+
   if (!user) return <div className="p-24 text-center">Please login to access this area.</div>;
 
   const tabNav = (tab: TabType, label: string, icon: React.ReactNode) => (
@@ -919,19 +939,33 @@ export const Dashboard: React.FC = () => {
                           <div className="px-6 pb-6 space-y-3">
                             <div className="h-px bg-brand-cream mb-4" />
                             {step.checklist.map((item, ci) => (
-                              <label key={ci} className="flex items-start gap-3 cursor-pointer group">
-                                <div onClick={() => updateRoadmap(step.id, ci, !checks[ci])}
-                                  className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${checks[ci] ? 'bg-brand-olive border-brand-olive' : 'border-brand-ink/20 group-hover:border-brand-olive/50'}`}>
-                                  {checks[ci] && <Check size={11} className="text-white" />}
-                                </div>
-                                <span className={`text-sm ${checks[ci] ? 'line-through text-brand-ink/30' : 'text-brand-ink/80'}`}>{item}</span>
-                              </label>
+                              <div key={ci} className="flex items-center justify-between gap-3 group/item">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1">
+                                  <div onClick={() => updateRoadmap(step.id, ci, !checks[ci])}
+                                    className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${checks[ci] ? 'bg-brand-olive border-brand-olive' : 'border-brand-ink/20 group-hover:border-brand-olive/50'}`}>
+                                    {checks[ci] && <Check size={11} className="text-white" />}
+                                  </div>
+                                  <span className={`text-sm ${checks[ci] ? 'line-through text-brand-ink/30' : 'text-brand-ink/80'}`}>{item}</span>
+                                </label>
+                                {!checks[ci] && (
+                                  <button
+                                    onClick={() => handleAddRoadmapItemAsJob(step.title, item)}
+                                    className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-brand-olive/10 text-brand-olive rounded-full transition-all"
+                                    title="Add to Open Manager"
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                )}
+                              </div>
                             ))}
-                            <div className="pt-4 flex gap-3">
-                              <button onClick={() => setActiveTab('overview')} className="px-4 py-2 bg-brand-olive text-white rounded-full text-xs font-bold flex items-center gap-1">
-                                <PlayCircle size={13} /> Start Now
+                            <div className="pt-4 border-t border-brand-cream flex gap-3">
+                              <button
+                                onClick={() => handleStartRoadmapStep(step.id)}
+                                className="px-5 py-2.5 bg-brand-olive text-white rounded-full text-xs font-bold flex items-center gap-2 hover:bg-brand-olive/90 transition-all shadow-md shadow-brand-olive/10"
+                              >
+                                <PlayCircle size={14} /> Start Working on Phase {step.phase}
                               </button>
-                              {pct > 0 && pct < 100 && <span className="text-xs text-brand-ink/40 self-center">{pct}% complete</span>}
+                              {pct > 0 && pct < 100 && <span className="text-xs text-brand-ink/40 self-center font-bold">{pct}% complete</span>}
                             </div>
                           </div>
                         </motion.div>
