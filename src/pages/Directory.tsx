@@ -112,7 +112,7 @@ export const Directory: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              <Link to="/join" className={`block w-full py-3 rounded-full text-center text-xs font-bold transition-all ${tier.highlight ? 'bg-brand-olive text-white shadow-lg shadow-brand-olive/20' : 'bg-brand-cream text-brand-ink/60 hover:bg-brand-olive/10'}`}>
+              <Link to="/subscriptions" className={`block w-full py-3 rounded-full text-center text-xs font-bold transition-all ${tier.highlight ? 'bg-brand-olive text-white shadow-lg shadow-brand-olive/20' : 'bg-brand-cream text-brand-ink/60 hover:bg-brand-olive/10'}`}>
                 {tier.cta}
               </Link>
             </div>

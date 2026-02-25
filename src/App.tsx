@@ -26,6 +26,8 @@ import { MakersShop } from './pages/MakersShop';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { CommandCenter } from './pages/CommandCenter';
+import { Subscriptions } from './pages/Subscriptions';
+import { ChangesDraft } from './pages/ChangesDraft';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -76,6 +78,8 @@ export default function App() {
                 <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
                 <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
                 <Route path="/command" element={<PageWrapper><CommandCenter /></PageWrapper>} />
+                <Route path="/subscriptions" element={<PageWrapper><Subscriptions /></PageWrapper>} />
+                <Route path="/changes" element={<PageWrapper><ChangesDraft /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />
