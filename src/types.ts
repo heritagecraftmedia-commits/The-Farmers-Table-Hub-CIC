@@ -1,0 +1,100 @@
+export type UserRole = 'founder' | 'staff' | 'customer' | null;
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+}
+
+export interface RawLead {
+  id: string;
+  sourcePlatform: string;
+  profileUrl: string;
+  displayName: string;
+  bioText: string;
+  locationHint: string;
+  categoryHint: string;
+  discoveredAt: string;
+}
+
+export interface QualifiedLead {
+  id: string;
+  rawLeadId: string;
+  artisanScore: number;
+  qualificationNotes: string;
+  qualified: boolean;
+  reviewed: boolean;
+  createdAt: string;
+}
+
+export interface EnrichedLead {
+  id: string;
+  vendorName: string;
+  vendorType: string;
+  craftCategory: string;
+  location: string;
+  website: string;
+  publicEmail: string;
+  socialLinks: Record<string, string>;
+  summary: string;
+  status: 'draft' | 'invited' | 'claimed';
+  createdAt: string;
+}
+
+export interface OutreachLog {
+  id: string;
+  enrichedLeadId: string;
+  contactMethod: string;
+  messageSent: string;
+  sentAt: string;
+  response?: string;
+}
+
+export interface ClaimedVendor {
+  id: string;
+  userId: string;
+  vendorProfile: any;
+  approved: boolean;
+  published: boolean;
+  claimedAt: string;
+}
+
+export interface HubEvent {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  venue: string;
+  websiteUrl: string;
+  source: string;
+  approved: boolean;
+  createdAt: string;
+}
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  status: 'active' | 'on-leave' | 'inactive';
+  joinedAt: string;
+}
+
+export interface RadioShow {
+  id: string;
+  title: string;
+  host: string;
+  schedule: string;
+  status: 'live' | 'pre-recorded' | 'planned';
+  lastBroadcast?: string;
+}
+
+export interface FounderJob {
+  id: string;
+  task: string;
+  priority: 'High' | 'Medium' | 'Low';
+  status: 'pending' | 'completed';
+  dueDate?: string;
+}

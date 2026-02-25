@@ -1,0 +1,8 @@
+{
+  "name": "The Farmers Table Hub CIC",
+  "description": "A community-focused social enterprise connecting local food producers with consumers through a directory and community radio.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}
