@@ -13,11 +13,17 @@ export const Directory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [allListings, setAllListings] = useState<DirectoryListing[]>([]);
+  const [featuredRotation, setFeaturedRotation] = useState<DirectoryListing[]>([]);
 
   React.useEffect(() => {
     const load = async () => {
       const data = await hubService.getListings();
       setAllListings(data);
+
+      // Select 10 featured spots randomly
+      const featured = data.filter(l => l.listingTier === 'featured');
+      const shuffled = [...featured].sort(() => 0.5 - Math.random());
+      setFeaturedRotation(shuffled.slice(0, 10));
     };
     load();
   }, []);
@@ -63,9 +69,96 @@ export const Directory: React.FC = () => {
           </h1>
           <p className="text-xl text-brand-ink/70 max-w-2xl">
             {allListings.length} local producers and artisans bringing real quality from farm to table.
-            Support the people who grow, rear, and craft our community.
           </p>
         </div>
+
+        {/* Tiered Pricing / Signup section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+          {[
+            {
+              tier: 'free',
+              name: 'Basic',
+              price: '£0',
+              features: ['Verified badge', 'Category listing'],
+              cta: 'Get Started'
+            },
+            {
+              tier: 'supporter',
+              name: 'Supporter',
+              price: '£5',
+              features: ['Website links', 'Contact info', 'Social links'],
+              cta: 'Claim Listing',
+              highlight: true
+            },
+            {
+              tier: 'featured',
+              name: 'Featured',
+              price: '£15',
+              features: ['Priority Spotlight', 'Bio section', 'Affiliate links'],
+              cta: 'Go Platinum'
+            }
+          ].map(tier => (
+            <div key={tier.name} className={`bg-white rounded-[32px] p-8 border ${tier.highlight ? 'border-brand-olive ring-1 ring-brand-olive/20' : 'border-brand-olive/5'} transition-all hover:shadow-lg relative overflow-hidden group`}>
+              {tier.highlight && <div className="absolute top-0 right-0 bg-brand-olive text-white text-[10px] font-bold px-4 py-1 rounded-bl-xl uppercase tracking-widest">Recommended</div>}
+              <h4 className="text-xs font-bold text-brand-olive uppercase tracking-widest mb-2">{tier.name}</h4>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-3xl font-serif">{tier.price}</span>
+                <span className="text-xs text-brand-ink/40">/month</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {tier.features.map(f => (
+                  <li key={f} className="text-xs text-brand-ink/60 flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-brand-olive" /> {f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/join" className={`block w-full py-3 rounded-full text-center text-xs font-bold transition-all ${tier.highlight ? 'bg-brand-olive text-white shadow-lg shadow-brand-olive/20' : 'bg-brand-cream text-brand-ink/60 hover:bg-brand-olive/10'}`}>
+                {tier.cta}
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        {/* Featured Spotlight - 10 Spots Rotation */}
+        {selectedCategory === 'All' && featuredRotation.length > 0 && (
+          <div className="mb-20">
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-2xl font-serif flex items-center gap-3">
+                <Crown className="text-amber-400" /> Featured <span className="italic text-brand-olive">Spotlights</span>
+              </h2>
+              <div className="h-px flex-1 bg-amber-200/30" />
+              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Premium Showcase</span>
+            </div>
+            <div className="flex overflow-x-auto pb-8 gap-6 no-scrollbar -mx-4 px-4 snap-x">
+              {featuredRotation.map((vendor, idx) => (
+                <motion.div
+                  key={vendor.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="w-[280px] md:w-[320px] flex-shrink-0 snap-start bg-gradient-to-br from-white to-brand-cream/30 rounded-[32px] p-6 border border-amber-200 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 right-0 p-6 opacity-5 -mr-4 -mt-4">
+                    <Crown size={80} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-olive/40 block mb-1">{vendor.craftCategory}</span>
+                  <h3 className="text-xl font-serif mb-3 leading-snug">{vendor.vendorName}</h3>
+                  <p className="text-xs text-brand-ink/60 mb-6 line-clamp-3 leading-relaxed">{vendor.bio}</p>
+                  <div className="flex justify-between items-end">
+                    <div className="text-[10px] font-bold text-brand-ink/30 flex items-center gap-1 uppercase tracking-wider">
+                      <MapPin size={10} /> {vendor.location}
+                    </div>
+                    {vendor.website && (
+                      <a href={`https://${vendor.website}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-brand-olive text-white rounded-2xl hover:bg-brand-olive/90 transition-all shadow-lg shadow-brand-olive/10">
+                        <ArrowRight size={14} />
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-brand-olive/5 mb-12 flex flex-col md:flex-row gap-6 items-center sticky top-24 z-10">
