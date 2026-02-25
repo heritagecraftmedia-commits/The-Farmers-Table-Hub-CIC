@@ -734,243 +734,109 @@ export const Dashboard: React.FC = () => {
                 <Plus size={16} /> Add Artisan
               </button>
             </div>
-            <div className="space-y-4">
-              {directoryListings.map(listing => (
-                <div key={listing.id} className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-bold">{listing.vendorName}</h4>
-                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${listing.approved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {listing.approved ? 'Approved' : 'Pending'}
-                        </span>
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-brand-cream text-brand-olive">
-                          {listing.listingTier}
-                        </span>
-                      </div>
-                      <p className="text-xs text-brand-ink/50">{listing.craftCategory} · {listing.location}</p>
-                      <div className="flex gap-4 mt-2">
-                        {listing.email && (
-                          <a href={`mailto:${listing.email}`} className="text-[10px] font-bold text-brand-olive flex items-center gap-1 hover:underline">
-                            <Mail size={10} /> {listing.email}
-                          </a>
-                        )}
-                        {listing.phone && (
-                          <div className="text-[10px] font-bold text-brand-ink/50 flex items-center gap-1">
-                            <Phone size={10} /> {listing.phone}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {!listing.approved && (
-                        <button onClick={() => handleApproveListing(listing.id)} className="px-4 py-2 bg-green-50 text-green-600 rounded-full text-xs font-bold">Approve</button>
-                      )}
-                      <button onClick={() => {
-                        setEditingAffiliatesId(listing.id);
-                        setTempAffiliateLinks(listing.affiliateLinks || []);
-                      }} className="px-4 py-2 border border-brand-olive/20 text-brand-olive rounded-full text-xs font-bold flex items-center gap-1">
-                        Affiliate Links ({listing.affiliateLinks?.length || 0})
-                      </button>
-                      <button onClick={() => handleDeleteListing(listing.id)} className="px-4 py-2 border border-red-50 text-red-400 rounded-full text-xs font-bold hover:bg-red-50"><Trash2 size={12} /></button>
-                    </div>
-                  </div>
-
-                  {/* Affiliate Links Editor */}
-                  {editingAffiliatesId === listing.id && (
-                    <div className="pt-4 border-t border-brand-olive/5 bg-brand-cream/10 p-4 rounded-2xl">
-                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-brand-ink/40 mb-3">Manage Product Affiliate Links</h5>
-                      <div className="space-y-3">
-                        {tempAffiliateLinks.map((link, idx) => (
-                          <div key={idx} className="flex gap-2">
-                            <input className="flex-1 px-3 py-2 rounded-xl bg-white border border-brand-olive/10 text-xs" placeholder="Product Label" value={link.label} onChange={e => {
-                              const nl = [...tempAffiliateLinks]; nl[idx].label = e.target.value; setTempAffiliateLinks(nl);
-                            }} />
-                            <input className="flex-[2] px-3 py-2 rounded-xl bg-white border border-brand-olive/10 text-xs" placeholder="Affiliate URL" value={link.url} onChange={e => {
-                              const nl = [...tempAffiliateLinks]; nl[idx].url = e.target.value; setTempAffiliateLinks(nl);
-                            }} />
-                            <button onClick={() => setTempAffiliateLinks(tempAffiliateLinks.filter((_, i) => i !== idx))} className="p-2 text-red-400"><Trash2 size={14} /></button>
-                          </div>
-                        ))}
-                        <button onClick={() => setTempAffiliateLinks([...tempAffiliateLinks, { label: '', url: '' }])} className="w-full py-2 border border-dashed border-brand-olive/30 rounded-xl text-xs font-bold text-brand-olive hover:bg-white transition-all">
-                          + Add Product Link
-                        </button>
-                        <div className="flex gap-2 pt-2">
-                          <button onClick={() => handleSaveAffiliates(listing.id)} className="flex-1 py-2 bg-brand-olive text-white rounded-full text-xs font-bold">Save Changes</button>
-                          <button onClick={() => setEditingAffiliatesId(null)} className="flex-1 py-2 border border-brand-olive/20 rounded-full text-xs font-bold">Cancel</button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── MEMBERSHIP ── */}
-        {activeTab === 'membership' && (
-          <div className="space-y-8 pb-12">
-            <div className="max-w-3xl">
-              <h2 className="text-4xl font-serif mb-2">Artisan <span className="italic text-brand-olive">Growth</span></h2>
-              <p className="text-lg text-brand-ink/60">Choose a tier that grows with your business. All revenue supports the Farmer's Table Hub CIC.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Supporter Tier */}
-              <div className="bg-white rounded-[40px] p-8 md:p-12 border border-brand-olive/5 shadow-sm hover:shadow-md transition-all">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-olive/10 text-brand-olive text-sm font-bold mb-6">
-                  <Star size={16} /> Supporter
-                </div>
-                <div className="mb-8">
-                  <span className="text-5xl font-serif">£5</span>
-                  <span className="text-brand-ink/40 font-bold ml-2">/ month</span>
-                </div>
-                <ul className="space-y-4 mb-10">
-                  <li className="flex items-center gap-3 text-brand-ink/70">
-                    <CheckCircle2 size={18} className="text-brand-olive" />
-                    Verified artisan badge
-                  </li>
-                  <li className="flex items-center gap-3 text-brand-ink/70">
-                    <CheckCircle2 size={18} className="text-brand-olive" />
-                    Include your Instagram & Website
-                  </li>
-                  <li className="flex items-center gap-3 text-brand-ink/70">
-                    <CheckCircle2 size={18} className="text-brand-olive" />
-                    Support local radio & inclusive training
-                  </li>
-                </ul>
-                <button
-                  onClick={() => stripeService.redirectToCheckout('supporter')}
-                  className="w-full py-4 bg-brand-olive text-white rounded-full font-bold hover:bg-brand-olive/90 transition-all flex items-center justify-center gap-2"
-                >
-                  Upgrade to Supporter <ArrowRight size={18} />
-                </button>
-              </div>
-
-              {/* Featured Tier */}
-              <div className="bg-gradient-to-br from-brand-olive to-brand-olive-dark text-brand-cream rounded-[40px] p-8 md:p-12 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                  <Crown size={120} />
-                </div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-bold mb-6">
-                  <Crown size={16} className="text-amber-400" /> Featured artisan
-                </div>
-                <div className="mb-8">
-                  <span className="text-5xl font-serif">£15</span>
-                  <span className="text-white/40 font-bold ml-2">/ month</span>
-                </div>
-                <ul className="space-y-4 mb-10">
-                  <li className="flex items-center gap-3 text-white/90">
-                    <CheckCircle2 size={18} className="text-white" />
-                    Priority placement in the directory
-                  </li>
-                  <li className="flex items-center gap-3 text-white/90">
-                    <CheckCircle2 size={18} className="text-white" />
-                    "Story of the Month" spotlight
-                  </li>
-                  <li className="flex items-center gap-3 text-white/90">
-                    <CheckCircle2 size={18} className="text-white" />
-                    Enhanced profile with video/story links
-                  </li>
-                  <li className="flex items-center gap-3 text-white/90">
-                    <CheckCircle2 size={18} className="text-white" />
-                    Direct community support impact
-                  </li>
-                </ul>
-                <button
-                  onClick={() => stripeService.redirectToCheckout('featured')}
-                  className="w-full py-4 bg-white text-brand-olive rounded-full font-bold hover:bg-brand-cream transition-all flex items-center justify-center gap-2 shadow-lg"
-                >
-                  Go Platinum <ArrowRight size={18} />
-                </button>
-              </div>
-            </div>
-
-            {/* Help/Support info */}
-            <div className="bg-white/50 rounded-[32px] p-8 border border-brand-olive/5 text-center">
-              <p className="text-brand-ink/60 text-sm max-w-lg mx-auto leading-relaxed">
-                Payments are handled securely by Stripe. You can cancel at any time.
-                As a Social Enterprise, 100% of our surplus goes back into community programs.
-              </p>
-            </div>
-          </div>
-        )}
-        {activeTab === 'roadmap' && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-serif mb-1">Next Steps Roadmap</h2>
-              <p className="text-brand-ink/60">Click any phase to expand and start working through it.</p>
-            </div>
-            <div className="space-y-4">
-              {ROADMAP_STEPS.map((step, idx) => {
-                const done = stepComplete(step);
-                const total = step.checklist.length;
-                const pct = Math.round((done / total) * 100);
-                const isExpanded = expandedStep === step.id;
-                const checks = roadmapProgress[step.id] || new Array(total).fill(false);
+            <div className="space-y-12">
+              {['Meat', 'Milk & Dairy', 'Fruit & Veg', 'Eggs & Poultry', 'Mixed Farms', 'Makers & Bakers', 'Crafters'].map(cat => {
+                const catListings = directoryListings.filter(l => l.displayCategory === cat);
+                if (catListings.length === 0) return null;
 
                 return (
-                  <div key={step.id} className={`bg-white rounded-[32px] border shadow-sm overflow-hidden transition-all ${isExpanded ? 'border-brand-olive/30' : 'border-brand-olive/5'}`}>
-                    <button onClick={() => setExpandedStep(isExpanded ? null : step.id)} className="w-full p-6 flex items-center gap-4 text-left">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${done === total ? 'bg-green-50 text-green-600' : isExpanded ? 'bg-brand-olive text-white' : 'bg-brand-cream text-brand-olive'}`}>
-                        {done === total ? <CheckCircle2 size={20} /> : step.icon}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-brand-ink/30 uppercase tracking-wider">Phase {step.phase}</span>
-                          {done === total && <span className="text-[10px] font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Complete</span>}
-                        </div>
-                        <p className="font-bold">{step.title}</p>
-                        <p className="text-xs text-brand-ink/50 mt-0.5">{step.description}</p>
-                        {/* Progress bar */}
-                        <div className="mt-3 flex items-center gap-3">
-                          <div className="flex-1 h-1.5 bg-brand-cream rounded-full overflow-hidden">
-                            <div className="h-full bg-brand-olive rounded-full transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-xs text-brand-ink/40 font-bold">{done}/{total}</span>
-                        </div>
-                      </div>
-                      <ArrowRight size={18} className={`text-brand-ink/20 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} />
-                    </button>
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
-                          <div className="px-6 pb-6 space-y-3">
-                            <div className="h-px bg-brand-cream mb-4" />
-                            {step.checklist.map((item, ci) => (
-                              <div key={ci} className="flex items-center justify-between gap-3 group/item">
-                                <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <div onClick={() => updateRoadmap(step.id, ci, !checks[ci])}
-                                    className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${checks[ci] ? 'bg-brand-olive border-brand-olive' : 'border-brand-ink/20 group-hover:border-brand-olive/50'}`}>
-                                    {checks[ci] && <Check size={11} className="text-white" />}
+                  <div key={cat} className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-serif text-xl">{cat}</h3>
+                      <div className="h-px flex-1 bg-brand-olive/10" />
+                      <span className="text-[10px] font-bold text-brand-olive/40">{catListings.length} LISTINGS</span>
+                    </div>
+                    <div className="space-y-4">
+                      {catListings.map(listing => (
+                        <div key={listing.id} className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm space-y-4">
+                          <div className="flex flex-col md:flex-row md:items-center gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-bold">{listing.vendorName}</h4>
+                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${listing.approved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                                  {listing.approved ? 'Approved' : 'Pending'}
+                                </span>
+                                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-brand-cream text-brand-olive">
+                                  {listing.listingTier}
+                                </span>
+                                <span className="text-[10px] font-bold text-brand-ink/30 italic ml-2">{listing.displayCategory}</span>
+                              </div>
+                              <p className="text-xs text-brand-ink/50">{listing.craftCategory} · {listing.location}</p>
+                              <div className="flex gap-4 mt-2">
+                                {listing.email && (
+                                  <a href={`mailto:${listing.email}`} className="text-[10px] font-bold text-brand-olive flex items-center gap-1 hover:underline">
+                                    <Mail size={10} /> {listing.email}
+                                  </a>
+                                )}
+                                {listing.phone && (
+                                  <div className="text-[10px] font-bold text-brand-ink/50 flex items-center gap-1">
+                                    <Phone size={10} /> {listing.phone}
                                   </div>
-                                  <span className={`text-sm ${checks[ci] ? 'line-through text-brand-ink/30' : 'text-brand-ink/80'}`}>{item}</span>
-                                </label>
-                                {!checks[ci] && (
-                                  <button
-                                    onClick={() => handleAddRoadmapItemAsJob(step.title, item)}
-                                    className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-brand-olive/10 text-brand-olive rounded-full transition-all"
-                                    title="Add to Open Manager"
-                                  >
-                                    <Plus size={14} />
-                                  </button>
                                 )}
                               </div>
-                            ))}
-                            <div className="pt-4 border-t border-brand-cream flex gap-3">
-                              <button
-                                onClick={() => handleStartRoadmapStep(step.id)}
-                                className="px-5 py-2.5 bg-brand-olive text-white rounded-full text-xs font-bold flex items-center gap-2 hover:bg-brand-olive/90 transition-all shadow-md shadow-brand-olive/10"
-                              >
-                                <PlayCircle size={14} /> Start Working on Phase {step.phase}
+                            </div>
+                            <div className="flex gap-2">
+                              {!listing.approved && (
+                                <button onClick={() => hubService.approveListing(listing.id).then(refreshData)} className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-all">
+                                  <Check size={18} />
+                                </button>
+                              )}
+                              <button onClick={() => hubService.deleteListing(listing.id).then(refreshData)} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all">
+                                <Trash2 size={18} />
                               </button>
-                              {pct > 0 && pct < 100 && <span className="text-xs text-brand-ink/40 self-center font-bold">{pct}% complete</span>}
+                              {listing.listingTier === 'featured' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingAffiliatesId(listing.id);
+                                    setTempAffiliateLinks(listing.affiliateLinks || []);
+                                  }}
+                                  className={`p-2 rounded-full transition-all ${editingAffiliatesId === listing.id ? 'bg-brand-olive text-white' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                                  title="Manage Affiliate Links"
+                                >
+                                  <Layers size={18} />
+                                </button>
+                              )}
                             </div>
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+
+                          {/* Affiliate Links Editor */}
+                          <AnimatePresence>
+                            {editingAffiliatesId === listing.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-4 border-t border-brand-olive/5 bg-brand-cream/10 p-4 rounded-2xl space-y-4">
+                                  <h5 className="text-[10px] font-bold uppercase tracking-wider text-brand-ink/40 mb-3">Manage Product Affiliate Links</h5>
+                                  <div className="space-y-3">
+                                    {tempAffiliateLinks.map((link, idx) => (
+                                      <div key={idx} className="flex gap-2">
+                                        <input className="flex-1 px-3 py-2 rounded-xl bg-white border border-brand-olive/10 text-xs" placeholder="Product Label" value={link.label} onChange={e => {
+                                          const nl = [...tempAffiliateLinks]; nl[idx].label = e.target.value; setTempAffiliateLinks(nl);
+                                        }} />
+                                        <input className="flex-[2] px-3 py-2 rounded-xl bg-white border border-brand-olive/10 text-xs" placeholder="Affiliate URL" value={link.url} onChange={e => {
+                                          const nl = [...tempAffiliateLinks]; nl[idx].url = e.target.value; setTempAffiliateLinks(nl);
+                                        }} />
+                                        <button onClick={() => setTempAffiliateLinks(tempAffiliateLinks.filter((_, i) => i !== idx))} className="p-2 text-red-400"><Trash2 size={14} /></button>
+                                      </div>
+                                    ))}
+                                    <button onClick={() => setTempAffiliateLinks([...tempAffiliateLinks, { label: '', url: '' }])} className="w-full py-2 border border-dashed border-brand-olive/30 rounded-xl text-xs font-bold text-brand-olive hover:bg-white transition-all">
+                                      + Add Product Link
+                                    </button>
+                                  </div>
+                                  <div className="flex gap-2 pt-2">
+                                    <button onClick={() => handleSaveAffiliates(listing.id)} className="flex-1 py-2 bg-brand-olive text-white rounded-full text-xs font-bold">Save Changes</button>
+                                    <button onClick={() => setEditingAffiliatesId(null)} className="flex-1 py-2 border border-brand-olive/20 rounded-full text-xs font-bold text-brand-olive">Cancel</button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
@@ -978,142 +844,320 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* ── SETTINGS ── */}
-        {activeTab === 'settings' && (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-3xl font-serif mb-1">System Controls</h2>
-              <p className="text-brand-ink/60">Manage AI agent permissions and global application state.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
-                <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><Bot className="text-brand-olive" /> AI Agent Permissions</h3>
-                <div className="space-y-6">
-                  {[
-                    { id: 'discoveryAgentEnabled', label: 'Discovery Agent', desc: 'Allows AI to search for new maker leads' },
-                    { id: 'qualificationAgentEnabled', label: 'Qualification Agent', desc: 'Allows AI to score and filter leads' },
-                    { id: 'enrichmentAgentEnabled', label: 'Enrichment Agent', desc: 'Allows AI to draft listing content' },
-                    { id: 'outreachAgentEnabled', label: 'Outreach Agent', desc: 'Allows AI to prepare outreach drafts' },
-                  ].map(agent => (
-                    <div key={agent.id} className="flex items-center justify-between">
-                      <div><p className="font-bold text-sm">{agent.label}</p><p className="text-xs text-brand-ink/40">{agent.desc}</p></div>
-                      <button onClick={() => { const n = hubService.updateSystemSettings({ [agent.id]: !systemSettings[agent.id as keyof typeof systemSettings] }); setSystemSettings(n); }}
-                        className={`p-1 rounded-full transition-colors ${systemSettings[agent.id as keyof typeof systemSettings] ? 'text-brand-olive' : 'text-brand-ink/20'}`}>
-                        {systemSettings[agent.id as keyof typeof systemSettings] ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+        {/* ── MEMBERSHIP ── */}
+        {
+          activeTab === 'membership' && (
+            <div className="space-y-8 pb-12">
+              <div className="max-w-3xl">
+                <h2 className="text-4xl font-serif mb-2">Artisan <span className="italic text-brand-olive">Growth</span></h2>
+                <p className="text-lg text-brand-ink/60">Choose a tier that grows with your business. All revenue supports the Farmer's Table Hub CIC.</p>
               </div>
-              <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
-                <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><ShieldAlert className="text-red-400" /> Global Safety</h3>
-                <div className="flex items-center justify-between mb-8">
-                  <div><p className="font-bold text-sm">Maintenance Mode</p><p className="text-xs text-brand-ink/40">Disable all public-facing features</p></div>
-                  <button onClick={() => { const n = hubService.updateSystemSettings({ maintenanceMode: !systemSettings.maintenanceMode }); setSystemSettings(n); }}
-                    className={`p-1 rounded-full transition-colors ${systemSettings.maintenanceMode ? 'text-red-400' : 'text-brand-ink/20'}`}>
-                    {systemSettings.maintenanceMode ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Supporter Tier */}
+                <div className="bg-white rounded-[40px] p-8 md:p-12 border border-brand-olive/5 shadow-sm hover:shadow-md transition-all">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-olive/10 text-brand-olive text-sm font-bold mb-6">
+                    <Star size={16} /> Supporter
+                  </div>
+                  <div className="mb-8">
+                    <span className="text-5xl font-serif">£5</span>
+                    <span className="text-brand-ink/40 font-bold ml-2">/ month</span>
+                  </div>
+                  <ul className="space-y-4 mb-10">
+                    <li className="flex items-center gap-3 text-brand-ink/70">
+                      <CheckCircle2 size={18} className="text-brand-olive" />
+                      Verified artisan badge
+                    </li>
+                    <li className="flex items-center gap-3 text-brand-ink/70">
+                      <CheckCircle2 size={18} className="text-brand-olive" />
+                      Include your Instagram & Website
+                    </li>
+                    <li className="flex items-center gap-3 text-brand-ink/70">
+                      <CheckCircle2 size={18} className="text-brand-olive" />
+                      Support local radio & inclusive training
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => stripeService.redirectToCheckout('supporter')}
+                    className="w-full py-4 bg-brand-olive text-white rounded-full font-bold hover:bg-brand-olive/90 transition-all flex items-center justify-center gap-2"
+                  >
+                    Upgrade to Supporter <ArrowRight size={18} />
                   </button>
                 </div>
-                <div className="p-6 bg-red-50 rounded-3xl border border-red-100">
-                  <h4 className="text-red-600 font-bold text-sm mb-2">Danger Zone</h4>
-                  <p className="text-xs text-red-400 mb-4">Permanently clear all AI discovery logs and raw lead data.</p>
-                  <button className="px-4 py-2 bg-red-100 text-red-600 rounded-full text-xs font-bold">Clear Data Cache</button>
+
+                {/* Featured Tier */}
+                <div className="bg-gradient-to-br from-brand-olive to-brand-olive-dark text-brand-cream rounded-[40px] p-8 md:p-12 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <Crown size={120} />
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-bold mb-6">
+                    <Crown size={16} className="text-amber-400" /> Featured artisan
+                  </div>
+                  <div className="mb-8">
+                    <span className="text-5xl font-serif">£15</span>
+                    <span className="text-white/40 font-bold ml-2">/ month</span>
+                  </div>
+                  <ul className="space-y-4 mb-10">
+                    <li className="flex items-center gap-3 text-white/90">
+                      <CheckCircle2 size={18} className="text-white" />
+                      Priority placement in the directory
+                    </li>
+                    <li className="flex items-center gap-3 text-white/90">
+                      <CheckCircle2 size={18} className="text-white" />
+                      "Story of the Month" spotlight
+                    </li>
+                    <li className="flex items-center gap-3 text-white/90">
+                      <CheckCircle2 size={18} className="text-white" />
+                      Enhanced profile with video/story links
+                    </li>
+                    <li className="flex items-center gap-3 text-white/90">
+                      <CheckCircle2 size={18} className="text-white" />
+                      Direct community support impact
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => stripeService.redirectToCheckout('featured')}
+                    className="w-full py-4 bg-white text-brand-olive rounded-full font-bold hover:bg-brand-cream transition-all flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    Go Platinum <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Help/Support info */}
+              <div className="bg-white/50 rounded-[32px] p-8 border border-brand-olive/5 text-center">
+                <p className="text-brand-ink/60 text-sm max-w-lg mx-auto leading-relaxed">
+                  Payments are handled securely by Stripe. You can cancel at any time.
+                  As a Social Enterprise, 100% of our surplus goes back into community programs.
+                </p>
+              </div>
+            </div>
+          )
+        }
+        {
+          activeTab === 'roadmap' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-3xl font-serif mb-1">Next Steps Roadmap</h2>
+                <p className="text-brand-ink/60">Click any phase to expand and start working through it.</p>
+              </div>
+              <div className="space-y-4">
+                {ROADMAP_STEPS.map((step, idx) => {
+                  const done = stepComplete(step);
+                  const total = step.checklist.length;
+                  const pct = Math.round((done / total) * 100);
+                  const isExpanded = expandedStep === step.id;
+                  const checks = roadmapProgress[step.id] || new Array(total).fill(false);
+
+                  return (
+                    <div key={step.id} className={`bg-white rounded-[32px] border shadow-sm overflow-hidden transition-all ${isExpanded ? 'border-brand-olive/30' : 'border-brand-olive/5'}`}>
+                      <button onClick={() => setExpandedStep(isExpanded ? null : step.id)} className="w-full p-6 flex items-center gap-4 text-left">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${done === total ? 'bg-green-50 text-green-600' : isExpanded ? 'bg-brand-olive text-white' : 'bg-brand-cream text-brand-olive'}`}>
+                          {done === total ? <CheckCircle2 size={20} /> : step.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold text-brand-ink/30 uppercase tracking-wider">Phase {step.phase}</span>
+                            {done === total && <span className="text-[10px] font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Complete</span>}
+                          </div>
+                          <p className="font-bold">{step.title}</p>
+                          <p className="text-xs text-brand-ink/50 mt-0.5">{step.description}</p>
+                          {/* Progress bar */}
+                          <div className="mt-3 flex items-center gap-3">
+                            <div className="flex-1 h-1.5 bg-brand-cream rounded-full overflow-hidden">
+                              <div className="h-full bg-brand-olive rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-brand-ink/40 font-bold">{done}/{total}</span>
+                          </div>
+                        </div>
+                        <ArrowRight size={18} className={`text-brand-ink/20 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                            <div className="px-6 pb-6 space-y-3">
+                              <div className="h-px bg-brand-cream mb-4" />
+                              {step.checklist.map((item, ci) => (
+                                <div key={ci} className="flex items-center justify-between gap-3 group/item">
+                                  <label className="flex items-start gap-3 cursor-pointer flex-1">
+                                    <div onClick={() => updateRoadmap(step.id, ci, !checks[ci])}
+                                      className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${checks[ci] ? 'bg-brand-olive border-brand-olive' : 'border-brand-ink/20 group-hover:border-brand-olive/50'}`}>
+                                      {checks[ci] && <Check size={11} className="text-white" />}
+                                    </div>
+                                    <span className={`text-sm ${checks[ci] ? 'line-through text-brand-ink/30' : 'text-brand-ink/80'}`}>{item}</span>
+                                  </label>
+                                  {!checks[ci] && (
+                                    <button
+                                      onClick={() => handleAddRoadmapItemAsJob(step.title, item)}
+                                      className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-brand-olive/10 text-brand-olive rounded-full transition-all"
+                                      title="Add to Open Manager"
+                                    >
+                                      <Plus size={14} />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              <div className="pt-4 border-t border-brand-cream flex gap-3">
+                                <button
+                                  onClick={() => handleStartRoadmapStep(step.id)}
+                                  className="px-5 py-2.5 bg-brand-olive text-white rounded-full text-xs font-bold flex items-center gap-2 hover:bg-brand-olive/90 transition-all shadow-md shadow-brand-olive/10"
+                                >
+                                  <PlayCircle size={14} /> Start Working on Phase {step.phase}
+                                </button>
+                                {pct > 0 && pct < 100 && <span className="text-xs text-brand-ink/40 self-center font-bold">{pct}% complete</span>}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )
+        }
+
+        {/* ── SETTINGS ── */}
+        {
+          activeTab === 'settings' && (
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-serif mb-1">System Controls</h2>
+                <p className="text-brand-ink/60">Manage AI agent permissions and global application state.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
+                  <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><Bot className="text-brand-olive" /> AI Agent Permissions</h3>
+                  <div className="space-y-6">
+                    {[
+                      { id: 'discoveryAgentEnabled', label: 'Discovery Agent', desc: 'Allows AI to search for new maker leads' },
+                      { id: 'qualificationAgentEnabled', label: 'Qualification Agent', desc: 'Allows AI to score and filter leads' },
+                      { id: 'enrichmentAgentEnabled', label: 'Enrichment Agent', desc: 'Allows AI to draft listing content' },
+                      { id: 'outreachAgentEnabled', label: 'Outreach Agent', desc: 'Allows AI to prepare outreach drafts' },
+                    ].map(agent => (
+                      <div key={agent.id} className="flex items-center justify-between">
+                        <div><p className="font-bold text-sm">{agent.label}</p><p className="text-xs text-brand-ink/40">{agent.desc}</p></div>
+                        <button onClick={() => { const n = hubService.updateSystemSettings({ [agent.id]: !systemSettings[agent.id as keyof typeof systemSettings] }); setSystemSettings(n); }}
+                          className={`p-1 rounded-full transition-colors ${systemSettings[agent.id as keyof typeof systemSettings] ? 'text-brand-olive' : 'text-brand-ink/20'}`}>
+                          {systemSettings[agent.id as keyof typeof systemSettings] ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
+                  <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><ShieldAlert className="text-red-400" /> Global Safety</h3>
+                  <div className="flex items-center justify-between mb-8">
+                    <div><p className="font-bold text-sm">Maintenance Mode</p><p className="text-xs text-brand-ink/40">Disable all public-facing features</p></div>
+                    <button onClick={() => { const n = hubService.updateSystemSettings({ maintenanceMode: !systemSettings.maintenanceMode }); setSystemSettings(n); }}
+                      className={`p-1 rounded-full transition-colors ${systemSettings.maintenanceMode ? 'text-red-400' : 'text-brand-ink/20'}`}>
+                      {systemSettings.maintenanceMode ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                    </button>
+                  </div>
+                  <div className="p-6 bg-red-50 rounded-3xl border border-red-100">
+                    <h4 className="text-red-600 font-bold text-sm mb-2">Danger Zone</h4>
+                    <p className="text-xs text-red-400 mb-4">Permanently clear all AI discovery logs and raw lead data.</p>
+                    <button className="px-4 py-2 bg-red-100 text-red-600 rounded-full text-xs font-bold">Clear Data Cache</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* ── STORIES ── */}
-        {activeTab === 'stories' && (
-          <div className="space-y-8">
-            <div className="flex justify-between items-end">
-              <div>
-                <h2 className="text-3xl font-serif mb-2">Maker Stories</h2>
-                <p className="text-brand-ink/60">Interviews and spotlights from our artisan community.</p>
-              </div>
-              <button onClick={() => setShowAddStory(true)} className="px-5 py-3 bg-brand-olive text-white rounded-full text-sm font-bold flex items-center gap-2">
-                <Plus size={18} /> Add New Story
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {makerStories.map(story => (
-                <div key={story.id} className="bg-white rounded-[40px] overflow-hidden border border-brand-olive/5 shadow-sm group">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img src={story.image} alt={story.makerName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      <button onClick={() => handleDeleteStory(story.id)} className="p-2 bg-white/90 backdrop-blur rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-all">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="text-xl font-serif">{story.makerName}</h4>
-                        <p className="text-xs font-bold text-brand-olive uppercase tracking-wider">{story.craft}</p>
-                      </div>
-                      <button
-                        onClick={() => handlePublishStory(story.id)}
-                        disabled={story.published}
-                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${story.published ? 'bg-green-100 text-green-600 cursor-default' : 'bg-brand-olive text-white hover:bg-brand-olive/90'}`}
-                      >
-                        {story.published ? 'Published' : 'Publish Story'}
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="p-4 bg-brand-cream/30 rounded-2xl">
-                        <p className="text-[10px] font-bold text-brand-ink/40 uppercase mb-1">How did you learn?</p>
-                        <p className="text-sm text-brand-ink/70 italic line-clamp-2">{story.q1}</p>
-                      </div>
-                    </div>
-                  </div>
+        {
+          activeTab === 'stories' && (
+            <div className="space-y-8">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h2 className="text-3xl font-serif mb-2">Maker Stories</h2>
+                  <p className="text-brand-ink/60">Interviews and spotlights from our artisan community.</p>
                 </div>
-              ))}
-            </div>
+                <button onClick={() => setShowAddStory(true)} className="px-5 py-3 bg-brand-olive text-white rounded-full text-sm font-bold flex items-center gap-2">
+                  <Plus size={18} /> Add New Story
+                </button>
+              </div>
 
-            {/* Add Story Modal */}
-            <AnimatePresence>
-              {showAddStory && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-ink/40 backdrop-blur-sm">
-                  <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl">
-                    <div className="p-8 border-b border-brand-olive/5 flex justify-between items-center bg-brand-cream/30">
-                      <h3 className="text-2xl font-serif">Add Artisan Story</h3>
-                      <button onClick={() => setShowAddStory(false)} className="p-2 hover:bg-brand-olive/5 rounded-full"><Clock className="rotate-45" size={24} /></button>
-                    </div>
-                    <div className="p-8 space-y-4 max-h-[70vh] overflow-y-auto">
-                      <div className="grid grid-cols-2 gap-4">
-                        <input className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all" placeholder="Maker Name" value={newStory.makerName} onChange={e => setNewStory({ ...newStory, makerName: e.target.value })} />
-                        <input className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all" placeholder="Craft" value={newStory.craft} onChange={e => setNewStory({ ...newStory, craft: e.target.value })} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {makerStories.map(story => (
+                  <div key={story.id} className="bg-white rounded-[40px] overflow-hidden border border-brand-olive/5 shadow-sm group">
+                    <div className="aspect-video relative overflow-hidden">
+                      <img src={story.image} alt={story.makerName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <div className="absolute top-4 right-4 flex gap-2">
+                        <button onClick={() => handleDeleteStory(story.id)} className="p-2 bg-white/90 backdrop-blur rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                      <input className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all" placeholder="Image URL" value={newStory.image} onChange={e => setNewStory({ ...newStory, image: e.target.value })} />
+                    </div>
+                    <div className="p-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="text-xl font-serif">{story.makerName}</h4>
+                          <p className="text-xs font-bold text-brand-olive uppercase tracking-wider">{story.craft}</p>
+                        </div>
+                        <button
+                          onClick={() => handlePublishStory(story.id)}
+                          disabled={story.published}
+                          className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${story.published ? 'bg-green-100 text-green-600 cursor-default' : 'bg-brand-olive text-white hover:bg-brand-olive/90'}`}
+                        >
+                          {story.published ? 'Published' : 'Publish Story'}
+                        </button>
+                      </div>
                       <div className="space-y-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-brand-ink/40 uppercase ml-4">How did you learn your craft?</label>
-                          <textarea className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all h-24 resize-none" placeholder="Learned by watching my grandfather..." value={newStory.q1} onChange={e => setNewStory({ ...newStory, q1: e.target.value })} />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-brand-ink/40 uppercase ml-4">What tools can't you work without?</label>
-                          <textarea className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all h-24 resize-none" placeholder="My anvil, my favourite hammer..." value={newStory.q2} onChange={e => setNewStory({ ...newStory, q2: e.target.value })} />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-brand-ink/40 uppercase ml-4">What does a good making day look like?</label>
-                          <textarea className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all h-24 resize-none" placeholder="Sunshine, fresh coffee, and a complex commission..." value={newStory.q3} onChange={e => setNewStory({ ...newStory, q3: e.target.value })} />
+                        <div className="p-4 bg-brand-cream/30 rounded-2xl">
+                          <p className="text-[10px] font-bold text-brand-ink/40 uppercase mb-1">How did you learn?</p>
+                          <p className="text-sm text-brand-ink/70 italic line-clamp-2">{story.q1}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="p-8 bg-brand-cream/30 border-t border-brand-olive/5 flex gap-3">
-                      <button onClick={() => setShowAddStory(false)} className="flex-1 py-4 font-bold rounded-full hover:bg-brand-olive/5 text-brand-ink/60">Cancel</button>
-                      <button onClick={handleAddStory} className="flex-[2] py-4 bg-brand-olive text-white font-bold rounded-full hover:bg-brand-olive/90 shadow-lg shadow-brand-olive/10">Save Story</button>
-                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Story Modal */}
+              <AnimatePresence>
+                {showAddStory && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-ink/40 backdrop-blur-sm">
+                    <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl">
+                      <div className="p-8 border-b border-brand-olive/5 flex justify-between items-center bg-brand-cream/30">
+                        <h3 className="text-2xl font-serif">Add Artisan Story</h3>
+                        <button onClick={() => setShowAddStory(false)} className="p-2 hover:bg-brand-olive/5 rounded-full"><Clock className="rotate-45" size={24} /></button>
+                      </div>
+                      <div className="p-8 space-y-4 max-h-[70vh] overflow-y-auto">
+                        <div className="grid grid-cols-2 gap-4">
+                          <input className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all" placeholder="Maker Name" value={newStory.makerName} onChange={e => setNewStory({ ...newStory, makerName: e.target.value })} />
+                          <input className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all" placeholder="Craft" value={newStory.craft} onChange={e => setNewStory({ ...newStory, craft: e.target.value })} />
+                        </div>
+                        <input className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all" placeholder="Image URL" value={newStory.image} onChange={e => setNewStory({ ...newStory, image: e.target.value })} />
+                        <div className="space-y-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-brand-ink/40 uppercase ml-4">How did you learn your craft?</label>
+                            <textarea className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all h-24 resize-none" placeholder="Learned by watching my grandfather..." value={newStory.q1} onChange={e => setNewStory({ ...newStory, q1: e.target.value })} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-brand-ink/40 uppercase ml-4">What tools can't you work without?</label>
+                            <textarea className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all h-24 resize-none" placeholder="My anvil, my favourite hammer..." value={newStory.q2} onChange={e => setNewStory({ ...newStory, q2: e.target.value })} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-brand-ink/40 uppercase ml-4">What does a good making day look like?</label>
+                            <textarea className="w-full px-4 py-3 rounded-2xl bg-brand-cream/50 border-transparent focus:bg-white focus:border-brand-olive/20 outline-none text-sm transition-all h-24 resize-none" placeholder="Sunshine, fresh coffee, and a complex commission..." value={newStory.q3} onChange={e => setNewStory({ ...newStory, q3: e.target.value })} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-8 bg-brand-cream/30 border-t border-brand-olive/5 flex gap-3">
+                        <button onClick={() => setShowAddStory(false)} className="flex-1 py-4 font-bold rounded-full hover:bg-brand-olive/5 text-brand-ink/60">Cancel</button>
+                        <button onClick={handleAddStory} className="flex-[2] py-4 bg-brand-olive text-white font-bold rounded-full hover:bg-brand-olive/90 shadow-lg shadow-brand-olive/10">Save Story</button>
+                      </div>
+                    </motion.div>
                   </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
-    </div>
+                )}
+              </AnimatePresence>
+            </div>
+          )
+        }
+      </div >
+    </div >
   );
 };

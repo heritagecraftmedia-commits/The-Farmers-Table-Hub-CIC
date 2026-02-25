@@ -72,11 +72,23 @@ import { makerListings } from '../data/makerListings';
 
 const titleCase = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
 
+const getListingCategory = (typeOrCraft: string): DirectoryListing['displayCategory'] => {
+  const t = typeOrCraft.toLowerCase();
+  if (t.includes('meat')) return 'Meat';
+  if (t.includes('milk') || t.includes('dairy') || t.includes('cheese') || t.includes('ice cream')) return 'Milk & Dairy';
+  if (t.includes('fruit') || t.includes('vegetable') || t.includes('veg') || t.includes('apple') || t.includes('berry')) return 'Fruit & Veg';
+  if (t.includes('egg') || t.includes('poultry') || t.includes('chicken') || t.includes('turkey')) return 'Eggs & Poultry';
+  if (t.includes('mixed farm') || t.includes('farm shop')) return 'Mixed Farms';
+  if (t.includes('bakery') || t.includes('baker') || t.includes('food') || t.includes('shop')) return 'Makers & Bakers';
+  return 'Crafters'; // Default for makers/artisans
+};
+
 const realListings: DirectoryListing[] = [
   ...foodVendors.map(v => ({
     id: v.id,
     vendorName: titleCase(v.name),
     craftCategory: v.type,
+    displayCategory: getListingCategory(v.type),
     location: `${v.location} (${v.postcode})`,
     bio: `${v.type} producer in ${v.location}.`,
     website: v.website,
@@ -92,10 +104,11 @@ const realListings: DirectoryListing[] = [
     id: m.id,
     vendorName: m.businessName || m.name,
     craftCategory: m.craft,
+    displayCategory: getListingCategory(m.craft),
     location: 'Surrey Area',
     bio: `${m.craft} by ${m.name}.`,
     website: '',
-    email: '', // Not in data file yet
+    email: '',
     phone: '',
     socialLinks: { instagram: m.instagram },
     listingTier: m.tier as any,

@@ -117,6 +117,7 @@ export interface DirectoryListing {
   claimedAt: string;
   email?: string;
   phone?: string;
+  displayCategory: 'Meat' | 'Milk & Dairy' | 'Fruit & Veg' | 'Eggs & Poultry' | 'Mixed Farms' | 'Makers & Bakers' | 'Crafters';
   affiliateLinks?: { label: string; url: string }[];
 }
 
