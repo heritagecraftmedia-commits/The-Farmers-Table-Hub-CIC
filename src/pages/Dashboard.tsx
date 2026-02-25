@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  LayoutDashboard, 
-  ClipboardList, 
-  StickyNote, 
-  CloudRain, 
-  Settings, 
-  Package, 
-  Users, 
+import {
+  LayoutDashboard,
+  ClipboardList,
+  StickyNote,
+  CloudRain,
+  Settings,
+  Package,
+  Users,
   Radio,
   CheckCircle2,
   AlertCircle,
@@ -57,46 +57,57 @@ export const Dashboard: React.FC = () => {
   const [radioShows, setRadioShows] = useState<RadioShow[]>([]);
   const [founderJobs, setFounderJobs] = useState<FounderJob[]>([]);
   const [systemSettings, setSystemSettings] = useState(hubService.getSystemSettings());
+  const [loadingData, setLoadingData] = useState(false);
+
+  const refreshData = async () => {
+    setLoadingData(true);
+    const [rl, el, ol, ev, st, rs, fj] = await Promise.all([
+      aiAgentService.getRawLeads(),
+      aiAgentService.getEnrichedLeads(),
+      aiAgentService.getOutreachLogs(),
+      hubService.getEvents(),
+      hubService.getStaff(),
+      hubService.getRadioShows(),
+      hubService.getFounderJobs(),
+    ]);
+    setRawLeads(rl);
+    setEnrichedLeads(el);
+    setOutreachLogs(ol);
+    setEvents(ev);
+    setStaff(st);
+    setRadioShows(rs);
+    setFounderJobs(fj);
+    setSystemSettings(hubService.getSystemSettings());
+    setLoadingData(false);
+  };
 
   useEffect(() => {
-    if (user?.role === 'founder') {
-      setRawLeads(aiAgentService.getRawLeads());
-      setQualifiedLeads(aiAgentService.getQualifiedLeads());
-      setEnrichedLeads(aiAgentService.getEnrichedLeads());
-      setOutreachLogs(aiAgentService.getOutreachLogs());
-      
-      setEvents(hubService.getEvents());
-      setStaff(hubService.getStaff());
-      setRadioShows(hubService.getRadioShows());
-      setFounderJobs(hubService.getFounderJobs());
-      setSystemSettings(hubService.getSystemSettings());
+    if (user?.role === 'founder' || user?.role === 'staff') {
+      refreshData();
     }
   }, [user]);
 
   if (!user) return <div className="p-24 text-center">Please login to access this area.</div>;
 
-  const handleQualify = (id: string) => {
-    aiAgentService.qualifyLead(id);
-    setRawLeads(aiAgentService.getRawLeads());
-    setQualifiedLeads(aiAgentService.getQualifiedLeads());
+  const handleQualify = async (lead: RawLead) => {
+    await aiAgentService.enrichLead(lead);
+    await refreshData();
   };
 
-  const handleEnrich = (id: string) => {
-    aiAgentService.enrichLead(id);
-    setQualifiedLeads(aiAgentService.getQualifiedLeads());
-    setEnrichedLeads(aiAgentService.getEnrichedLeads());
+  const handleEnrich = async (lead: RawLead) => {
+    await aiAgentService.enrichLead(lead);
+    await refreshData();
   };
 
-  const handleOutreach = (id: string) => {
-    aiAgentService.draftOutreach(id);
-    setEnrichedLeads(aiAgentService.getEnrichedLeads());
-    setOutreachLogs(aiAgentService.getOutreachLogs());
+  const handleOutreach = async (lead: EnrichedLead) => {
+    await aiAgentService.draftOutreach(lead);
+    await refreshData();
   };
 
   return (
     <div className="py-16 md:py-24 bg-brand-cream min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
           <div>
@@ -107,7 +118,7 @@ export const Dashboard: React.FC = () => {
               {user.role === 'founder' ? 'Founder Dashboard' : user.role === 'staff' ? 'Staff Portal' : 'Customer Portal'}
             </p>
           </div>
-          <button 
+          <button
             onClick={logout}
             className="px-6 py-2 border border-brand-olive/20 rounded-full text-sm font-bold hover:bg-brand-olive hover:text-white transition-all"
           >
@@ -133,11 +144,10 @@ export const Dashboard: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-brand-olive text-white shadow-md' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === tab.id
+                    ? 'bg-brand-olive text-white shadow-md'
                     : 'text-brand-ink/60 hover:bg-brand-olive/5'
-                }`}
+                  }`}
               >
                 {tab.icon} {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
@@ -151,13 +161,13 @@ export const Dashboard: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 gap-8">
-          
+
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Founder Specific: Fog Day Survival Guide */}
               {user.role === 'founder' && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="md:col-span-3 bg-brand-olive text-brand-cream p-8 md:p-12 rounded-[40px] shadow-xl relative overflow-hidden"
@@ -207,7 +217,7 @@ export const Dashboard: React.FC = () => {
                             <span className={`font-medium ${job.status === 'completed' ? 'line-through opacity-40' : ''}`}>{job.task}</span>
                           </div>
                           {job.status === 'pending' && (
-                            <button 
+                            <button
                               onClick={() => {
                                 hubService.completeJob(job.id);
                                 setFounderJobs(hubService.getFounderJobs());
@@ -228,7 +238,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-4">Manage Listings</h3>
                     <p className="text-sm text-brand-ink/60 mb-8">Review, approve, or edit all directory and marketplace listings.</p>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('listings')}
                       className="w-full py-3 bg-brand-cream text-brand-olive rounded-full font-bold text-sm"
                     >
@@ -241,7 +251,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-4">Staff & Volunteers</h3>
                     <p className="text-sm text-brand-ink/60 mb-8">Manage PA tasks, volunteer schedules, and board communications.</p>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('staff')}
                       className="w-full py-3 bg-brand-cream text-brand-olive rounded-full font-bold text-sm"
                     >
@@ -254,7 +264,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-4">Radio Operations</h3>
                     <p className="text-sm text-brand-ink/60 mb-8">Monitor Live365 status, show logs, and upcoming broadcasts.</p>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('radio')}
                       className="w-full py-3 bg-brand-cream text-brand-olive rounded-full font-bold text-sm"
                     >
@@ -293,7 +303,7 @@ export const Dashboard: React.FC = () => {
                       <StickyNote className="text-brand-olive" />
                       <h3 className="text-2xl font-serif">Notes</h3>
                     </div>
-                    <textarea 
+                    <textarea
                       className="w-full h-48 p-4 bg-brand-cream/50 rounded-2xl border-none focus:ring-2 focus:ring-brand-olive/20 text-sm"
                       placeholder="Type your notes here..."
                     ></textarea>
@@ -353,13 +363,13 @@ export const Dashboard: React.FC = () => {
                       </a>
                     </div>
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={() => handleQualify(lead.id)}
                         className="px-6 py-3 bg-brand-olive text-white rounded-full font-bold text-sm hover:bg-brand-olive/90 transition-all"
                       >
                         Qualify Artisan
                       </button>
-                      <button 
+                      <button
                         onClick={() => aiAgentService.discardRawLead(lead.id)}
                         className="px-6 py-3 border border-brand-olive/20 text-brand-ink/60 rounded-full font-bold text-sm hover:bg-brand-cream transition-all"
                       >
@@ -395,7 +405,7 @@ export const Dashboard: React.FC = () => {
                         <span className="text-xs text-brand-ink/40 italic">{lead.qualificationNotes}</span>
                       </div>
                       <h3 className="text-xl font-bold mb-4">Lead ID: {lead.id}</h3>
-                      <button 
+                      <button
                         onClick={() => handleEnrich(lead.id)}
                         className="px-6 py-3 bg-brand-olive text-white rounded-full font-bold text-sm flex items-center gap-2"
                       >
@@ -439,7 +449,7 @@ export const Dashboard: React.FC = () => {
                       <button className="w-full py-3 border border-brand-olive/20 text-brand-olive rounded-full font-bold text-sm hover:bg-brand-olive hover:text-white transition-all">
                         Edit Details
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleOutreach(lead.id)}
                         className="w-full py-3 bg-brand-olive text-white rounded-full font-bold text-sm flex items-center justify-center gap-2"
                       >
@@ -718,7 +728,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex gap-3">
                       {!event.approved && (
-                        <button 
+                        <button
                           onClick={() => {
                             hubService.approveEvent(event.id);
                             setEvents(hubService.getEvents());
@@ -728,7 +738,7 @@ export const Dashboard: React.FC = () => {
                           Approve
                         </button>
                       )}
-                      <button 
+                      <button
                         onClick={() => {
                           hubService.deleteEvent(event.id);
                           setEvents(hubService.getEvents());
@@ -741,7 +751,7 @@ export const Dashboard: React.FC = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="bg-brand-cream/30 p-8 rounded-[40px] border border-brand-olive/10">
                 <h4 className="font-bold mb-4">Noticeboard Rules</h4>
                 <p className="text-sm text-brand-ink/60 leading-relaxed">
@@ -777,9 +787,8 @@ export const Dashboard: React.FC = () => {
                           <p className="text-xs text-brand-ink/40">{member.role}</p>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        member.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-brand-cream text-brand-ink/40'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${member.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-brand-cream text-brand-ink/40'
+                        }`}>
                         {member.status}
                       </span>
                     </div>
@@ -788,13 +797,13 @@ export const Dashboard: React.FC = () => {
                       <p className="text-sm text-brand-ink/60 flex items-center gap-2"><Clock size={14} /> Joined {member.joinedAt}</p>
                     </div>
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={() => alert(`Exporting payroll data for ${member.name}...`)}
                         className="flex-1 py-3 bg-brand-cream text-brand-olive rounded-full font-bold text-xs flex items-center justify-center gap-2"
                       >
                         <Download size={14} /> Payroll Info
                       </button>
-                      <button 
+                      <button
                         onClick={() => {
                           hubService.removeStaff(member.id);
                           setStaff(hubService.getStaff());
@@ -828,9 +837,8 @@ export const Dashboard: React.FC = () => {
                         <p className="text-xs text-brand-ink/40">{show.schedule} • Host: {show.host}</p>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          show.status === 'live' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-brand-cream text-brand-ink/40'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${show.status === 'live' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-brand-cream text-brand-ink/40'
+                          }`}>
                           {show.status}
                         </span>
                         <Settings size={18} className="text-brand-ink/20 cursor-pointer" />
@@ -881,7 +889,7 @@ export const Dashboard: React.FC = () => {
                           <p className="font-bold text-sm">{agent.label}</p>
                           <p className="text-xs text-brand-ink/40">{agent.desc}</p>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             const newSettings = hubService.updateSystemSettings({ [agent.id]: !systemSettings[agent.id as keyof typeof systemSettings] });
                             setSystemSettings(newSettings);
@@ -903,7 +911,7 @@ export const Dashboard: React.FC = () => {
                         <p className="font-bold text-sm">Maintenance Mode</p>
                         <p className="text-xs text-brand-ink/40">Disable all public-facing features</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => {
                           const newSettings = hubService.updateSystemSettings({ maintenanceMode: !systemSettings.maintenanceMode });
                           setSystemSettings(newSettings);
@@ -914,7 +922,7 @@ export const Dashboard: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="mt-12 p-6 bg-red-50 rounded-3xl border border-red-100">
                     <h4 className="text-red-600 font-bold text-sm mb-2">Danger Zone</h4>
                     <p className="text-xs text-red-400 mb-4">Permanently clear all AI discovery logs and raw lead data.</p>

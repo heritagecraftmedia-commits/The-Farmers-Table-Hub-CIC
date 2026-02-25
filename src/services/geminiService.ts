@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
+const ai = new GoogleGenAI({ apiKey });
 
 export const generateCommunityContent = async () => {
   const prompt = `
@@ -19,7 +20,7 @@ export const generateCommunityContent = async () => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }] }],
       config: {
         responseMimeType: "application/json",
@@ -30,5 +31,56 @@ export const generateCommunityContent = async () => {
   } catch (error) {
     console.error("Error generating content:", error);
     return null;
+  }
+};
+
+export const discoverLocalArtisans = async (searchQuery: string): Promise<{ displayName: string; bioText: string; locationHint: string; categoryHint: string; sourcePlatform: string; profileUrl: string }[]> => {
+  const prompt = `
+    You are an ethical AI research assistant for The Farmers Table Hub CIC in Farnham, Surrey.
+    Your job is to suggest potential local artisans and makers who might be a good fit for the directory.
+    IMPORTANT: Only suggest fictional example profiles. Do NOT scrape or invent real people's data.
+    
+    Search query: "${searchQuery}"
+    
+    Return 3 example artisan profiles that match this query in JSON format:
+    Array of { displayName: string, bioText: string, locationHint: string, categoryHint: string, sourcePlatform: string, profileUrl: string }
+    
+    Use "Example" as part of the display name to make it clear these are illustrative.
+    Set profileUrl to a plausible but clearly example URL.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ parts: [{ text: prompt }] }],
+      config: { responseMimeType: "application/json" },
+    });
+    return JSON.parse(response.text || "[]");
+  } catch (error) {
+    console.error("Error discovering artisans:", error);
+    return [];
+  }
+};
+
+export const enrichArtisanProfile = async (rawBio: string, name: string): Promise<string> => {
+  const prompt = `
+    You are a copywriter for The Farmers Table Hub CIC. 
+    Write a warm, 2-sentence maker profile summary for the directory based on this information:
+    Name: ${name}
+    Bio: ${rawBio}
+    
+    Keep it under 60 words. Focus on their craft and community connection.
+    Return plain text only.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+    return response.text?.trim() || rawBio;
+  } catch (error) {
+    console.error("Error enriching profile:", error);
+    return rawBio;
   }
 };
