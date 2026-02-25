@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, ShoppingBag, Users, CheckCircle, ExternalLink, Info, Edit3, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { ArtisanSpotlight } from '../components/makers/ArtisanSpotlight';
 
 const projects = [
   {
@@ -156,7 +157,7 @@ export const MakersHub: React.FC = () => {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
           {filteredProjects.map((project) => (
             <motion.div
               layout
@@ -249,6 +250,9 @@ export const MakersHub: React.FC = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Local Artisan Showcase */}
+        <ArtisanSpotlight />
 
         {/* Footer Admin Bar */}
         <div className="mt-20 flex justify-center">
