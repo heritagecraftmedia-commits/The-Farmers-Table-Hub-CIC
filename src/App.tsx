@@ -22,6 +22,7 @@ import { WhatsOn } from './pages/WhatsOn';
 import { MakerStories } from './pages/MakerStories';
 import { ClaimListing } from './pages/ClaimListing';
 import { SubmitStory } from './pages/SubmitStory';
+import { MakersShop } from './pages/MakersShop';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -68,6 +69,7 @@ export default function App() {
                 <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
                 <Route path="/claim/:id" element={<PageWrapper><ClaimListing /></PageWrapper>} />
                 <Route path="/submit-story" element={<PageWrapper><SubmitStory /></PageWrapper>} />
+                <Route path="/makers-shop" element={<PageWrapper><MakersShop /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />

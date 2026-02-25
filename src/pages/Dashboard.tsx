@@ -17,6 +17,7 @@ import { TeamMemberDrawer } from '../components/dashboard/TeamMemberDrawer';
 import { AddEventModal } from '../components/dashboard/AddEventModal';
 import { AddArtisanModal } from '../components/dashboard/AddArtisanModal';
 import { RadioScheduleModal } from '../components/dashboard/RadioScheduleModal';
+import { CsvUploadModal } from '../components/dashboard/CsvUploadModal';
 
 type TabType = 'overview' | 'discovery' | 'enrichment' | 'outreach' | 'roadmap' | 'events' | 'staff' | 'radio' | 'listings' | 'settings';
 
@@ -72,6 +73,7 @@ export const Dashboard: React.FC = () => {
   const [discoveryLocation, setDiscoveryLocation] = useState('Farnham, Surrey');
   const [discoveryCraft, setDiscoveryCraft] = useState('');
   const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  const [showCsvUpload, setShowCsvUpload] = useState(false);
 
   // Roadmap state
   const [roadmapProgress, setRoadmapProgress] = useState<Record<string, boolean[]>>(() => {
@@ -155,6 +157,7 @@ export const Dashboard: React.FC = () => {
       {showAddEvent && <AddEventModal onClose={() => setShowAddEvent(false)} onSave={handleAddEvent} />}
       {showAddArtisan && <AddArtisanModal onClose={() => setShowAddArtisan(false)} onSave={handleAddArtisan} />}
       {editingShow && <RadioScheduleModal show={editingShow} onClose={() => setEditingShow(null)} onSave={async (s) => { await handleUpdateRadio(s); setEditingShow(null); }} />}
+      {showCsvUpload && <CsvUploadModal onClose={() => setShowCsvUpload(false)} onImport={(target, data) => { console.log('CSV import:', target, data.length, 'rows'); setShowCsvUpload(false); }} />}
 
       {/* Header */}
       <div className="bg-white border-b border-brand-cream/80 sticky top-0 z-40">
@@ -253,6 +256,7 @@ export const Dashboard: React.FC = () => {
                 { label: 'View Discovery', icon: <Search size={20} />, action: () => setActiveTab('discovery') },
                 { label: 'Radio Ops', icon: <Radio size={20} />, action: () => setActiveTab('radio') },
                 { label: 'View Roadmap', icon: <Map size={20} />, action: () => setActiveTab('roadmap') },
+                { label: 'Upload CSV', icon: <Download size={20} />, action: () => setShowCsvUpload(true) },
               ].map(t => (
                 <button key={t.label} onClick={t.action} className="bg-white border border-brand-olive/10 rounded-[28px] p-6 text-left hover:shadow-md transition-all hover:border-brand-olive/30 flex items-center gap-3">
                   <div className="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-olive">{t.icon}</div>

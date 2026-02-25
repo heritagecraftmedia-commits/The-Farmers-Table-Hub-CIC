@@ -1,3 +1,28 @@
+export type ListingTier = 'free' | 'supporter' | 'featured';
+
+export interface FoodVendor {
+  id: string;
+  name: string;
+  type: string;
+  email: string;
+  location: string;
+  postcode: string;
+  website: string;
+  rating: number;
+  phone: string;
+  tier: ListingTier;
+}
+
+export interface MakerListing {
+  id: string;
+  name: string;
+  craft: string;
+  businessName: string;
+  instagram: string;
+  instagramUrl: string;
+  tier: ListingTier;
+}
+
 export type UserRole = 'founder' | 'staff' | 'customer' | null;
 
 export interface User {
