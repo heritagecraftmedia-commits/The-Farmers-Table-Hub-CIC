@@ -19,6 +19,7 @@ import { Feedback } from './pages/Feedback';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { WhatsOn } from './pages/WhatsOn';
+import { MakerStories } from './pages/MakerStories';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -60,6 +61,7 @@ export default function App() {
                 <Route path="/join" element={<PageWrapper><Join /></PageWrapper>} />
                 <Route path="/resources" element={<PageWrapper><Resources /></PageWrapper>} />
                 <Route path="/whats-on" element={<PageWrapper><WhatsOn /></PageWrapper>} />
+                <Route path="/maker-stories" element={<PageWrapper><MakerStories /></PageWrapper>} />
                 <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
                 <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
               </Routes>

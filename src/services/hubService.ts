@@ -1,4 +1,4 @@
-import { HubEvent, StaffMember, RadioShow, FounderJob } from '../types';
+import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory } from '../types';
 
 let events: HubEvent[] = [
   {
@@ -88,6 +88,27 @@ let founderJobs: FounderJob[] = [
   }
 ];
 
+let makerStories: MakerStory[] = [
+  {
+    id: '1',
+    makerName: 'Thomas Ironworks',
+    craft: 'Blacksmithing',
+    image: 'https://picsum.photos/seed/forge/800/600',
+    q1: 'I learned by watching my grandfather in his small workshop in the Surrey Hills. It took years of burnt fingers and heavy hammers.',
+    q2: 'My 1920s Peter Wright anvil. It has a ring like a bell and has shaped thousands of pieces of steel.',
+    q3: 'A cold morning, the forge at full heat, and a complex commission that finally starts to take its true shape.',
+    published: true
+  }
+];
+
+let systemSettings = {
+  discoveryAgentEnabled: true,
+  qualificationAgentEnabled: true,
+  enrichmentAgentEnabled: false,
+  outreachAgentEnabled: false,
+  maintenanceMode: false
+};
+
 export const hubService = {
   getEvents: () => events,
   approveEvent: (id: string) => {
@@ -129,5 +150,16 @@ export const hubService = {
     };
     founderJobs.push(newJob);
     return newJob;
+  },
+
+  getMakerStories: () => makerStories,
+  publishStory: (id: string) => {
+    makerStories = makerStories.map(s => s.id === id ? { ...s, published: true } : s);
+  },
+
+  getSystemSettings: () => systemSettings,
+  updateSystemSettings: (settings: Partial<typeof systemSettings>) => {
+    systemSettings = { ...systemSettings, ...settings };
+    return systemSettings;
   }
 };

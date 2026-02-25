@@ -30,7 +30,11 @@ import {
   Coffee,
   Trash2,
   UserPlus,
-  Clock
+  Clock,
+  Download,
+  ToggleLeft,
+  ToggleRight,
+  ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { aiAgentService } from '../services/aiAgentService';
@@ -39,7 +43,7 @@ import { RawLead, QualifiedLead, EnrichedLead, OutreachLog, HubEvent, StaffMembe
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'discovery' | 'qualification' | 'enrichment' | 'outreach' | 'roadmap' | 'events' | 'staff' | 'radio' | 'listings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'discovery' | 'qualification' | 'enrichment' | 'outreach' | 'roadmap' | 'events' | 'staff' | 'radio' | 'listings' | 'settings'>('overview');
 
   // State for AI workflow
   const [rawLeads, setRawLeads] = useState<RawLead[]>([]);
@@ -52,6 +56,7 @@ export const Dashboard: React.FC = () => {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [radioShows, setRadioShows] = useState<RadioShow[]>([]);
   const [founderJobs, setFounderJobs] = useState<FounderJob[]>([]);
+  const [systemSettings, setSystemSettings] = useState(hubService.getSystemSettings());
 
   useEffect(() => {
     if (user?.role === 'founder') {
@@ -64,6 +69,7 @@ export const Dashboard: React.FC = () => {
       setStaff(hubService.getStaff());
       setRadioShows(hubService.getRadioShows());
       setFounderJobs(hubService.getFounderJobs());
+      setSystemSettings(hubService.getSystemSettings());
     }
   }, [user]);
 
@@ -121,6 +127,7 @@ export const Dashboard: React.FC = () => {
               { id: 'events', label: "What's On", icon: <Calendar size={18} />, count: events.filter(e => !e.approved).length },
               { id: 'staff', label: 'Staff & Payroll', icon: <Users size={18} /> },
               { id: 'radio', label: 'Radio', icon: <Radio size={18} /> },
+              { id: 'settings', label: 'System', icon: <Settings size={18} /> },
               { id: 'roadmap', label: 'Next Steps', icon: <Map size={18} /> },
             ].map(tab => (
               <button
@@ -635,6 +642,47 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <p className="mt-8 text-brand-ink/60">You already built the hard part correctly. Take it slow.</p>
               </div>
+
+              {/* Pre-Flight Checklist */}
+              <div className="bg-white p-12 md:p-16 rounded-[40px] border border-brand-olive/10">
+                <h2 className="text-3xl font-serif mb-8">Pre-Flight Checklist <span className="text-brand-olive italic">(Before Antigravity Build)</span></h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-6">
+                    <h4 className="font-bold text-lg flex items-center gap-2"><ShieldCheck className="text-brand-olive" /> 1. Database & Auth</h4>
+                    <ul className="space-y-4">
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-olive/20 flex-shrink-0 mt-1"></div>
+                        <p className="text-sm text-brand-ink/70">Set up Supabase tables for <code className="bg-brand-cream px-1">leads</code>, <code className="bg-brand-cream px-1">events</code>, <code className="bg-brand-cream px-1">staff</code>, and <code className="bg-brand-cream px-1">stories</code>.</p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-olive/20 flex-shrink-0 mt-1"></div>
+                        <p className="text-sm text-brand-ink/70">Configure Row Level Security (RLS) so only you can see the Fog Day guide.</p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-olive/20 flex-shrink-0 mt-1"></div>
+                        <p className="text-sm text-brand-ink/70">Map your <code className="bg-brand-cream px-1">UserRole</code> to Supabase metadata.</p>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="space-y-6">
+                    <h4 className="font-bold text-lg flex items-center gap-2"><Zap className="text-brand-olive" /> 2. Automation & AI</h4>
+                    <ul className="space-y-4">
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-olive/20 flex-shrink-0 mt-1"></div>
+                        <p className="text-sm text-brand-ink/70">Connect Make.com to your Supabase <code className="bg-brand-cream px-1">events</code> table for automated fetching.</p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-olive/20 flex-shrink-0 mt-1"></div>
+                        <p className="text-sm text-brand-ink/70">Set up the Gemini API keys in your production environment variables.</p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full border-2 border-brand-olive/20 flex-shrink-0 mt-1"></div>
+                        <p className="text-sm text-brand-ink/70">Test the "Librarian AI" prompt with 5 sample directory listings.</p>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -740,7 +788,12 @@ export const Dashboard: React.FC = () => {
                       <p className="text-sm text-brand-ink/60 flex items-center gap-2"><Clock size={14} /> Joined {member.joinedAt}</p>
                     </div>
                     <div className="flex gap-3">
-                      <button className="flex-1 py-3 bg-brand-cream text-brand-olive rounded-full font-bold text-xs">Payroll Info</button>
+                      <button 
+                        onClick={() => alert(`Exporting payroll data for ${member.name}...`)}
+                        className="flex-1 py-3 bg-brand-cream text-brand-olive rounded-full font-bold text-xs flex items-center justify-center gap-2"
+                      >
+                        <Download size={14} /> Payroll Info
+                      </button>
                       <button 
                         onClick={() => {
                           hubService.removeStaff(member.id);
@@ -799,6 +852,73 @@ export const Dashboard: React.FC = () => {
                     <div className="pt-6 border-t border-white/10">
                       <button className="w-full py-4 bg-white text-brand-olive rounded-full font-bold text-sm">Open Live365 Studio</button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SYSTEM SETTINGS TAB */}
+          {activeTab === 'settings' && (
+            <div className="space-y-8">
+              <div className="mb-8">
+                <h2 className="text-3xl font-serif mb-2">System Controls</h2>
+                <p className="text-brand-ink/60">Manage AI agent permissions and global application state.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
+                  <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><Bot className="text-brand-olive" /> AI Agent Permissions</h3>
+                  <div className="space-y-6">
+                    {[
+                      { id: 'discoveryAgentEnabled', label: 'Discovery Agent', desc: 'Allows AI to search for new maker leads' },
+                      { id: 'qualificationAgentEnabled', label: 'Qualification Agent', desc: 'Allows AI to score and filter leads' },
+                      { id: 'enrichmentAgentEnabled', label: 'Enrichment Agent', desc: 'Allows AI to draft listing content' },
+                      { id: 'outreachAgentEnabled', label: 'Outreach Agent', desc: 'Allows AI to prepare outreach drafts' },
+                    ].map(agent => (
+                      <div key={agent.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-sm">{agent.label}</p>
+                          <p className="text-xs text-brand-ink/40">{agent.desc}</p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            const newSettings = hubService.updateSystemSettings({ [agent.id]: !systemSettings[agent.id as keyof typeof systemSettings] });
+                            setSystemSettings(newSettings);
+                          }}
+                          className={`p-1 rounded-full transition-colors ${systemSettings[agent.id as keyof typeof systemSettings] ? 'text-brand-olive' : 'text-brand-ink/20'}`}
+                        >
+                          {systemSettings[agent.id as keyof typeof systemSettings] ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
+                  <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><ShieldAlert className="text-red-400" /> Global Safety</h3>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-sm">Maintenance Mode</p>
+                        <p className="text-xs text-brand-ink/40">Disable all public-facing features</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const newSettings = hubService.updateSystemSettings({ maintenanceMode: !systemSettings.maintenanceMode });
+                          setSystemSettings(newSettings);
+                        }}
+                        className={`p-1 rounded-full transition-colors ${systemSettings.maintenanceMode ? 'text-red-400' : 'text-brand-ink/20'}`}
+                      >
+                        {systemSettings.maintenanceMode ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-12 p-6 bg-red-50 rounded-3xl border border-red-100">
+                    <h4 className="text-red-600 font-bold text-sm mb-2">Danger Zone</h4>
+                    <p className="text-xs text-red-400 mb-4">Permanently clear all AI discovery logs and raw lead data.</p>
+                    <button className="px-4 py-2 bg-red-100 text-red-600 rounded-full text-xs font-bold">Clear Data Cache</button>
                   </div>
                 </div>
               </div>

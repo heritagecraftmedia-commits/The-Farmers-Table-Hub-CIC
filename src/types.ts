@@ -98,3 +98,14 @@ export interface FounderJob {
   status: 'pending' | 'completed';
   dueDate?: string;
 }
+
+export interface MakerStory {
+  id: string;
+  makerName: string;
+  craft: string;
+  image: string;
+  q1: string; // How did you learn?
+  q2: string; // What tools?
+  q3: string; // Good making day?
+  published: boolean;
+}
