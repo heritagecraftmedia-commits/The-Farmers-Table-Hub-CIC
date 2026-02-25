@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Edit3, Copy, Check, Info } from 'lucide-react';
+import { FileText, Copy, Check, Info } from 'lucide-react';
 
-export const ChangesDraft: React.FC = () => {
-    const [text, setText] = useState('// Heritage Makers & Affiliate Hub Plan\n// Paste or draft your changes here...\n\n' +
-        'Current Priorities:\n' +
-        '1. Map Thompson & Morgan (Affiliate) for Herb Kits\n' +
-        '2. Link Lakeland for Preserving Tools\n' +
-        '3. Connect World of Wool for Textiles\n' +
-        '4. Add "No Stock Held" disclaimers everywhere');
+export const Notes: React.FC = () => {
+    const [text, setText] = useState('// Personal Notes & Content Space\n// This is an additional space for your drafting.\n\n' +
+        'Ideas:\n' +
+        '- Local seasonal recipes\n' +
+        '- Volunteer onboarding ideas\n' +
+        '- Radio ad scripts');
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -22,18 +21,17 @@ export const ChangesDraft: React.FC = () => {
 
                 <div className="mb-12">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-olive/10 text-brand-olive text-[10px] font-bold uppercase tracking-widest mb-4">
-                        <Edit3 size={12} /> Work in Progress
+                        <FileText size={12} /> Personal Workspace
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-serif mb-4">Changes <span className="italic text-brand-olive">Draft</span></h1>
+                    <h1 className="text-4xl md:text-5xl font-serif mb-4">Community <span className="italic text-brand-olive">Notes</span></h1>
                     <p className="text-lg text-brand-ink/60">
-                        Use this clean space to paste your text, draft project updates, or outline structural changes.
-                        This page is for your own drafting and will not be displayed to the public.
+                        An additional clean space for your thoughts, planning, and content drafting.
                     </p>
                 </div>
 
                 <div className="bg-white rounded-[40px] shadow-sm border border-brand-olive/5 overflow-hidden">
                     <div className="flex items-center justify-between px-8 py-4 bg-brand-cream/30 border-b border-brand-olive/5">
-                        <span className="text-xs font-bold text-brand-ink/40">PLAIN TEXT EDITOR</span>
+                        <span className="text-xs font-bold text-brand-ink/40">DRAFT EDITOR</span>
                         <button
                             onClick={handleCopy}
                             className="flex items-center gap-2 text-xs font-bold text-brand-olive hover:opacity-70 transition-all"
@@ -46,14 +44,14 @@ export const ChangesDraft: React.FC = () => {
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         placeholder="Paste your text here..."
-                        className="w-full h-[500px] p-8 md:p-12 text-lg font-mono focus:ring-0 border-none resize-none placeholder:text-brand-ink/20"
+                        className="w-full h-[600px] p-8 md:p-12 text-lg font-mono focus:ring-0 border-none resize-none placeholder:text-brand-ink/20"
                     ></textarea>
                 </div>
 
                 <div className="mt-8 flex gap-4 p-6 bg-brand-olive/5 rounded-3xl border border-brand-olive/10">
                     <Info className="text-brand-olive shrink-0" size={20} />
                     <p className="text-sm text-brand-ink/60 leading-relaxed">
-                        <strong>Note:</strong> Changes made here are saved in your current session. Make sure to copy your text if you need to save it permanently or apply it to specific page files.
+                        This workspace is private to your current session. Use it to organize long-form text before moving it to specific pages.
                     </p>
                 </div>
 

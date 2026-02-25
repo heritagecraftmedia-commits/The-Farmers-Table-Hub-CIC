@@ -28,6 +28,10 @@ import { Terms } from './pages/Terms';
 import { CommandCenter } from './pages/CommandCenter';
 import { Subscriptions } from './pages/Subscriptions';
 import { ChangesDraft } from './pages/ChangesDraft';
+import { MakersDirectory } from './pages/MakersDirectory';
+import { SupportMakers } from './pages/SupportMakers';
+import { BecomeAMaker } from './pages/BecomeAMaker';
+import { Notes } from './pages/Notes';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -78,8 +82,12 @@ export default function App() {
                 <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
                 <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
                 <Route path="/command" element={<PageWrapper><CommandCenter /></PageWrapper>} />
-                <Route path="/subscriptions" element={<PageWrapper><Subscriptions /></PageWrapper>} />
-                <Route path="/changes" element={<PageWrapper><ChangesDraft /></PageWrapper>} />
+                <Route path="/subscriptions" element={<Subscriptions />} />
+                <Route path="/changes" element={<ChangesDraft />} />
+                <Route path="/makers" element={<PageWrapper><MakersDirectory /></PageWrapper>} />
+                <Route path="/support-the-makers" element={<PageWrapper><SupportMakers /></PageWrapper>} />
+                <Route path="/become-a-maker" element={<PageWrapper><BecomeAMaker /></PageWrapper>} />
+                <Route path="/notes" element={<PageWrapper><Notes /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />

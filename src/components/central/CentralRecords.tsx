@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { BookOpen, Database, Users, FileText, CheckCircle2, ChevronRight, ExternalLink, RefreshCw } from 'lucide-react';
+import { BookOpen, Database, Users, FileText, CheckCircle2, ChevronRight, ExternalLink, RefreshCw, Edit3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const CentralRecords: React.FC = () => {
     const notionNotebooks = [
@@ -116,6 +117,45 @@ export const CentralRecords: React.FC = () => {
                         </p>
                         <button className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-8">Open Sales Dashboard</button>
                     </div>
+                </div>
+            </div>
+
+            {/* Internal Drafts Section */}
+            <div className="bg-white rounded-[40px] border border-brand-olive/5 shadow-sm p-8 md:p-12 mt-10">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-olive">
+                        <Edit3 size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-serif text-brand- ink">Internal <span className="italic text-brand-olive">Drafting Spaces</span></h3>
+                        <p className="text-sm text-brand-ink/40">Private session-based editors for founder notes.</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Link to="/changes" className="flex items-center justify-between p-6 bg-brand-cream/20 rounded-3xl border border-brand-olive/5 hover:border-brand-olive/20 transition-all group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-olive">
+                                <Edit3 size={18} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-brand-ink group-hover:text-brand-olive transition-colors">Project Changes</h4>
+                                <p className="text-xs text-brand-ink/40">Draft updates & structural shifts</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={18} className="text-brand-ink/20 group-hover:text-brand-olive transition-all" />
+                    </Link>
+                    <Link to="/notes" className="flex items-center justify-between p-6 bg-brand-cream/20 rounded-3xl border border-brand-olive/5 hover:border-brand-olive/20 transition-all group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-olive">
+                                <FileText size={18} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-brand-ink group-hover:text-brand-olive transition-colors">Community Notes</h4>
+                                <p className="text-xs text-brand-ink/40">Personal thoughts & content drafting</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={18} className="text-brand-ink/20 group-hover:text-brand-olive transition-all" />
+                    </Link>
                 </div>
             </div>
         </div>

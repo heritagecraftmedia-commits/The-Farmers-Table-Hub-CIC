@@ -2,8 +2,9 @@ import React from 'react';
 import { motion } from 'motion/react';
 import {
     TrendingUp, Users, Coins, ClipboardList, Plus,
-    Clock, AlertCircle, Database, LayoutDashboard, Radio
+    Clock, AlertCircle, Database, LayoutDashboard, Radio, Edit3, FileText
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const CentralOverview: React.FC = () => {
     const stats = [
@@ -57,8 +58,14 @@ export const CentralOverview: React.FC = () => {
 
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-3">
-                {['Add Person', 'Log Stock', 'Add Task', 'New Note'].map(action => (
-                    <button key={action} className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-olive rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
+                <Link to="/changes" className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-olive rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
+                    <Edit3 size={16} /> Edit Changes
+                </Link>
+                <Link to="/notes" className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-olive rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
+                    <FileText size={16} /> Draft Notes
+                </Link>
+                {['Add Person', 'Log Stock', 'Add Task'].map(action => (
+                    <button key={action} className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-ink/40 rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
                         <Plus size={16} /> {action}
                     </button>
                 ))}
