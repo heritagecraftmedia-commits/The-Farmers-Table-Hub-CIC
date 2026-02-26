@@ -7,6 +7,7 @@ import { ArtisanSpotlight } from '../components/makers/ArtisanSpotlight';
 const projects = [
   {
     id: 1,
+    guideId: 'jam',
     title: 'Seasonal Jam & Preserve Making',
     category: 'Food & Kitchen',
     description: 'Step-by-step guidance to make your own jams, chutneys and preserves using local seasonal fruit. Includes printable labels.',
@@ -24,6 +25,7 @@ const projects = [
   },
   {
     id: 2,
+    guideId: 'sourdough',
     title: 'Sourdough Bread from Scratch',
     category: 'Food & Kitchen',
     description: 'Build your own sourdough starter and bake your first loaf. Audio guide included. Local flour suppliers listed.',
@@ -40,6 +42,7 @@ const projects = [
   },
   {
     id: 3,
+    guideId: 'wraps',
     title: 'Beeswax Wraps & Natural Packaging',
     category: 'Home & Eco',
     description: 'Make reusable beeswax food wraps to replace clingfilm. Zero waste, beautiful, and surprisingly simple.',
@@ -56,6 +59,7 @@ const projects = [
   },
   {
     id: 4,
+    guideId: 'herbs',
     title: 'Grow Your Own Herb Garden',
     category: 'Garden & Growing',
     description: 'From seed to harvest — a guided project to grow 5 essential culinary herbs at home. Perfect for windowsills.',
@@ -73,6 +77,7 @@ const projects = [
   },
   {
     id: 5,
+    guideId: 'candles',
     title: 'Homemade Candles with Local Botanicals',
     category: 'Home & Craft',
     description: 'Pour your own soy or beeswax candles with dried lavender, rosemary and other local botanicals. Great gifts.',
@@ -89,6 +94,7 @@ const projects = [
   },
   {
     id: 6,
+    guideId: 'cleaning',
     title: 'Natural Cleaning Products',
     category: 'Home & Eco',
     description: 'Make your own non-toxic cleaning sprays, scrubs and laundry powder from simple natural ingredients.',
@@ -216,20 +222,13 @@ export const MakersHub: React.FC = () => {
               </div>
 
               <div className="p-8 md:p-10 pt-0 space-y-3">
-                {project.id === 1 ? (
-                  <Link
-                    to="/guides/jam"
-                    className="w-full flex items-center justify-between p-5 bg-brand-olive text-white rounded-2xl font-bold text-sm hover:bg-brand-olive/90 transition-all group/btn shadow-lg shadow-brand-olive/10"
-                  >
-                    View Guided Project
-                    <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </Link>
-                ) : (
-                  <button className="w-full flex items-center justify-between p-5 bg-brand-cream text-brand-olive rounded-2xl font-bold text-sm hover:bg-brand-olive hover:text-white transition-all group/btn">
-                    View Guide — Coming Soon
-                    <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </button>
-                )}
+                <Link
+                  to={`/guides/${project.guideId}`}
+                  className="w-full flex items-center justify-between p-5 bg-brand-olive text-white rounded-2xl font-bold text-sm hover:bg-brand-olive/90 transition-all group/btn shadow-lg shadow-brand-olive/10"
+                >
+                  View Guided Project
+                  <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                </Link>
 
                 <div className="space-y-2">
                   {project.links.map((link, i) => (

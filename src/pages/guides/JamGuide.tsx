@@ -110,14 +110,14 @@ export const JamGuide: React.FC = () => {
                             transition={{ delay: idx * 0.1 }}
                             onClick={() => toggleStep(step.id)}
                             className={`bg-white rounded-[40px] p-8 md:p-12 border transition-all cursor-pointer group ${completedSteps.includes(step.id)
-                                    ? 'border-brand-olive/30 bg-brand-cream/10'
-                                    : 'border-brand-olive/5 shadow-sm hover:border-brand-olive/20'
+                                ? 'border-brand-olive/30 bg-brand-cream/10'
+                                : 'border-brand-olive/5 shadow-sm hover:border-brand-olive/20'
                                 }`}
                         >
                             <div className="flex items-start gap-6">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 transition-all ${completedSteps.includes(step.id)
-                                        ? 'bg-brand-olive text-white'
-                                        : 'bg-brand-cream text-brand-olive'
+                                    ? 'bg-brand-olive text-white'
+                                    : 'bg-brand-cream text-brand-olive'
                                     }`}>
                                     {completedSteps.includes(step.id) ? <CheckCircle size={20} /> : step.id}
                                 </div>

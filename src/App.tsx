@@ -33,6 +33,7 @@ import { SupportMakers } from './pages/SupportMakers';
 import { BecomeAMaker } from './pages/BecomeAMaker';
 import { Notes } from './pages/Notes';
 import { JamGuide } from './pages/guides/JamGuide';
+import { ProjectGuide } from './pages/guides/ProjectGuide';
 import { DraftSpace } from './pages/DraftSpace';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -91,6 +92,7 @@ export default function App() {
                 <Route path="/become-a-maker" element={<PageWrapper><BecomeAMaker /></PageWrapper>} />
                 <Route path="/notes" element={<PageWrapper><Notes /></PageWrapper>} />
                 <Route path="/guides/jam" element={<PageWrapper><JamGuide /></PageWrapper>} />
+                <Route path="/guides/:guideId" element={<PageWrapper><ProjectGuide /></PageWrapper>} />
                 <Route path="/draft" element={<PageWrapper><DraftSpace /></PageWrapper>} />
               </Routes>
             </main>
