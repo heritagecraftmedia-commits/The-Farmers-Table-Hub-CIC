@@ -91,7 +91,6 @@ export default function App() {
                 <Route path="/support-the-makers" element={<PageWrapper><SupportMakers /></PageWrapper>} />
                 <Route path="/become-a-maker" element={<PageWrapper><BecomeAMaker /></PageWrapper>} />
                 <Route path="/notes" element={<PageWrapper><Notes /></PageWrapper>} />
-                <Route path="/guides/jam" element={<PageWrapper><JamGuide /></PageWrapper>} />
                 <Route path="/guides/:guideId" element={<PageWrapper><ProjectGuide /></PageWrapper>} />
                 <Route path="/draft" element={<PageWrapper><DraftSpace /></PageWrapper>} />
               </Routes>
