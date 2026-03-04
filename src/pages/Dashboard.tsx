@@ -6,8 +6,9 @@ import {
   ArrowRight, ExternalLink, ShieldCheck, Zap, Mail, CheckSquare, Map, Coins,
   Calendar, BookOpen, Bot, Battery, Coffee, Trash2, UserPlus, Clock, Download,
   ToggleLeft, ToggleRight, ShieldAlert, Edit, PlayCircle, Check, Circle,
-  Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown, Phone
+  Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown, Phone, FileText
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { aiAgentService } from '../services/aiAgentService';
 import { hubService } from '../services/hubService';
@@ -337,6 +338,14 @@ export const Dashboard: React.FC = () => {
                   <span className="font-bold text-sm">{t.label}</span>
                 </button>
               ))}
+              <Link to="/notes" className="bg-white border border-brand-olive/10 rounded-[28px] p-6 text-left hover:shadow-md transition-all hover:border-brand-olive/30 flex items-center gap-3">
+                <div className="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-olive"><FileText size={20} /></div>
+                <span className="font-bold text-sm">Notes</span>
+              </Link>
+              <Link to="/draft" className="bg-white border border-brand-olive/10 rounded-[28px] p-6 text-left hover:shadow-md transition-all hover:border-brand-olive/30 flex items-center gap-3">
+                <div className="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-olive"><Edit size={20} /></div>
+                <span className="font-bold text-sm">Draft Space</span>
+              </Link>
             </div>
           </div>
         )}
