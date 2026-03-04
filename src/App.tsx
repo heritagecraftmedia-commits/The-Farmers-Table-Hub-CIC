@@ -35,6 +35,7 @@ import { Notes } from './pages/Notes';
 import { JamGuide } from './pages/guides/JamGuide';
 import { ProjectGuide } from './pages/guides/ProjectGuide';
 import { DraftSpace } from './pages/DraftSpace';
+import WhatsOnAgent from './pages/WhatsOnAgent';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -93,6 +94,7 @@ export default function App() {
                 <Route path="/notes" element={<PageWrapper><Notes /></PageWrapper>} />
                 <Route path="/guides/:guideId" element={<PageWrapper><ProjectGuide /></PageWrapper>} />
                 <Route path="/draft" element={<PageWrapper><DraftSpace /></PageWrapper>} />
+                <Route path="/whats-on-agent" element={<WhatsOnAgent />} />
               </Routes>
             </main>
             <Footer />
