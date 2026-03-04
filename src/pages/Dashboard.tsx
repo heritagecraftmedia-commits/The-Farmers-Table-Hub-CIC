@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { useFog } from '../context/FogContext';
 import { aiAgentService } from '../services/aiAgentService';
 import { hubService } from '../services/hubService';
 import { DirectoryListing, RawLead, QualifiedLead, EnrichedLead, OutreachLog, HubEvent, StaffMember, RadioShow, FounderJob, MakerStory } from '../types';
@@ -45,6 +46,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const { isFogMode } = useFog();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   // Data state
@@ -271,6 +273,39 @@ export const Dashboard: React.FC = () => {
               <h2 className="text-3xl font-serif mb-2">Hub Overview</h2>
               <p className="text-brand-ink/60">Your mission control for The Farmers Table Hub CIC.</p>
             </div>
+
+            {/* Fog-Day Survival Guide — founder only */}
+            {isFogMode && (
+              <motion.div
+                initial={{ opacity: 0, y: -16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 rounded-[28px] p-8"
+              >
+                <div className="flex items-center gap-3 mb-6 text-red-800">
+                  <ShieldAlert size={28} />
+                  <h2 className="text-2xl font-bold">Fog-Day Survival Guide</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
+                    <h3 className="font-bold text-lg mb-4 text-red-700">Rules for Today</h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2"><span className="text-red-500 font-bold">•</span><span>Do one thing only</span></li>
+                      <li className="flex items-start gap-2"><span className="text-red-500 font-bold">•</span><span>No new decisions</span></li>
+                      <li className="flex items-start gap-2"><span className="text-red-500 font-bold">•</span><span>It is OK to stop early</span></li>
+                    </ul>
+                  </div>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
+                    <h3 className="font-bold text-lg mb-4 text-red-700">Emergency Contacts</h3>
+                    <div className="space-y-2">
+                      <p><strong>Office PA (Thalia):</strong> 07xxx xxxxxx</p>
+                      <p><strong>Radio PA (Rachael):</strong> 07xxx xxxxxx</p>
+                      <p className="text-sm text-gray-500 mt-4 italic">Message them: "Fog day — please continue routine ops."</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard label="Raw Leads" value={rawLeads.length} sub="Awaiting review" icon={<Search size={20} />} />
               <StatCard label="Stories" value={makerStories.length} sub={`${makerStories.filter(s => s.published).length} published`} icon={<BookOpen size={20} />} />

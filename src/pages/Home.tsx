@@ -1,57 +1,11 @@
 import React from 'react';
-import { useFog } from '../context/FogContext';
 import { motion } from 'motion/react';
-import { ArrowRight, Radio, MapPin, Users, Heart, ShieldAlert } from 'lucide-react';
+import { ArrowRight, Radio, MapPin, Users, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Home: React.FC = () => {
-  const { isFogMode } = useFog();
-
   return (
     <div className="flex flex-col">
-      {/* Fog Mode Survival Guide - Only visible when Fog Mode is active */}
-      {isFogMode && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-50 border-b border-red-200 py-8 px-4"
-        >
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 mb-6 text-red-800">
-              <ShieldAlert size={32} />
-              <h2 className="text-3xl font-bold">Fog-Day Survival Guide</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
-                <h3 className="font-bold text-xl mb-4 text-red-700">Rules for Today</h3>
-                <ul className="space-y-3 text-lg">
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-500 font-bold">•</span>
-                    <span>Do one thing only</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-500 font-bold">•</span>
-                    <span>No new decisions</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-500 font-bold">•</span>
-                    <span>It is OK to stop early</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
-                <h3 className="font-bold text-xl mb-4 text-red-700">Emergency Contacts</h3>
-                <div className="space-y-2 text-lg">
-                  <p><strong>Office PA (Thalia):</strong> 07xxx xxxxxx</p>
-                  <p><strong>Radio PA (Rachael):</strong> 07xxx xxxxxx</p>
-                  <p className="text-sm text-gray-500 mt-4 italic">Message them: "Fog day — please continue routine ops."</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Hero Section */}
       <section className="relative py-24 md:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
