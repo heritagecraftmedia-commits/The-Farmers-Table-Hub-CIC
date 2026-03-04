@@ -346,6 +346,10 @@ export const Dashboard: React.FC = () => {
                 <div className="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-olive"><Edit size={20} /></div>
                 <span className="font-bold text-sm">Draft Space</span>
               </Link>
+              <Link to="/whats-on-agent" className="bg-white border border-brand-olive/10 rounded-[28px] p-6 text-left hover:shadow-md transition-all hover:border-brand-olive/30 flex items-center gap-3">
+                <div className="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-olive"><Bot size={20} /></div>
+                <span className="font-bold text-sm">The Brain</span>
+              </Link>
             </div>
           </div>
         )}
