@@ -6,14 +6,14 @@ import {
   ArrowRight, ExternalLink, ShieldCheck, Zap, Mail, CheckSquare, Map, Coins,
   Calendar, BookOpen, Bot, Battery, Coffee, Trash2, UserPlus, Clock, Download,
   ToggleLeft, ToggleRight, ShieldAlert, Edit, PlayCircle, Check, Circle,
-  Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown, Phone, FileText
+  Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown, Phone, FileText, AlertTriangle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFog } from '../context/FogContext';
 import { aiAgentService } from '../services/aiAgentService';
 import { hubService } from '../services/hubService';
-import { DirectoryListing, RawLead, QualifiedLead, EnrichedLead, OutreachLog, HubEvent, StaffMember, RadioShow, FounderJob, MakerStory } from '../types';
+import { DirectoryListing, RawLead, QualifiedLead, EnrichedLead, OutreachLog, HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, PendingListing } from '../types';
 import { stripeService } from '../services/stripeService';
 import { AddTeamMemberModal } from '../components/dashboard/AddTeamMemberModal';
 import { TeamMemberDrawer } from '../components/dashboard/TeamMemberDrawer';
@@ -21,8 +21,9 @@ import { AddEventModal } from '../components/dashboard/AddEventModal';
 import { AddArtisanModal } from '../components/dashboard/AddArtisanModal';
 import { RadioScheduleModal } from '../components/dashboard/RadioScheduleModal';
 import { CsvUploadModal } from '../components/dashboard/CsvUploadModal';
+import { ApprovalQueue } from '../components/dashboard/ApprovalQueue';
 
-type TabType = 'overview' | 'discovery' | 'enrichment' | 'outreach' | 'roadmap' | 'events' | 'staff' | 'radio' | 'listings' | 'membership' | 'stories' | 'settings';
+type TabType = 'overview' | 'discovery' | 'enrichment' | 'outreach' | 'roadmap' | 'events' | 'staff' | 'radio' | 'listings' | 'membership' | 'stories' | 'settings' | 'approvals';
 
 interface RoadmapStep {
   id: string;
@@ -45,7 +46,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
 // MOCK_LISTINGS removed in favor of hubService.getListings()
 
 export const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { isFogMode } = useFog();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -61,6 +62,8 @@ export const Dashboard: React.FC = () => {
   const [founderJobs, setFounderJobs] = useState<FounderJob[]>([]);
   const [makerStories, setMakerStories] = useState<MakerStory[]>([]);
   const [directoryListings, setDirectoryListings] = useState<DirectoryListing[]>([]);
+  const [claimedVendors, setClaimedVendors] = useState<any[]>([]);
+  const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
   const [systemSettings, setSystemSettings] = useState(hubService.getSystemSettings());
   const [loadingData, setLoadingData] = useState(false);
 
@@ -92,21 +95,50 @@ export const Dashboard: React.FC = () => {
 
   const refreshData = async () => {
     setLoadingData(true);
-    const [rl, el, ol, ev, evLinks, st, rs, fj, ms, dl] = await Promise.all([
+    const [rl, el, ol, ev, evLinks, st, rs, fj, ms, dl, cv, pl] = await Promise.all([
       aiAgentService.getRawLeads(), aiAgentService.getEnrichedLeads(),
       aiAgentService.getOutreachLogs(), hubService.getEvents(),
       hubService.getEventMakerLinks(),
       hubService.getStaff(), hubService.getRadioShows(), hubService.getFounderJobs(),
-      hubService.getMakerStories(), hubService.getListings()
+      hubService.getMakerStories(), hubService.getListings(), hubService.getClaimedVendors(),
+      hubService.getPendingListings()
     ]);
     setRawLeads(rl); setEnrichedLeads(el); setOutreachLogs(ol);
     setEvents(ev); setEventMakerLinks(evLinks); setStaff(st); setRadioShows(rs); setFounderJobs(fj);
-    setMakerStories(ms); setDirectoryListings(dl);
+    setMakerStories(ms); setDirectoryListings(dl); setClaimedVendors(cv); setPendingListings(pl);
     setSystemSettings(hubService.getSystemSettings());
     setLoadingData(false);
   };
 
   useEffect(() => { if (user?.role === 'founder' || user?.role === 'staff') { refreshData(); } }, [user]);
+
+  // Auth guard — must come after all hooks
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand-olive/30 border-t-brand-olive rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== 'founder' && user.role !== 'staff') {
+    return (
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center">
+        <div className="text-center max-w-sm px-6">
+          <ShieldAlert size={48} className="mx-auto mb-4 text-red-400" />
+          <h1 className="text-2xl font-serif mb-2">Access Denied</h1>
+          <p className="text-sm text-brand-ink/60 mb-6">You do not have permission to view this page.</p>
+          <Link to="/" className="px-6 py-2 bg-brand-olive text-white rounded-full text-sm font-bold hover:bg-brand-olive/90">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const updateRoadmap = (stepId: string, checkIdx: number, val: boolean) => {
     const stepChecks = roadmapProgress[stepId] || Array(ROADMAP_STEPS.find(s => s.id === stepId)?.checklist.length || 5).fill(false);
@@ -185,6 +217,10 @@ export const Dashboard: React.FC = () => {
     await refreshData();
   };
 
+  const handleApprovePending = async (id: string) => { await hubService.approvePendingListing(id); await refreshData(); };
+  const handleRejectPending = async (id: string) => { await hubService.rejectPendingListing(id); await refreshData(); };
+  const handleAddPending = async (listing: Omit<PendingListing, 'id' | 'discoveredAt' | 'status'>) => { await hubService.addPendingListing(listing); await refreshData(); };
+
   const handleStartRoadmapStep = async (stepId: string) => {
     const step = ROADMAP_STEPS.find(s => s.id === stepId);
     if (!step) return;
@@ -213,10 +249,11 @@ export const Dashboard: React.FC = () => {
     </button>
   );
 
-  const StatCard = ({ label, value, sub, icon }: { label: string; value: string | number; sub?: string; icon: React.ReactNode }) => (
-    <div className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm">
+  const StatCard = ({ label, value, sub, icon, onClick }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; onClick?: () => void }) => (
+    <div onClick={onClick} className={`bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm ${onClick ? 'cursor-pointer hover:border-brand-olive/20 hover:shadow-md transition-all' : ''}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="w-10 h-10 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-olive">{icon}</div>
+        {onClick && <ArrowRight size={14} className="text-brand-ink/20 mt-1" />}
       </div>
       <p className="text-3xl font-serif">{value}</p>
       <p className="text-sm font-bold mt-1">{label}</p>
@@ -239,7 +276,7 @@ export const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl font-serif">Founder Dashboard</h1>
+              <h1 className="text-xl font-serif">{user.role === 'founder' ? 'Founder Dashboard' : 'Staff Dashboard'}</h1>
               <p className="text-xs text-brand-ink/40">Welcome back, {user.name}</p>
             </div>
             <div className="flex items-center gap-3">
@@ -249,17 +286,18 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {tabNav('overview', 'Overview', <LayoutDashboard size={16} />)}
-            {tabNav('discovery', 'Discovery', <Search size={16} />)}
-            {tabNav('enrichment', 'Enriched', <ShieldCheck size={16} />)}
-            {tabNav('outreach', 'Outreach', <Mail size={16} />)}
+            {user.role === 'founder' && tabNav('discovery', 'Discovery', <Search size={16} />)}
+            {user.role === 'founder' && tabNav('enrichment', 'Enriched', <ShieldCheck size={16} />)}
+            {user.role === 'founder' && tabNav('outreach', 'Outreach', <Mail size={16} />)}
             {tabNav('events', "What's On", <Calendar size={16} />)}
             {tabNav('staff', 'Team', <Users size={16} />)}
             {tabNav('radio', 'Radio', <Radio size={16} />)}
             {tabNav('stories', 'Stories', <BookOpen size={16} />)}
-            {tabNav('listings', 'Listings', <Store size={16} />)}
-            {tabNav('membership', 'Membership', <Coins size={16} />)}
-            {tabNav('roadmap', 'Roadmap', <Map size={16} />)}
-            {tabNav('settings', 'Settings', <Settings size={16} />)}
+            {user.role === 'founder' && tabNav('listings', 'Listings', <Store size={16} />)}
+            {user.role === 'founder' && tabNav('membership', 'Membership', <Coins size={16} />)}
+            {user.role === 'founder' && tabNav('roadmap', 'Roadmap', <Map size={16} />)}
+            {user.role === 'founder' && tabNav('approvals', 'Approvals', <CheckCircle2 size={16} />)}
+            {user.role === 'founder' && tabNav('settings', 'Settings', <Settings size={16} />)}
           </div>
         </div>
       </div>
@@ -307,10 +345,10 @@ export const Dashboard: React.FC = () => {
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Raw Leads" value={rawLeads.length} sub="Awaiting review" icon={<Search size={20} />} />
-              <StatCard label="Stories" value={makerStories.length} sub={`${makerStories.filter(s => s.published).length} published`} icon={<BookOpen size={20} />} />
-              <StatCard label="Events" value={events.length} sub={`${events.filter(e => e.approved).length} approved`} icon={<Calendar size={20} />} />
-              <StatCard label="Team Members" value={staff.length} sub="Active staff" icon={<Users size={20} />} />
+              <StatCard label="Raw Leads" value={rawLeads.length} sub="Awaiting review" icon={<Search size={20} />} onClick={() => setActiveTab('discovery')} />
+              <StatCard label="Stories" value={makerStories.length} sub={`${makerStories.filter(s => s.published).length} published`} icon={<BookOpen size={20} />} onClick={() => setActiveTab('stories')} />
+              <StatCard label="Events" value={events.length} sub={`${events.filter(e => e.approved).length} approved`} icon={<Calendar size={20} />} onClick={() => setActiveTab('events')} />
+              <StatCard label="Team Members" value={staff.length} sub="Active staff" icon={<Users size={20} />} onClick={() => setActiveTab('staff')} />
             </div>
 
             {/* Open Manager – Jobs */}
@@ -521,11 +559,20 @@ export const Dashboard: React.FC = () => {
                       <span className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full ${lead.status === 'invited' ? 'bg-blue-50 text-blue-600' : lead.status === 'claimed' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>{lead.status}</span>
                     </div>
                     <p className="text-sm text-brand-ink/70 mb-4 line-clamp-3">{lead.summary}</p>
-                    {lead.status === 'draft' && (
-                      <button onClick={() => handleOutreach(lead)} className="w-full py-2 flex items-center justify-center gap-2 bg-brand-olive text-white rounded-full text-xs font-bold">
-                        <Send size={12} /> Send Invite
+                    <div className="flex gap-2">
+                      {lead.status === 'draft' && (
+                        <button onClick={() => handleOutreach(lead)} className="flex-1 py-2 flex items-center justify-center gap-2 bg-brand-olive text-white rounded-full text-xs font-bold">
+                          <Send size={12} /> Send Invite
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/claim/${lead.id}`); }}
+                        className="flex-1 py-2 flex items-center justify-center gap-2 bg-brand-cream text-brand-olive border border-brand-olive/20 rounded-full text-xs font-bold hover:bg-brand-olive/10 transition-all"
+                        title="Copy claim link to share with this maker"
+                      >
+                        <Globe size={12} /> Copy Claim Link
                       </button>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -574,7 +621,13 @@ export const Dashboard: React.FC = () => {
                       </div>
                       <span className="text-xs text-brand-ink/40">{new Date(log.sentAt).toLocaleDateString('en-GB')}</span>
                     </div>
-                    <p className="text-sm text-brand-ink/70 bg-brand-cream/50 p-4 rounded-2xl">{log.messageSent}</p>
+                    <p className="text-sm text-brand-ink/70 bg-brand-cream/50 p-4 rounded-2xl mb-3">{log.messageSent}</p>
+                    <a
+                      href={`mailto:?subject=Invitation to join The Farmers Table Hub&body=${encodeURIComponent(log.messageSent)}`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-olive/10 text-brand-olive text-xs font-bold hover:bg-brand-olive/20 transition-colors"
+                    >
+                      <Mail size={13} /> Open in Mail
+                    </a>
                   </div>
                 ))}
               </div>
@@ -757,11 +810,11 @@ export const Dashboard: React.FC = () => {
                     <span className="text-sm font-bold">{radioShows.filter(s => s.status === 'live').length}</span>
                   </div>
                   <div className="pt-4 border-t border-white/10 space-y-3">
-                    <a href="https://live365.com" target="_blank" rel="noopener noreferrer" className="block w-full py-4 bg-white text-brand-olive rounded-full font-bold text-sm text-center hover:bg-brand-cream transition-all">
+                    <a href="https://live365.com/manage" target="_blank" rel="noopener noreferrer" className="block w-full py-4 bg-white text-brand-olive rounded-full font-bold text-sm text-center hover:bg-brand-cream transition-all">
                       Open Live365 Studio ↗
                     </a>
-                    <a href="https://live365.com/dashboard" target="_blank" rel="noopener noreferrer" className="block w-full py-3 border border-white/20 text-white rounded-full font-bold text-sm text-center hover:bg-white/10 transition-all">
-                      Dashboard & Analytics
+                    <a href="https://live365.com/manage/stations" target="_blank" rel="noopener noreferrer" className="block w-full py-3 border border-white/20 text-white rounded-full font-bold text-sm text-center hover:bg-white/10 transition-all">
+                      Station Dashboard ↗
                     </a>
                   </div>
                 </div>
@@ -782,6 +835,35 @@ export const Dashboard: React.FC = () => {
                 <Plus size={16} /> Add Artisan
               </button>
             </div>
+            {/* Pending Claims */}
+            {claimedVendors.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-[32px] p-6 space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <AlertTriangle size={16} className="text-amber-600" />
+                  <h3 className="font-bold text-amber-800">Pending Claims ({claimedVendors.length})</h3>
+                  <p className="text-xs text-amber-600">Makers who have claimed their listing — review and approve to publish.</p>
+                </div>
+                <div className="space-y-3">
+                  {claimedVendors.map(claim => (
+                    <div key={claim.id} className="bg-white rounded-2xl p-5 border border-amber-100 flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-bold">{claim.vendor_name}</h4>
+                        <p className="text-xs text-brand-ink/50">{claim.craft_category} · {claim.location}</p>
+                        {claim.bio && <p className="text-xs text-brand-ink/60 mt-1 line-clamp-2">{claim.bio}</p>}
+                        {claim.website && <p className="text-xs text-brand-olive mt-1">{claim.website}</p>}
+                      </div>
+                      <button
+                        onClick={async () => { await hubService.approveClaimedVendor(claim); refreshData(); }}
+                        className="flex items-center gap-2 px-5 py-2 bg-brand-olive text-white rounded-full text-xs font-bold hover:bg-brand-olive/90 transition-all shrink-0"
+                      >
+                        <CheckCircle2 size={14} /> Approve & Publish
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-12">
               {['Meat', 'Milk & Dairy', 'Fruit & Veg', 'Eggs & Poultry', 'Mixed Farms', 'Makers & Bakers', 'Crafters'].map(cat => {
                 const catListings = directoryListings.filter(l => l.displayCategory === cat);
@@ -1113,6 +1195,16 @@ export const Dashboard: React.FC = () => {
             </div>
           )
         }
+
+        {/* ── APPROVALS ── */}
+        {activeTab === 'approvals' && (
+          <ApprovalQueue
+            listings={pendingListings}
+            onApprove={handleApprovePending}
+            onReject={handleRejectPending}
+            onAdd={handleAddPending}
+          />
+        )}
 
         {/* ── STORIES ── */}
         {
