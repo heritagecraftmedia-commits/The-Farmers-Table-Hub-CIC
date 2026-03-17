@@ -15,6 +15,7 @@ import { aiAgentService } from '../services/aiAgentService';
 import { hubService } from '../services/hubService';
 import { DirectoryListing, RawLead, QualifiedLead, EnrichedLead, OutreachLog, HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, PendingListing } from '../types';
 import { stripeService } from '../services/stripeService';
+import { supabase } from '../lib/supabase';
 import { AddTeamMemberModal } from '../components/dashboard/AddTeamMemberModal';
 import { TeamMemberDrawer } from '../components/dashboard/TeamMemberDrawer';
 import { AddEventModal } from '../components/dashboard/AddEventModal';
@@ -86,6 +87,10 @@ export const Dashboard: React.FC = () => {
   });
   const [editingAffiliatesId, setEditingAffiliatesId] = useState<string | null>(null);
   const [tempAffiliateLinks, setTempAffiliateLinks] = useState<{ label: string, url: string }[]>([]);
+
+  // Directory outreach runner
+  const [outreachRunning, setOutreachRunning] = useState(false);
+  const [outreachResult, setOutreachResult] = useState<{ sent: number; skipped: number; errors: string[]; message?: string } | null>(null);
 
   // Roadmap state
   const [roadmapProgress, setRoadmapProgress] = useState<Record<string, boolean[]>>(() => {
@@ -187,6 +192,21 @@ export const Dashboard: React.FC = () => {
   const handlePublishStory = async (id: string) => {
     await hubService.publishStory(id);
     await refreshData();
+  };
+
+  const handleRunOutreach = async () => {
+    setOutreachRunning(true);
+    setOutreachResult(null);
+    try {
+      const { data, error } = await (supabase as any).functions.invoke('directory-outreach');
+      if (error) throw error;
+      setOutreachResult(data);
+    } catch (err: any) {
+      setOutreachResult({ sent: 0, skipped: 0, errors: [err.message || 'Unknown error'] });
+    } finally {
+      setOutreachRunning(false);
+      await refreshData();
+    }
   };
 
   const handleDeleteStory = async (id: string) => {
@@ -835,6 +855,56 @@ export const Dashboard: React.FC = () => {
                 <Plus size={16} /> Add Artisan
               </button>
             </div>
+            {/* Directory Outreach Panel */}
+            {(() => {
+              const eligible = directoryListings.filter(l => l.email && l.outreachStatus === 'not_contacted');
+              const contacted = directoryListings.filter(l => l.outreachStatus === 'contacted');
+              return (
+                <div className="bg-white rounded-[32px] border border-brand-olive/5 shadow-sm p-6 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                      <h3 className="font-serif text-xl mb-1">Directory Outreach</h3>
+                      <div className="flex items-center gap-4 text-xs text-brand-ink/50">
+                        <span><span className="font-bold text-brand-olive">{eligible.length}</span> eligible (have email, not yet contacted)</span>
+                        <span><span className="font-bold text-green-600">{contacted.length}</span> already contacted</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRunOutreach}
+                      disabled={outreachRunning || eligible.length === 0}
+                      className="flex items-center gap-2 px-5 py-3 bg-brand-olive text-white rounded-full text-sm font-bold hover:bg-brand-olive/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {outreachRunning
+                        ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Running…</>
+                        : <><Send size={14} /> Run Outreach</>}
+                    </button>
+                  </div>
+                  {outreachResult && (
+                    <div className={`rounded-2xl p-4 text-sm ${outreachResult.errors.length > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-green-50 border border-green-200'}`}>
+                      {outreachResult.message
+                        ? <p className="text-brand-ink/60">{outreachResult.message}</p>
+                        : <>
+                            <p className="font-bold mb-1">
+                              ✓ {outreachResult.sent} email{outreachResult.sent !== 1 ? 's' : ''} sent
+                              {outreachResult.skipped > 0 && ` · ${outreachResult.skipped} skipped`}
+                            </p>
+                            {outreachResult.errors.length > 0 && (
+                              <ul className="mt-2 space-y-1">
+                                {outreachResult.errors.map((e, i) => (
+                                  <li key={i} className="text-red-600 text-xs">{e}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </>}
+                    </div>
+                  )}
+                  <p className="text-xs text-brand-ink/30">
+                    Each run only contacts listings not previously contacted. Outreach status updates automatically after each send.
+                  </p>
+                </div>
+              );
+            })()}
+
             {/* Pending Claims */}
             {claimedVendors.length > 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-[32px] p-6 space-y-4">
@@ -890,6 +960,9 @@ export const Dashboard: React.FC = () => {
                                   {listing.listingTier}
                                 </span>
                                 <span className="text-[10px] font-bold text-brand-ink/30 italic ml-2">{listing.displayCategory}</span>
+                                {listing.outreachStatus === 'contacted' && (
+                                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">Contacted</span>
+                                )}
                               </div>
                               <p className="text-xs text-brand-ink/50">{listing.craftCategory} · {listing.location}</p>
                               <div className="flex gap-4 mt-2">

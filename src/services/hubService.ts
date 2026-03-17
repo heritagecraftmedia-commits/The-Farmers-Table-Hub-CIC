@@ -1,4 +1,4 @@
-import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, EventCategory, DirectoryListing } from '../types';
+import { HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, EventCategory, DirectoryListing, PendingListing, PlaylistTrack, SponsorRotation, AdSchedule, SocialPost } from '../types';
 import { supabase } from '../lib/supabase';
 
 const isConfigured = () => {
@@ -147,10 +147,77 @@ const mockStories: MakerStory[] = [
   }
 ];
 
+let mockPendingListings: PendingListing[] = [
+  {
+    id: 'p1',
+    businessName: 'Bramble & Birch Ceramics',
+    category: 'Pottery & Ceramics',
+    location: 'Farnham, Surrey',
+    website: 'https://bramblebirch.co.uk',
+    instagram: '@bramblebirchceramics',
+    description: 'Hand-thrown stoneware inspired by the Surrey Hills. Functional and decorative pieces, all wood-fired in a traditional kiln.',
+    sourcePlatform: 'Instagram',
+    sourceUrl: 'https://instagram.com/bramblebirchceramics',
+    discoveredAt: new Date(Date.now() - 86400000).toISOString(),
+    status: 'pending',
+    contactEmail: 'hello@bramblebirch.co.uk',
+    aiConfidenceScore: 92,
+  },
+  {
+    id: 'p2',
+    businessName: 'Holt Farm Dairy',
+    category: 'Milk & Dairy',
+    location: 'Godalming, Surrey',
+    website: 'https://holtfarmdairy.co.uk',
+    instagram: '@holtfarmdairy',
+    description: 'Family-run dairy farm producing raw milk, artisan cheeses, and cultured butter. Available at Guildford Farmers\' Market.',
+    sourcePlatform: 'Google Maps',
+    sourceUrl: 'https://maps.google.com/?q=holt+farm+dairy',
+    discoveredAt: new Date(Date.now() - 172800000).toISOString(),
+    status: 'pending',
+    contactEmail: 'info@holtfarmdairy.co.uk',
+    aiConfidenceScore: 88,
+  },
+  {
+    id: 'p3',
+    businessName: 'The Willow Basket Co.',
+    category: 'Heritage & Skills',
+    location: 'Haslemere, Surrey',
+    instagram: '@willowbasketco',
+    description: 'Traditional English willow basketry. Commissions welcome. Runs weekend workshops for beginners.',
+    sourcePlatform: 'Etsy',
+    sourceUrl: 'https://etsy.com/shop/willowbasketco',
+    discoveredAt: new Date(Date.now() - 259200000).toISOString(),
+    status: 'pending',
+    aiConfidenceScore: 79,
+  },
+];
+
 let mockSystemSettings = {
   discoveryAgentEnabled: true, qualificationAgentEnabled: true,
   enrichmentAgentEnabled: false, outreachAgentEnabled: false, maintenanceMode: false
 };
+
+// --- Radio System mock data ---
+let mockPlaylist: PlaylistTrack[] = [
+  { id: 'pl1', title: 'Sunrise Acoustic Set', artist: 'Various Artists', durationSeconds: 1800, category: 'music', fileUrl: '', orderIndex: 1, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'pl2', title: 'TFT Morning Jingle', artist: 'The Farmers Table', durationSeconds: 15, category: 'jingle', fileUrl: '', orderIndex: 2, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'pl3', title: 'Community Notice — Market Day', artist: 'Staff Read', durationSeconds: 60, category: 'community', fileUrl: '', orderIndex: 3, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'pl4', title: 'Emergency Playlist — Folk Classics', artist: 'Various', durationSeconds: 3600, category: 'emergency', fileUrl: '', orderIndex: 99, isActive: true, createdAt: new Date().toISOString() },
+];
+
+let mockSponsors: SponsorRotation[] = [
+  { id: 'sp1', name: 'Surrey Ironworks', productDesc: 'Hand-forged tools and decorative ironwork.', contactName: 'James Hill', contactEmail: 'james@surreyironworks.co.uk', package: '30s', readsPerShow: 2, adScript: 'Surrey Ironworks — beautiful hand-forged tools, made with care in the Surrey Hills. Visit surreyironworks.co.uk', renewalDate: '2026-06-01', status: 'active', createdAt: new Date().toISOString() },
+  { id: 'sp2', name: 'Farnham Brewery', productDesc: 'Small-batch craft ales brewed locally.', contactName: 'Tom Granger', contactEmail: 'tom@farnhambrewery.co.uk', package: '30s', readsPerShow: 1, adScript: 'Farnham Brewery — award-winning craft ales, brewed right here in Farnham.', renewalDate: '2026-09-15', status: 'active', createdAt: new Date().toISOString() },
+  { id: 'sp3', name: 'Rural Candle Co.', productDesc: 'Handmade soy candles with natural fragrances.', contactName: 'Lucy Park', contactEmail: 'lucy@ruralcandleco.com', package: '15s', readsPerShow: 2, adScript: 'Rural Candle Co — natural soy candles, hand-poured with love. Find us at the Farmers Table.', renewalDate: '2026-04-01', status: 'active', createdAt: new Date().toISOString() },
+];
+
+let mockAdSchedules: AdSchedule[] = [
+  { id: 'as1', sponsorId: 'sp1', sponsorName: 'Surrey Ironworks', showDay: 'Daily', timeSlot: '11:15', durationSeconds: 30, status: 'scheduled', createdAt: new Date().toISOString() },
+  { id: 'as2', sponsorId: 'sp2', sponsorName: 'Farnham Brewery', showDay: 'Mon-Fri', timeSlot: '12:45', durationSeconds: 30, status: 'scheduled', createdAt: new Date().toISOString() },
+];
+
+let mockSocialPosts: SocialPost[] = [];
 
 // --- Real Supabase service ---
 export const hubService = {
@@ -158,7 +225,7 @@ export const hubService = {
     if (!isConfigured()) return mockEvents;
     const { data, error } = await supabase.from('events').select('*').order('start_date', { ascending: true });
     if (error) { console.error('getEvents:', error); return mockEvents; }
-    return data.map((r: any) => ({ id: r.id, title: r.title, description: r.description, startDate: r.start_date, endDate: r.end_date, location: r.location, venue: r.venue, websiteUrl: r.website_url, source: r.source, approved: r.approved, createdAt: r.created_at }));
+    return data.map((r: any) => ({ id: r.id, title: r.title, description: r.description, startDate: r.start_date, endDate: r.end_date, location: r.location, venue: r.venue, websiteUrl: r.website_url, craftType: r.craft_type, source: r.source, approved: r.approved, createdAt: r.created_at }));
   },
 
   approveEvent: async (id: string) => {
@@ -176,7 +243,7 @@ export const hubService = {
       const ne = { ...event, id: Math.random().toString(36).substr(2, 9), createdAt: new Date().toISOString() };
       mockEvents.push(ne); return ne;
     }
-    const { data, error } = await supabase.from('events').insert({ title: event.title, description: event.description, start_date: event.startDate, end_date: event.endDate, location: event.location, venue: event.venue, website_url: event.websiteUrl, source: event.source, approved: event.approved }).select().single();
+    const { data, error } = await supabase.from('events').insert({ title: event.title, description: event.description, start_date: event.startDate, end_date: event.endDate, location: event.location, venue: event.venue, website_url: event.websiteUrl, craft_type: event.craftType, source: event.source, approved: event.approved }).select().single();
     if (error) { console.error('addEvent:', error); return null; }
     return { ...event, id: data.id, createdAt: data.created_at };
   },
@@ -196,6 +263,11 @@ export const hubService = {
     const { data, error } = await supabase.from('staff').insert({ name: member.name, role: member.role, email: member.email, status: member.status }).select().single();
     if (error) { console.error('addStaff:', error); return null; }
     return { id: data.id, name: data.name, role: data.role, email: data.email, status: data.status, joinedAt: data.joined_at };
+  },
+
+  updateStaff: async (id: string, updates: Partial<Pick<StaffMember, 'name' | 'role' | 'email'>>): Promise<void> => {
+    if (!isConfigured()) { const m = mockStaff.find(s => s.id === id); if (m) Object.assign(m, updates); return; }
+    await supabase.from('staff').update({ name: updates.name, role: updates.role, email: updates.email }).eq('id', id);
   },
 
   removeStaff: async (id: string) => {
@@ -284,9 +356,14 @@ export const hubService = {
     return data.map((r: any) => ({
       id: r.id, vendorName: r.vendor_name, craftCategory: r.craft_category,
       location: r.location, website: r.website, bio: r.bio,
+      email: r.email, phone: r.phone,
       socialLinks: r.social_links, listingTier: r.listing_tier,
       approved: r.approved, published: r.published,
-      claimedAt: r.claimed_at, affiliateLinks: r.affiliate_links || []
+      claimedAt: r.claimed_at, affiliateLinks: r.affiliate_links || [],
+      outreachStatus: r.outreach_status ?? 'not_contacted',
+      outreachDate: r.outreach_date,
+      response: r.response,
+      claimed: r.claimed ?? false
     }));
   },
 
@@ -298,6 +375,51 @@ export const hubService = {
   deleteListing: async (id: string) => {
     if (!isConfigured()) { const i = mockListings.findIndex(l => l.id === id); if (i > -1) mockListings.splice(i, 1); return; }
     await supabase.from('directory_listings').delete().eq('id', id);
+  },
+
+  getClaimedVendors: async (): Promise<any[]> => {
+    if (!isConfigured()) return [];
+    const { data, error } = await supabase.from('claimed_vendors').select('*').eq('approved', false).order('created_at', { ascending: false });
+    if (error) { console.error('getClaimedVendors:', error); return []; }
+    return data ?? [];
+  },
+
+  submitMakerApplication: async (application: {
+    businessName: string;
+    category: string;
+    website: string;
+    location: string;
+    description: string;
+    contactName: string;
+  }): Promise<void> => {
+    if (!isConfigured()) return; // local submitted state handles this case
+    await supabase.from('directory_listings').insert({
+      vendor_name: application.businessName,
+      craft_category: application.category,
+      location: application.location,
+      bio: application.description,
+      website: application.website,
+      listing_tier: 'free',
+      approved: false,
+      published: false,
+      claimed_at: new Date().toISOString(),
+    });
+  },
+
+  approveClaimedVendor: async (claim: any): Promise<void> => {
+    if (!isConfigured()) return;
+    await supabase.from('directory_listings').insert({
+      vendor_name: claim.vendor_name,
+      craft_category: claim.craft_category,
+      location: claim.location,
+      bio: claim.bio,
+      website: claim.website,
+      listing_tier: 'free',
+      approved: true,
+      published: true,
+      claimed_at: new Date().toISOString(),
+    });
+    await supabase.from('claimed_vendors').update({ approved: true }).eq('id', claim.id);
   },
 
   // --- Event-Maker Linkage ---
@@ -364,5 +486,233 @@ export const hubService = {
   updateSystemSettings: (settings: Partial<typeof mockSystemSettings>) => {
     mockSystemSettings = { ...mockSystemSettings, ...settings };
     return mockSystemSettings;
-  }
+  },
+
+  // --- Pending Listings (AI Discovery Approval Queue) ---
+
+  getPendingListings: async (): Promise<PendingListing[]> => {
+    if (!isConfigured()) return mockPendingListings;
+    const { data } = await supabase
+      .from('pending_listings')
+      .select('*')
+      .order('discovered_at', { ascending: false });
+    if (!data) return mockPendingListings;
+    return data.map(row => ({
+      id: row.id,
+      businessName: row.business_name,
+      category: row.category,
+      location: row.location,
+      website: row.website,
+      instagram: row.instagram,
+      description: row.description,
+      sourceUrl: row.source_url,
+      sourcePlatform: row.source_platform,
+      discoveredAt: row.discovered_at,
+      status: row.status,
+      reviewedAt: row.reviewed_at,
+      contactEmail: row.contact_email,
+      contactName: row.contact_name,
+      aiConfidenceScore: row.ai_confidence_score,
+    }));
+  },
+
+  addPendingListing: async (listing: Omit<PendingListing, 'id' | 'discoveredAt' | 'status'>): Promise<void> => {
+    if (!isConfigured()) {
+      mockPendingListings.unshift({
+        ...listing,
+        id: Date.now().toString(),
+        discoveredAt: new Date().toISOString(),
+        status: 'pending',
+      });
+      return;
+    }
+    await supabase.from('pending_listings').insert({
+      business_name: listing.businessName,
+      category: listing.category,
+      location: listing.location,
+      website: listing.website,
+      instagram: listing.instagram,
+      description: listing.description,
+      source_url: listing.sourceUrl,
+      source_platform: listing.sourcePlatform ?? 'Manual',
+      contact_email: listing.contactEmail,
+      contact_name: listing.contactName,
+      ai_confidence_score: listing.aiConfidenceScore,
+      status: 'pending',
+      discovered_at: new Date().toISOString(),
+    });
+  },
+
+  approvePendingListing: async (id: string): Promise<void> => {
+    const all = await hubService.getPendingListings();
+    const listing = all.find(l => l.id === id);
+    if (!listing) return;
+
+    if (!isConfigured()) {
+      const idx = mockPendingListings.findIndex(l => l.id === id);
+      if (idx !== -1) mockPendingListings[idx].status = 'approved';
+      return;
+    }
+    await supabase.from('pending_listings').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', id);
+    // Publish to directory_listings
+    await supabase.from('directory_listings').insert({
+      vendor_name: listing.businessName,
+      craft_category: listing.category,
+      location: listing.location,
+      bio: listing.description,
+      website: listing.website ?? '',
+      social_links: listing.instagram ? { instagram: listing.instagram } : {},
+      listing_tier: 'free',
+      approved: true,
+      published: true,
+      claimed_at: new Date().toISOString(),
+      email: listing.contactEmail ?? '',
+      display_category: 'Makers & Bakers',
+    });
+  },
+
+  rejectPendingListing: async (id: string): Promise<void> => {
+    if (!isConfigured()) {
+      const idx = mockPendingListings.findIndex(l => l.id === id);
+      if (idx !== -1) mockPendingListings[idx].status = 'rejected';
+      return;
+    }
+    await supabase.from('pending_listings').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', id);
+  },
+
+  // ── Radio System ─────────────────────────────────────────────────────────────
+
+  // Playlist
+  getPlaylist: async (): Promise<PlaylistTrack[]> => {
+    if (!isConfigured()) return mockPlaylist;
+    const { data, error } = await supabase.from('playlists').select('*').order('order_index');
+    if (error) { console.error('getPlaylist:', error); return mockPlaylist; }
+    return data.map((r: any) => ({
+      id: r.id, title: r.title, artist: r.artist,
+      durationSeconds: r.duration_seconds, category: r.category,
+      fileUrl: r.file_url, orderIndex: r.order_index,
+      isActive: r.is_active, createdAt: r.created_at,
+    }));
+  },
+
+  addTrack: async (track: Omit<PlaylistTrack, 'id' | 'createdAt'>): Promise<PlaylistTrack | null> => {
+    if (!isConfigured()) {
+      const t: PlaylistTrack = { ...track, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+      mockPlaylist.push(t); return t;
+    }
+    const { data, error } = await supabase.from('playlists').insert({
+      title: track.title, artist: track.artist, duration_seconds: track.durationSeconds,
+      category: track.category, file_url: track.fileUrl, order_index: track.orderIndex, is_active: track.isActive,
+    }).select().single();
+    if (error) { console.error('addTrack:', error); return null; }
+    return { ...track, id: data.id, createdAt: data.created_at };
+  },
+
+  removeTrack: async (id: string): Promise<void> => {
+    if (!isConfigured()) { const i = mockPlaylist.findIndex(t => t.id === id); if (i > -1) mockPlaylist.splice(i, 1); return; }
+    await supabase.from('playlists').delete().eq('id', id);
+  },
+
+  toggleTrack: async (id: string, isActive: boolean): Promise<void> => {
+    if (!isConfigured()) { mockPlaylist.forEach(t => { if (t.id === id) t.isActive = isActive; }); return; }
+    await supabase.from('playlists').update({ is_active: isActive }).eq('id', id);
+  },
+
+  // Sponsors
+  getSponsors: async (): Promise<SponsorRotation[]> => {
+    if (!isConfigured()) return mockSponsors;
+    const { data, error } = await supabase.from('sponsor_rotations').select('*').order('name');
+    if (error) { console.error('getSponsors:', error); return mockSponsors; }
+    return data.map((r: any) => ({
+      id: r.id, name: r.name, productDesc: r.product_desc, contactName: r.contact_name,
+      contactEmail: r.contact_email, package: r.package, readsPerShow: r.reads_per_show,
+      adScript: r.ad_script, renewalDate: r.renewal_date, status: r.status, createdAt: r.created_at,
+    }));
+  },
+
+  addSponsor: async (s: Omit<SponsorRotation, 'id' | 'createdAt'>): Promise<SponsorRotation | null> => {
+    if (!isConfigured()) {
+      const ns: SponsorRotation = { ...s, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+      mockSponsors.push(ns); return ns;
+    }
+    const { data, error } = await supabase.from('sponsor_rotations').insert({
+      name: s.name, product_desc: s.productDesc, contact_name: s.contactName,
+      contact_email: s.contactEmail, package: s.package, reads_per_show: s.readsPerShow,
+      ad_script: s.adScript, renewal_date: s.renewalDate, status: s.status,
+    }).select().single();
+    if (error) { console.error('addSponsor:', error); return null; }
+    return { ...s, id: data.id, createdAt: data.created_at };
+  },
+
+  updateSponsorStatus: async (id: string, status: SponsorRotation['status']): Promise<void> => {
+    if (!isConfigured()) { mockSponsors.forEach(s => { if (s.id === id) s.status = status; }); return; }
+    await supabase.from('sponsor_rotations').update({ status }).eq('id', id);
+  },
+
+  // Ad Schedules
+  getAdSchedules: async (): Promise<AdSchedule[]> => {
+    if (!isConfigured()) return mockAdSchedules;
+    const { data, error } = await supabase
+      .from('ad_schedules')
+      .select('*, sponsor_rotations(name)')
+      .order('time_slot');
+    if (error) { console.error('getAdSchedules:', error); return mockAdSchedules; }
+    return data.map((r: any) => ({
+      id: r.id, sponsorId: r.sponsor_id,
+      sponsorName: r.sponsor_rotations?.name,
+      showDay: r.show_day, timeSlot: r.time_slot,
+      durationSeconds: r.duration_seconds, status: r.status,
+      playedAt: r.played_at, createdAt: r.created_at,
+    }));
+  },
+
+  addAdSlot: async (slot: Omit<AdSchedule, 'id' | 'createdAt' | 'sponsorName'>): Promise<AdSchedule | null> => {
+    if (!isConfigured()) {
+      const sponsor = mockSponsors.find(s => s.id === slot.sponsorId);
+      const ns: AdSchedule = { ...slot, id: crypto.randomUUID(), sponsorName: sponsor?.name, createdAt: new Date().toISOString() };
+      mockAdSchedules.push(ns); return ns;
+    }
+    const { data, error } = await supabase.from('ad_schedules').insert({
+      sponsor_id: slot.sponsorId, show_day: slot.showDay, time_slot: slot.timeSlot,
+      duration_seconds: slot.durationSeconds, status: slot.status,
+    }).select().single();
+    if (error) { console.error('addAdSlot:', error); return null; }
+    return { ...slot, id: data.id, createdAt: data.created_at };
+  },
+
+  markAdPlayed: async (id: string): Promise<void> => {
+    const now = new Date().toISOString();
+    if (!isConfigured()) { mockAdSchedules.forEach(s => { if (s.id === id) { s.status = 'played'; s.playedAt = now; } }); return; }
+    await supabase.from('ad_schedules').update({ status: 'played', played_at: now }).eq('id', id);
+  },
+
+  // Social Posts
+  getSocialPosts: async (): Promise<SocialPost[]> => {
+    if (!isConfigured()) return mockSocialPosts;
+    const { data, error } = await supabase.from('social_posts').select('*').order('created_at', { ascending: false });
+    if (error) { console.error('getSocialPosts:', error); return mockSocialPosts; }
+    return data.map((r: any) => ({
+      id: r.id, content: r.content, platform: r.platform, sourceType: r.source_type,
+      sourceId: r.source_id, status: r.status, scheduledAt: r.scheduled_at,
+      postedAt: r.posted_at, createdAt: r.created_at,
+    }));
+  },
+
+  saveSocialPost: async (post: Omit<SocialPost, 'id' | 'createdAt'>): Promise<SocialPost | null> => {
+    if (!isConfigured()) {
+      const np: SocialPost = { ...post, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+      mockSocialPosts.unshift(np); return np;
+    }
+    const { data, error } = await supabase.from('social_posts').insert({
+      content: post.content, platform: post.platform, source_type: post.sourceType,
+      source_id: post.sourceId, status: post.status, scheduled_at: post.scheduledAt,
+    }).select().single();
+    if (error) { console.error('saveSocialPost:', error); return null; }
+    return { ...post, id: data.id, createdAt: data.created_at };
+  },
+
+  approveSocialPost: async (id: string): Promise<void> => {
+    if (!isConfigured()) { mockSocialPosts.forEach(p => { if (p.id === id) p.status = 'approved'; }); return; }
+    await supabase.from('social_posts').update({ status: 'approved' }).eq('id', id);
+  },
 };

@@ -119,6 +119,10 @@ export interface DirectoryListing {
   phone?: string;
   displayCategory: 'Meat' | 'Milk & Dairy' | 'Fruit & Veg' | 'Eggs & Poultry' | 'Mixed Farms' | 'Makers & Bakers' | 'Crafters';
   affiliateLinks?: { label: string; url: string }[];
+  outreachStatus?: 'not_contacted' | 'contacted' | 'responded' | 'opted_out';
+  outreachDate?: string;
+  response?: string;
+  claimed?: boolean;
 }
 
 export interface StaffMember {
@@ -164,6 +168,24 @@ export interface EventMakerLink {
   makerName?: string; // Fallback for makers not yet in directory
 }
 
+export interface PendingListing {
+  id: string;
+  businessName: string;
+  category: string;
+  location: string;
+  website?: string;
+  instagram?: string;
+  description: string;
+  sourceUrl?: string;
+  sourcePlatform?: string;
+  discoveredAt: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedAt?: string;
+  contactEmail?: string;
+  contactName?: string;
+  aiConfidenceScore?: number;
+}
+
 // Update existing types with linkage hints
 export interface HubEventWithMakers extends HubEvent {
   attendingMakers?: DirectoryListing[];
@@ -171,4 +193,56 @@ export interface HubEventWithMakers extends HubEvent {
 
 export interface MakerWithEvents extends DirectoryListing {
   upcomingEvents?: HubEvent[];
+}
+
+// ── Radio System ─────────────────────────────────────────────
+
+export interface SponsorRotation {
+  id: string;
+  name: string;
+  productDesc: string;
+  contactName: string;
+  contactEmail: string;
+  package: '15s' | '30s' | '60s' | 'sponsorship';
+  readsPerShow: number;
+  adScript: string;
+  renewalDate?: string;
+  status: 'active' | 'paused' | 'expired';
+  createdAt: string;
+}
+
+export interface AdSchedule {
+  id: string;
+  sponsorId: string;
+  sponsorName?: string;   // joined from sponsor_rotations
+  showDay: string;
+  timeSlot: string;
+  durationSeconds: number;
+  status: 'scheduled' | 'played' | 'skipped';
+  playedAt?: string;
+  createdAt: string;
+}
+
+export interface PlaylistTrack {
+  id: string;
+  title: string;
+  artist: string;
+  durationSeconds: number;
+  category: 'music' | 'jingle' | 'community' | 'ad' | 'emergency';
+  fileUrl: string;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SocialPost {
+  id: string;
+  content: string;
+  platform: 'instagram' | 'facebook' | 'twitter' | 'all';
+  sourceType: 'show' | 'event' | 'maker' | 'sponsor' | 'manual';
+  sourceId?: string;
+  status: 'draft' | 'approved' | 'posted';
+  scheduledAt?: string;
+  postedAt?: string;
+  createdAt: string;
 }
