@@ -256,7 +256,22 @@ export const Directory: React.FC = () => {
           ))}
         </div>
 
-        {filtered.length === 0 && (
+        {allListings.length === 0 && (
+          <div className="text-center py-24 max-w-md mx-auto">
+            <p className="text-3xl font-serif mb-4">Be the first to list your business</p>
+            <p className="text-brand-ink/50 mb-8">
+              No producers are listed yet. Apply now — it's free to get started and takes less than 2 minutes.
+            </p>
+            <Link
+              to="/apply"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-brand-olive text-white rounded-full font-bold hover:bg-brand-olive/90 transition-all"
+            >
+              Apply Now <ArrowRight size={18} />
+            </Link>
+          </div>
+        )}
+
+        {allListings.length > 0 && filtered.length === 0 && (
           <div className="text-center py-24">
             <p className="text-2xl text-brand-ink/40 font-serif italic">No producers found matching your search.</p>
           </div>
