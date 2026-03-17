@@ -36,6 +36,11 @@ import { JamGuide } from './pages/guides/JamGuide';
 import { ProjectGuide } from './pages/guides/ProjectGuide';
 import { DraftSpace } from './pages/DraftSpace';
 import WhatsOnAgent from './pages/WhatsOnAgent';
+import { ResetPassword } from './pages/ResetPassword';
+import { NotFound } from './pages/NotFound';
+import { Apply } from './pages/Apply';
+import { MembersArea } from './pages/MembersArea';
+import { CommunityRadio } from './pages/CommunityRadio';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -95,6 +100,11 @@ export default function App() {
                 <Route path="/guides/:guideId" element={<PageWrapper><ProjectGuide /></PageWrapper>} />
                 <Route path="/draft" element={<PageWrapper><DraftSpace /></PageWrapper>} />
                 <Route path="/whats-on-agent" element={<WhatsOnAgent />} />
+                <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
+                <Route path="/apply" element={<PageWrapper><Apply /></PageWrapper>} />
+                <Route path="/members-area" element={<PageWrapper><MembersArea /></PageWrapper>} />
+                <Route path="/community-radio" element={<PageWrapper><CommunityRadio /></PageWrapper>} />
+                <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
               </Routes>
             </main>
             <Footer />

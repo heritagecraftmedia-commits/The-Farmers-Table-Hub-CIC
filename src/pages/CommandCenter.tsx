@@ -7,6 +7,7 @@ import {
     TrendingUp, AlertTriangle, CheckCircle2, MoreVertical
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 // Import sub-components
 import { CentralOverview } from '../components/central/CentralOverview';
@@ -19,14 +20,15 @@ import { CentralAdvertisers } from '../components/central/CentralAdvertisers';
 import { CentralFinance } from '../components/central/CentralFinance';
 import { CentralSchedules } from '../components/central/CentralSchedules';
 import { CentralRecords } from '../components/central/CentralRecords';
+import { CentralEvents } from '../components/central/CentralEvents';
 
 type CentralTab =
     | 'overview' | 'people' | 'advertisers' | 'stock'
     | 'radio' | 'finance' | 'schedules' | 'tasks'
-    | 'records' | 'safemode';
+    | 'records' | 'safemode' | 'events';
 
 export const CommandCenter: React.FC = () => {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
     const [activeTab, setActiveTab] = useState<CentralTab>('overview');
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -62,7 +64,15 @@ export const CommandCenter: React.FC = () => {
         </button>
     );
 
-    if (!user) return <div className="p-24 text-center font-serif text-2xl">Access Denied</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-brand-cream flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-brand-olive/30 border-t-brand-olive rounded-full animate-spin" />
+        </div>
+    );
+
+    if (!user || (user.role !== 'founder' && user.role !== 'staff')) {
+        return <Navigate to="/login" replace state={{ message: 'Access restricted.' }} />;
+    }
 
     return (
         <div className="min-h-screen bg-brand-cream pb-20">
@@ -101,6 +111,7 @@ export const CommandCenter: React.FC = () => {
                         {tabButton('advertisers', 'Advertisers')}
                         {tabButton('finance', 'Finance')}
                         {tabButton('schedules', 'Rotas')}
+                        {tabButton('events', 'Events')}
                         {tabButton('records', 'Records')}
                     </div>
                 </div>
@@ -115,7 +126,7 @@ export const CommandCenter: React.FC = () => {
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3 }}
                     >
-                        {activeTab === 'overview' && <CentralOverview />}
+                        {activeTab === 'overview' && <CentralOverview onNavigate={(tab) => setActiveTab(tab as CentralTab)} />}
                         {activeTab === 'safemode' && <CentralSafeMode />}
                         {activeTab === 'people' && <CentralPeople />}
                         {activeTab === 'tasks' && <CentralTasks />}
@@ -124,6 +135,7 @@ export const CommandCenter: React.FC = () => {
                         {activeTab === 'advertisers' && <CentralAdvertisers />}
                         {activeTab === 'finance' && <CentralFinance />}
                         {activeTab === 'schedules' && <CentralSchedules />}
+                        {activeTab === 'events' && <CentralEvents />}
                         {activeTab === 'records' && <CentralRecords />}
                     </motion.div>
                 </AnimatePresence>
