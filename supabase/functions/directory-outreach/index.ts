@@ -135,14 +135,14 @@ serve(async (req) => {
     // Fetch eligible listings
     const { data: rows, error: dbError } = await admin
       .from('directory_listings')
-      .select('id, vendor_name, email, craft_category, location')
-      .not('email', 'is', null)
-      .neq('email', '')
+      .select('id, name, contact_email, category, location')
+      .not('contact_email', 'is', null)
+      .neq('contact_email', '')
       .eq('outreach_status', 'not_contacted');
 
     if (dbError) throw new Error(`DB query failed: ${dbError.message}`);
 
-    const eligible = (rows ?? []).filter(r => EMAIL_REGEX.test(r.email));
+    const eligible = (rows ?? []).filter(r => EMAIL_REGEX.test(r.contact_email));
     if (eligible.length === 0) {
       return json({ sent: 0, skipped: 0, errors: [], message: 'No eligible listings found.' });
     }
@@ -168,10 +168,10 @@ serve(async (req) => {
         // 1. Send email
         await transporter.sendMail({
           from: `"Scott Andrew — Farmers Table Hub" <${Deno.env.get('GMAIL_USER')}>`,
-          to: listing.email,
+          to: listing.contact_email,
           subject: 'Your free listing on The Farmers Table Hub directory',
-          text: emailText(listing.vendor_name, claimUrl),
-          html: emailHtml(listing.vendor_name, claimUrl),
+          text: emailText(listing.name, claimUrl),
+          html: emailHtml(listing.name, claimUrl),
         });
 
         // 2. Mark as contacted
@@ -190,8 +190,8 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               properties: {
-                email: listing.email,
-                company: listing.vendor_name,
+                email: listing.contact_email,
+                company: listing.name,
                 lifecyclestage: 'lead',
                 hs_lead_source: 'FTH Directory Outreach',
               },
@@ -206,7 +206,7 @@ serve(async (req) => {
         results.sent++;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        results.errors.push(`${listing.vendor_name}: ${msg}`);
+        results.errors.push(`${listing.name}: ${msg}`);
         results.skipped++;
       }
     }

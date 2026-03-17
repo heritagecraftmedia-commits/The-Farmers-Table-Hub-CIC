@@ -351,25 +351,34 @@ export const hubService = {
 
   getListings: async (): Promise<any[]> => {
     if (!isConfigured()) return mockListings;
-    const { data, error } = await supabase.from('directory_listings').select('*').order('vendor_name');
+    const { data, error } = await supabase.from('directory_listings').select('*').order('name');
     if (error) { console.error('getListings:', error); return mockListings; }
     return data.map((r: any) => ({
-      id: r.id, vendorName: r.vendor_name, craftCategory: r.craft_category,
-      location: r.location, website: r.website, bio: r.bio,
-      email: r.email, phone: r.phone,
-      socialLinks: r.social_links, listingTier: r.listing_tier,
-      approved: r.approved, published: r.published,
-      claimedAt: r.claimed_at, affiliateLinks: r.affiliate_links || [],
+      id: r.id,
+      vendorName: r.name,
+      craftCategory: r.category,
+      displayCategory: getListingCategory(r.category ?? ''),
+      location: r.location,
+      website: r.website ?? '',
+      bio: r.description ?? '',
+      email: r.contact_email ?? '',
+      phone: r.phone ?? '',
+      socialLinks: {},
+      affiliateLinks: [],
+      listingTier: r.tier ?? 'free',
+      approved: r.status === 'active',
+      published: r.status === 'active',
+      claimedAt: r.created_at,
       outreachStatus: r.outreach_status ?? 'not_contacted',
       outreachDate: r.outreach_date,
       response: r.response,
-      claimed: r.claimed ?? false
+      claimed: r.claimed ?? false,
     }));
   },
 
   approveListing: async (id: string) => {
     if (!isConfigured()) { mockListings.forEach(l => { if (l.id === id) l.approved = true; }); return; }
-    await supabase.from('directory_listings').update({ approved: true }).eq('id', id);
+    await supabase.from('directory_listings').update({ status: 'active' }).eq('id', id);
   },
 
   deleteListing: async (id: string) => {
@@ -394,30 +403,26 @@ export const hubService = {
   }): Promise<void> => {
     if (!isConfigured()) return; // local submitted state handles this case
     await supabase.from('directory_listings').insert({
-      vendor_name: application.businessName,
-      craft_category: application.category,
+      name: application.businessName,
+      category: application.category,
       location: application.location,
-      bio: application.description,
+      description: application.description,
       website: application.website,
-      listing_tier: 'free',
-      approved: false,
-      published: false,
-      claimed_at: new Date().toISOString(),
+      tier: 'free',
+      status: 'pending',
     });
   },
 
   approveClaimedVendor: async (claim: any): Promise<void> => {
     if (!isConfigured()) return;
     await supabase.from('directory_listings').insert({
-      vendor_name: claim.vendor_name,
-      craft_category: claim.craft_category,
+      name: claim.vendor_name,
+      category: claim.craft_category,
       location: claim.location,
-      bio: claim.bio,
+      description: claim.bio,
       website: claim.website,
-      listing_tier: 'free',
-      approved: true,
-      published: true,
-      claimed_at: new Date().toISOString(),
+      tier: 'free',
+      status: 'active',
     });
     await supabase.from('claimed_vendors').update({ approved: true }).eq('id', claim.id);
   },
@@ -556,18 +561,14 @@ export const hubService = {
     await supabase.from('pending_listings').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', id);
     // Publish to directory_listings
     await supabase.from('directory_listings').insert({
-      vendor_name: listing.businessName,
-      craft_category: listing.category,
+      name: listing.businessName,
+      category: listing.category,
       location: listing.location,
-      bio: listing.description,
+      description: listing.description,
       website: listing.website ?? '',
-      social_links: listing.instagram ? { instagram: listing.instagram } : {},
-      listing_tier: 'free',
-      approved: true,
-      published: true,
-      claimed_at: new Date().toISOString(),
-      email: listing.contactEmail ?? '',
-      display_category: 'Makers & Bakers',
+      tier: 'free',
+      status: 'active',
+      contact_email: listing.contactEmail ?? '',
     });
   },
 
