@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
+import { getInviteLink } from '../services/discordService';
 
 interface AuthContextType {
   user: User | null;
@@ -17,12 +18,16 @@ const isSupabaseConfigured = () => {
   return url && url !== 'https://placeholder.supabase.co' && url.includes('supabase.co');
 };
 
+const devAutoLogin = import.meta.env.VITE_DEV_AUTO_LOGIN === 'true';
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(
+    devAutoLogin ? { id: '1', name: 'Scott', role: 'founder' } : null
+  );
+  const [loading, setLoading] = useState(!devAutoLogin);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
+    if (devAutoLogin || !isSupabaseConfigured()) {
       setLoading(false);
       return;
     }
@@ -37,10 +42,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const role = (session.user.user_metadata?.role as UserRole) || 'customer';
         setUser({ id: session.user.id, name: session.user.email?.split('@')[0] || 'User', role });
+
+        // On new signup: log Discord invite link (replace with email send when email service is ready)
+        if (event === 'SIGNED_IN' && session.user.created_at === session.user.last_sign_in_at) {
+          getInviteLink().then(url => {
+            if (url) {
+              console.log(
+                `[FTH] New member signup — ${session.user.email}. Send Discord invite: ${url}`
+              );
+            }
+          });
+        }
       } else {
         setUser(null);
       }

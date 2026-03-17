@@ -23,6 +23,7 @@ export const Navbar: React.FC = () => {
     { name: 'Volunteer', path: '/volunteer' },
     { name: 'Resources', path: '/resources' },
     { name: 'Apply to Join', path: '/join' },
+    { name: 'Community', path: '/community' },
     { name: 'Members', path: '/members' },
     { name: 'Feedback', path: '/feedback' },
     { name: 'About', path: '/about' },
@@ -33,6 +34,7 @@ export const Navbar: React.FC = () => {
     { name: 'Food Directory', path: '/directory' },
     { name: 'What\'s On', path: '/whats-on' },
     { name: 'Makers Hub', path: '/makers-hub' },
+    { name: 'Community', path: '/community' },
   ];
 
   return (
