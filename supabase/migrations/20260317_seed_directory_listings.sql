@@ -1,87 +1,159 @@
--- Seed: 3 real-looking Surrey/Hampshire directory listings
--- Run this in Supabase: Dashboard → SQL Editor → paste and run
+-- Step 2 of 2: Seed directory_listings with 146 UK food producers
+-- Run this AFTER 20260317_create_directory_listings_table.sql has succeeded.
 
--- Create applications table (required by /apply form)
-CREATE TABLE IF NOT EXISTS applications (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  name text NOT NULL,
-  email text NOT NULL,
-  business_name text,
-  type text NOT NULL CHECK (type IN ('Grower', 'Beekeeper', 'Maker', 'Other')),
-  description text,
-  location text,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-  created_at timestamptz DEFAULT now()
-);
-
-ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
-
--- Allow anyone to submit an application (insert only)
-CREATE POLICY "Anyone can submit application"
-  ON applications FOR INSERT
-  WITH CHECK (true);
-
--- Only founder can read applications
-CREATE POLICY "Founder can read applications"
-  ON applications FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND (auth.users.raw_user_meta_data->>'role') = 'founder'
-    )
-  );
-
--- Seed 3 directory listings
-INSERT INTO directory_listings
-  (id, vendor_name, craft_category, display_category, location, bio,
-   website, email, phone, social_links, listing_tier, approved, published, claimed_at)
+INSERT INTO directory_listings (name, category, location, contact_email, website, phone, status, tier)
 VALUES
-  (
-    gen_random_uuid(),
-    'Alton Honey Farm',
-    'Artisan Honey',
-    'Makers & Bakers',
-    'Alton, Hampshire',
-    'Family-run apiary in the Hampshire countryside producing raw, unfiltered honey from wildflower meadows. Established in 1987.',
-    'altonhoneyfarm.co.uk',
-    'hello@altonhoneyfarm.co.uk',
-    '01420 123456',
-    '{"instagram": "altonhoneyfarm"}',
-    'featured',
-    true,
-    true,
-    now()
-  ),
-  (
-    gen_random_uuid(),
-    'Surrey Hills Cheesemakers',
-    'Artisan Cheese',
-    'Milk & Dairy',
-    'Shere, Surrey',
-    'Small-batch soft and aged cheeses made from local Jersey milk. Available at Farnham Farmers Market every second Saturday.',
-    'surreyhillscheese.co.uk',
-    '',
-    '',
-    '{}',
-    'supporter',
-    true,
-    true,
-    now()
-  ),
-  (
-    gen_random_uuid(),
-    'The Farnham Herb Garden',
-    'Herbs & Plants',
-    'Fruit & Veg',
-    'Farnham, Surrey',
-    'Organic herb grower supplying restaurants and home cooks across East Hampshire. Lavender, rosemary, thyme and seasonal specials.',
-    '',
-    '',
-    '',
-    '{}',
-    'free',
-    true,
-    true,
-    now()
-  );
+  -- Meat Products
+  ('Manor Farm Surrey', 'Meat Products', 'Wotton, Surrey', 'info@manorfarmsurrey.com', 'manorfarmsurrey.com', NULL, 'active', 'free'),
+  ('Brightleigh Farm', 'Meat Products', 'RH1 5PY', 'penny@brightleighfarm.co.uk', 'brightleighfarm.co.uk', '07775924141', 'active', 'free'),
+  ('Halliloovalley Longhorns Warren Barn Farm', 'Meat Products', 'CR3 7HN', NULL, NULL, NULL, 'active', 'free'),
+  ('Lucies Lambs', 'Meat Products', 'TN13 1TP', NULL, NULL, NULL, 'active', 'free'),
+  ('Seal Community Farm', 'Meat Products', 'TN15 0DJ', NULL, NULL, NULL, 'active', 'free'),
+  ('White Rocks Farm Shop', 'Meat Products', 'TN15 0SL', NULL, NULL, NULL, 'active', 'free'),
+  ('Mote Farm', 'Meat Products', 'TN15 0NT', NULL, NULL, NULL, 'active', 'free'),
+  ('Horse Grove Farm', 'Meat Products', 'TN6 3LU', NULL, NULL, NULL, 'active', 'free'),
+  ('Beales Farm Charcuterie', 'Meat Products', 'TN3 9JA', NULL, NULL, NULL, 'active', 'free'),
+  ('Boring Wheel Farm', 'Meat Products', 'TN22 3DU', NULL, NULL, NULL, 'active', 'free'),
+  ('Butter Box Farm', 'Meat Products', 'RH17 7NW', NULL, NULL, NULL, 'active', 'free'),
+  ('South Brockwells Farm', 'Meat Products', 'TN22 5QS', NULL, NULL, NULL, 'active', 'free'),
+  ('Food and French Beef', 'Meat Products', 'BN8 5SN', NULL, NULL, NULL, 'active', 'free'),
+  ('BW Carr Farms', 'Meat Products', 'BN2 7BA', NULL, NULL, NULL, 'active', 'free'),
+  ('Saddlescombe Farm', 'Meat Products', 'BN45 7DB', NULL, NULL, NULL, 'active', 'free'),
+  ('Calcot Farm Produce', 'Meat Products', 'BN44 3AA', NULL, NULL, NULL, 'active', 'free'),
+  ('Danefold Farms', 'Meat Products', 'RH13 8NA', NULL, NULL, NULL, 'active', 'free'),
+  ('Knepp Wild Range Meat', 'Meat Products', 'West Grinstead, West Sussex', 'wildrange@knepp.co.uk', 'kneppwildrangemeat.co.uk', '01403 741235', 'active', 'free'),
+  ('Westerlands', 'Meat Products', 'GU28 0QJ', NULL, NULL, NULL, 'active', 'free'),
+  ('Holme Farm Venison', 'Meat Products', 'PO9 6DT', 'lizzy@holmefarmvenison.co.uk', 'holmefarmvenison.co.uk', '07722319250', 'active', 'free'),
+  ('Isle of Wight Deer Farm', 'Meat Products', 'PO30 1YS', NULL, NULL, NULL, 'active', 'free'),
+  ('Cheverton Farm', 'Meat Products', 'PO30 3JE', NULL, NULL, NULL, 'active', 'free'),
+  ('Brightstone Belted Galloways', 'Meat Products', 'GU34 3ET', NULL, NULL, NULL, 'active', 'free'),
+  ('Street Croft Farm', 'Meat Products', 'RG25 2PQ', 'info@streetcroftfarm.co.uk', NULL, '07775596388', 'active', 'free'),
+  ('The Woodland Pig Company', 'Meat Products', 'RG27 8BU', NULL, NULL, NULL, 'active', 'free'),
+  ('Newlyns Farm Shop', 'Meat Products', 'RG29 1HA', NULL, NULL, NULL, 'active', 'free'),
+  ('Field to Feast', 'Meat Products', 'RG7 1LL', 'hatty.thurley@gmail.com', NULL, NULL, 'active', 'free'),
+  ('Beenham Park Produce', 'Meat Products', 'RG7 5LT', NULL, NULL, NULL, 'active', 'free'),
+  ('Test Valley Devons', 'Meat Products', 'SO20 6AL', NULL, NULL, NULL, 'active', 'free'),
+  ('Springbottom Farm', 'Meat Products', 'SP4 7BY', NULL, NULL, NULL, 'active', 'free'),
+  ('Puckshipton Beef', 'Meat Products', 'SN10 3RQ', NULL, NULL, NULL, 'active', 'free'),
+  ('Bridge Farm', 'Meat Products', 'SN10 3NR', NULL, NULL, NULL, 'active', 'free'),
+  ('The Gourmet Goat Farmer', 'Meat Products', 'SN4 9NW', NULL, NULL, NULL, 'active', 'free'),
+  ('Grove Farm Butchery', 'Meat Products', 'SN8 2FJ', NULL, NULL, NULL, 'active', 'free'),
+  ('Great Cotmarsh Farm', 'Meat Products', 'SN4 7RA', NULL, NULL, NULL, 'active', 'free'),
+  ('Cantorist Farm', 'Meat Products', 'OX12 9UT', NULL, NULL, NULL, 'active', 'free'),
+  ('Westend Farm', 'Meat Products', 'OX18 4AW', NULL, NULL, NULL, 'active', 'free'),
+  ('Northmoor Meat Company', 'Meat Products', 'OX29 5TA', NULL, NULL, NULL, 'active', 'free'),
+  ('One Elm Farm Shop', 'Meat Products', 'OX29 7YL', NULL, NULL, NULL, 'active', 'free'),
+  ('Shilbrook Feeds', 'Meat Products', 'OX18 4AN', NULL, NULL, NULL, 'active', 'free'),
+  ('Hollands Farm Beef', 'Meat Products', 'OX44 7NR', NULL, NULL, NULL, 'active', 'free'),
+  ('New Farm Meats Oxford', 'Meat Products', 'OX3 0QG', NULL, NULL, NULL, 'active', 'free'),
+  ('Hampton Gay Farms', 'Meat Products', 'OX5 2QH', NULL, NULL, NULL, 'active', 'free'),
+  ('Browns at Park Farm', 'Meat Products', 'OX25 4AL', NULL, NULL, NULL, 'active', 'free'),
+  ('Flocks and Fields', 'Meat Products', 'MK18 3PG', NULL, NULL, NULL, 'active', 'free'),
+  ('Oving Dexter Beef', 'Meat Products', 'HP22 4HL', NULL, NULL, NULL, 'active', 'free'),
+  ('PE Mead and Sons Farm Shop', 'Meat Products', 'HP23 4NT', NULL, NULL, NULL, 'active', 'free'),
+  ('Bullbeggars Beef and Lamb', 'Meat Products', 'AL3 8DH', 'uptonregan@gmail.com', NULL, '07973 714 039', 'active', 'free'),
+  ('Pepperstock Herefords', 'Meat Products', 'LU1 4LH', NULL, NULL, NULL, 'active', 'free'),
+
+  -- Milk and Dairy
+  ('Kingcott Farm', 'Milk and Dairy', 'TN12 0ER', NULL, NULL, NULL, 'active', 'free'),
+  ('Park Farm Brasted', 'Milk and Dairy', 'TN16 1LL', NULL, NULL, NULL, 'active', 'free'),
+  ('Nutfield Dairy', 'Milk and Dairy', 'RH1 4EH', NULL, NULL, NULL, 'active', 'free'),
+  ('Latchetts Farm', 'Milk and Dairy', 'TN22 3RG', NULL, NULL, NULL, 'active', 'free'),
+  ('Downsview Farm', 'Milk and Dairy', 'BN8 5UT', NULL, NULL, NULL, 'active', 'free'),
+  ('Hook and Son', 'Milk and Dairy', 'BN27 1ER', NULL, NULL, NULL, 'active', 'free'),
+  ('The Traditional Cheese Dairy', 'Milk and Dairy', 'TN21 0PG', NULL, NULL, NULL, 'active', 'free'),
+  ('Dawlicious Jersey Ice Cream', 'Milk and Dairy', 'SG13 7RZ', NULL, NULL, NULL, 'active', 'free'),
+  ('The Calf at the Foot Dairy', 'Milk and Dairy', 'SG4 7ED', NULL, NULL, NULL, 'active', 'free'),
+  ('Wayside Farm', 'Milk and Dairy', 'WD4 8EA', NULL, NULL, NULL, 'active', 'free'),
+  ('Clipstone Dairy', 'Milk and Dairy', 'LU7 9NZ', NULL, NULL, NULL, 'active', 'free'),
+  ('Utterly Fresh Raw Milk UK', 'Milk and Dairy', 'MK18 3LF', NULL, NULL, NULL, 'active', 'free'),
+  ('Barn Owl Farm Shop', 'Milk and Dairy', 'NN13 5SD', NULL, NULL, NULL, 'active', 'free'),
+  ('The Milk Churn', 'Milk and Dairy', 'OX27 0EY', NULL, NULL, NULL, 'active', 'free'),
+  ('Addinggrove Dairy', 'Milk and Dairy', 'HP18 9SF', 'lisa@bjrural.com', NULL, '07801 229708', 'active', 'free'),
+  ('Hitcham Dairy Ice Cream', 'Milk and Dairy', 'SL1 7AD', NULL, NULL, NULL, 'active', 'free'),
+  ('Lacey''s Family Farm', 'Milk and Dairy', 'HP14 3LP', NULL, NULL, NULL, 'active', 'free'),
+  ('Nettlebed Creamery', 'Milk and Dairy', 'RG9 5DA', NULL, NULL, NULL, 'active', 'free'),
+  ('The Dairy at Honeydale', 'Milk and Dairy', 'OX7 6BJ', NULL, NULL, NULL, 'active', 'free'),
+  ('The Sandy Hill Mob', 'Milk and Dairy', 'GL54 3DH', NULL, NULL, NULL, 'active', 'free'),
+  ('Roaming Dairy Ltd', 'Milk and Dairy', 'RG26 5RJ', NULL, NULL, NULL, 'active', 'free'),
+  ('Moos on Thames', 'Milk and Dairy', 'SN6 6QY', NULL, NULL, NULL, 'active', 'free'),
+  ('Dora''s Dairy', 'Milk and Dairy', 'SN5 4EA', NULL, NULL, NULL, 'active', 'free'),
+  ('Berkeley Farm Dairy', 'Milk and Dairy', 'SN4 9AQ', NULL, NULL, NULL, 'active', 'free'),
+  ('Brinkworth Dairy', 'Milk and Dairy', 'SN15 5AZ', NULL, NULL, NULL, 'active', 'free'),
+  ('Lacock Dairy', 'Milk and Dairy', 'SN15 2PN', NULL, NULL, NULL, 'active', 'free'),
+  ('Milk at Mile Elm', 'Milk and Dairy', 'SN11 0NE', NULL, NULL, NULL, 'active', 'free'),
+  ('Moo 2 Yoo', 'Milk and Dairy', 'SN10 3PA', NULL, NULL, NULL, 'active', 'free'),
+  ('The Milk Yard', 'Milk and Dairy', 'SN8 3BQ', NULL, NULL, NULL, 'active', 'free'),
+  ('Four Brothers Cheese', 'Milk and Dairy', 'SP11 9DR', NULL, NULL, NULL, 'active', 'free'),
+  ('Pies Farm Milk Station', 'Milk and Dairy', 'GU34 3ET', NULL, NULL, NULL, 'active', 'free'),
+  ('Meadow Cottage Farm', 'Milk and Dairy', 'GU35 8SS', NULL, NULL, NULL, 'active', 'free'),
+  ('Buddington Bottled', 'Milk and Dairy', 'GU29 0QP', NULL, NULL, NULL, 'active', 'free'),
+  ('Susana and Daughters', 'Milk and Dairy', 'GU29 0AY', NULL, NULL, NULL, 'active', 'free'),
+  ('Southview Farm Dairy', 'Milk and Dairy', 'RH20 1NP', NULL, NULL, NULL, 'active', 'free'),
+  ('Ides Barn Dairy', 'Milk and Dairy', 'PO18 0JJ', NULL, NULL, NULL, 'active', 'free'),
+  ('Caroline''s Dairy', 'Milk and Dairy', 'PO20 7RN', NULL, NULL, NULL, 'active', 'free'),
+  ('Northney Dairy', 'Milk and Dairy', 'PO11 0SE', NULL, NULL, NULL, 'active', 'free'),
+  ('Briddlesford Dairy', 'Milk and Dairy', 'PO33 4RY', NULL, NULL, NULL, 'active', 'free'),
+  ('Meon Valley Milk', 'Milk and Dairy', 'SO32 2JW', NULL, NULL, NULL, 'active', 'free'),
+  ('Daisy Meadow Dairy', 'Milk and Dairy', 'SO30 2AA', 'hello@daisymeadowdairy.co.uk', 'daisymeadowdairy.co.uk', '07732 011 437', 'active', 'free'),
+  ('Hiltonbury Jerseys', 'Milk and Dairy', 'SO21 2AY', NULL, NULL, '07977 933 470', 'active', 'free'),
+  ('Michelmersh Manor Farm', 'Milk and Dairy', 'SO51 0NT', NULL, NULL, NULL, 'active', 'free'),
+  ('Dandy''s Ford Dairy', 'Milk and Dairy', 'SO51 0GL', NULL, NULL, NULL, 'active', 'free'),
+  ('Hgglers Farm Micro Dairy', 'Milk and Dairy', 'PO17 5PQ', NULL, NULL, NULL, 'active', 'free'),
+  ('Nunton Dairy', 'Milk and Dairy', 'SP5 4HY', NULL, NULL, NULL, 'active', 'free'),
+  ('Allen Valley Milk', 'Milk and Dairy', 'BH21 4ED', NULL, NULL, NULL, 'active', 'free'),
+  ('Church Farm Dairy', 'Milk and Dairy', 'SP7 9AS', NULL, NULL, NULL, 'active', 'free'),
+  ('Milly Moo''s', 'Milk and Dairy', 'BA12 0NS', NULL, NULL, NULL, 'active', 'free'),
+
+  -- Fruit and Vegetables
+  ('Hampshire Market Garden CIC', 'Fruit and Vegetables', 'SP5 1LE', 'hello@hampshiremarketgarden.co.uk', NULL, '07591 378149', 'active', 'free'),
+  ('Lusso Leaf', 'Fruit and Vegetables', 'SO20 6HS', NULL, NULL, NULL, 'active', 'free'),
+  ('Heckfield Home Farm', 'Fruit and Vegetables', 'RG27 0LA', NULL, NULL, NULL, 'active', 'free'),
+  ('Eden Greens Urban Farm', 'Fruit and Vegetables', 'GU22 0BW', NULL, NULL, NULL, 'active', 'free'),
+  ('Pittfield Veg', 'Fruit and Vegetables', 'BN6 9LR', 'sophie@pittfieldveg.co.uk', NULL, '07835 011505', 'active', 'free'),
+  ('The Modern Kitchen Garden', 'Fruit and Vegetables', 'PO33 4BP', NULL, NULL, NULL, 'active', 'free'),
+  ('Sandy Lane Farm', 'Fruit and Vegetables', 'OX9 2LA', NULL, NULL, NULL, 'active', 'free'),
+  ('Rectory Farm Oxford', 'Fruit and Vegetables', 'OX33 1HF', NULL, NULL, NULL, 'active', 'free'),
+  ('Berryhill Farm', 'Fruit and Vegetables', 'BH9 3NH', NULL, NULL, NULL, 'active', 'free'),
+  ('The Veg Lady', 'Fruit and Vegetables', 'DT11 8DB', NULL, NULL, NULL, 'active', 'free'),
+  ('Dowdings Apple Juice', 'Fruit and Vegetables', 'BA9 8JP', NULL, NULL, NULL, 'active', 'free'),
+  ('Neil''s Farm', 'Fruit and Vegetables', 'BA12 7PW', NULL, NULL, NULL, 'active', 'free'),
+  ('Moonacre Farm', 'Fruit and Vegetables', 'BA11 3RP', NULL, NULL, NULL, 'active', 'free'),
+  ('Leigh Court Farm', 'Fruit and Vegetables', 'BS8 3RA', NULL, NULL, NULL, 'active', 'free'),
+  ('Forbidden Fruit and Veg', 'Fruit and Vegetables', 'GL9 1DJ', 'tracy@tracyworcester.org.uk', NULL, '07890 971 721', 'active', 'free'),
+  ('Elmore Fruit Farm', 'Fruit and Vegetables', 'GL2 3SG', NULL, NULL, NULL, 'active', 'free'),
+  ('Little Marcle Organic Produce', 'Fruit and Vegetables', 'HR8 2JN', 'joshua@lmop.farm', NULL, '07771 982792', 'active', 'free'),
+  ('Lower Ladysden Farm', 'Fruit and Vegetables', 'TN17 1JX', NULL, NULL, NULL, 'active', 'free'),
+  ('The Potato Shop', 'Fruit and Vegetables', 'TN30 7LR', NULL, NULL, NULL, 'active', 'free'),
+  ('Perry Court Farm', 'Fruit and Vegetables', 'TN25 4ES', NULL, NULL, NULL, 'active', 'free'),
+  ('Lower Cock Ash Organics', 'Fruit and Vegetables', 'TN25 6DY', NULL, NULL, NULL, 'active', 'free'),
+  ('East Kent Growers', 'Fruit and Vegetables', 'CT3 1ES', 'michelle.eastkentgrowers@gmail.com', NULL, '01227 532082', 'active', 'free'),
+  ('Ripple Farm Organics', 'Fruit and Vegetables', 'CT4 7EB', NULL, NULL, NULL, 'active', 'free'),
+  ('The Wonky Parsnip', 'Fruit and Vegetables', 'CT4 7LG', NULL, NULL, NULL, 'active', 'free'),
+  ('Sarah Greens Organic', 'Fruit and Vegetables', 'CM0 7SP', NULL, NULL, NULL, 'active', 'free'),
+  ('Wild Farm', 'Fruit and Vegetables', 'WD7 9HJ', 'amber@wildfarm.uk', NULL, '07500 885315', 'active', 'free'),
+  ('Stort Valley Organics', 'Fruit and Vegetables', 'SG12 8JZ', NULL, NULL, NULL, 'active', 'free'),
+  ('Tewin Greens', 'Fruit and Vegetables', 'AL6 0JB', NULL, NULL, NULL, 'active', 'free'),
+  ('Augernik Fruit Farm', 'Fruit and Vegetables', 'DY14 0HH', NULL, NULL, NULL, 'active', 'free'),
+  ('Fruitfields', 'Fruit and Vegetables', 'BN45 8NZ', NULL, NULL, NULL, 'active', 'free'),
+  ('The Apple Farm Snitterfield', 'Fruit and Vegetables', 'CV37 0QA', NULL, NULL, NULL, 'active', 'free'),
+  ('Five Acre Community Farm', 'Fruit and Vegetables', 'CV8 3LG', 'info@fiveacrefarm.org.uk', NULL, '02477 360361', 'active', 'free'),
+  ('Poplars Farm Shop', 'Fruit and Vegetables', 'CV11 6JG', 'richard@poplarsfarm.co.uk', NULL, '07980 686902', 'active', 'free'),
+  ('Village Farm Shop Diseworth', 'Fruit and Vegetables', 'DE74 2TT', 'matthewdaikin@btinternet.com', NULL, '07810 510538', 'active', 'free'),
+  ('The Farm Shed', 'Fruit and Vegetables', 'NN6 9SH', NULL, NULL, NULL, 'active', 'free'),
+  ('Alpino Garden Farm', 'Fruit and Vegetables', 'PE28 0PE', 'alpinogardenfarm@outlook.com', NULL, NULL, 'active', 'free'),
+  ('WA Pearce and Sons Potatoes', 'Fruit and Vegetables', 'PE6 8RW', 'wppearceandsons@hotmail.com', NULL, '07957987058', 'active', 'free'),
+  ('Bank Farm', 'Fruit and Vegetables', 'PE26 2RF', NULL, NULL, NULL, 'active', 'free'),
+  ('D Voutt Farming', 'Fruit and Vegetables', 'PE14 9TB', 'danielvoutt@yahoo.co.uk', NULL, '07900 818810', 'active', 'free'),
+  ('Petite Peonys', 'Fruit and Vegetables', 'PE13 4UB', 'Wilock.farm@gmail.com', NULL, '07714 409894', 'active', 'free'),
+  ('Bedlam Farms', 'Fruit and Vegetables', 'PE15 0DP', NULL, NULL, NULL, 'active', 'free'),
+  ('Clean Greens Market Garden', 'Fruit and Vegetables', 'PE38 0EG', 'cleangreensorganic@outlook.com', NULL, '07752 032808', 'active', 'free'),
+  ('Waterland Organics', 'Fruit and Vegetables', 'CB25 9HF', 'contact@waterlandorganics.com', NULL, '07867 744870', 'active', 'free'),
+  ('Flourish Produce', 'Fruit and Vegetables', 'CB21 6BS', NULL, NULL, NULL, 'active', 'free'),
+  ('Sunshine and Green', 'Fruit and Vegetables', 'CO10 8BS', 'info@sunshineandgreen.co.uk', NULL, '07825 516735', 'active', 'free'),
+  ('Little Haugh Farm', 'Fruit and Vegetables', 'IP31 3LH', NULL, NULL, NULL, 'active', 'free'),
+
+  -- Eggs and Poultry
+  ('Duckpit Valley Turkeys', 'Eggs and Poultry', 'CT4 5QB', 'hello@duckpitvalley.co.uk', NULL, '01227 700062', 'active', 'free')
+
+ON CONFLICT DO NOTHING;
