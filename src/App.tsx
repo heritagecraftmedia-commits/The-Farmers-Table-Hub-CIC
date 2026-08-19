@@ -32,7 +32,6 @@ import { MakersDirectory } from './pages/MakersDirectory';
 import { SupportMakers } from './pages/SupportMakers';
 import { BecomeAMaker } from './pages/BecomeAMaker';
 import { Notes } from './pages/Notes';
-import { JamGuide } from './pages/guides/JamGuide';
 import { ProjectGuide } from './pages/guides/ProjectGuide';
 import { DraftSpace } from './pages/DraftSpace';
 import WhatsOnAgent from './pages/WhatsOnAgent';
@@ -42,6 +41,7 @@ import { Apply } from './pages/Apply';
 import { MembersArea } from './pages/MembersArea';
 import { CommunityRadio } from './pages/CommunityRadio';
 import { Community } from './pages/Community';
+import { PracticeWorkbook } from './pages/PracticeWorkbook';
 import { AnimatePresence, motion } from 'motion/react';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -106,6 +106,7 @@ export default function App() {
                 <Route path="/apply" element={<PageWrapper><Apply /></PageWrapper>} />
                 <Route path="/members-area" element={<PageWrapper><MembersArea /></PageWrapper>} />
                 <Route path="/community-radio" element={<PageWrapper><CommunityRadio /></PageWrapper>} />
+                <Route path="/workbook" element={<PageWrapper><PracticeWorkbook /></PageWrapper>} />
                 <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
               </Routes>
             </main>
@@ -116,4 +117,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-
