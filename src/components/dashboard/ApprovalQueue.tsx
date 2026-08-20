@@ -60,14 +60,7 @@ export const ApprovalQueue: React.FC<Props> = ({ listings, onApprove, onReject }
                                         {listing.bioText || listing.description}
                                     </p>
                                 )}
-                                {(listing.profileUrl || listing.website) && (
-                                    
-                                        href={listing.profileUrl || listing.website}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-brand-olive mt-2 inline-flex items-center gap-1"
-                                    >
-                                        <ExternalLink size={12} /> View Profile
+                              {(listing.profileUrl || listing.website) && (<a href={listing.profileUrl || listing.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-olive mt-2 inline-flex items-center gap-1"><ExternalLink size={12} /> View Profile</a>)}
                                     </a>
                                 )}
                                 {listing.discoveredAt && (
