@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ExternalLink, Star, Crown, ArrowRight } from 'lucide-react';
+import { MapPin, ExternalLink, Star, Crown, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { hubService } from '../services/hubService';
 import { DirectoryListing } from '../types';
+import { InclusiveDirectorySearch } from '../components/InclusiveDirectorySearch';
 
 const CATEGORY_ORDER: DirectoryListing['displayCategory'][] = [
   'Meat', 'Milk & Dairy', 'Fruit & Veg', 'Eggs & Poultry', 'Mixed Farms', 'Makers & Bakers', 'Crafters'
@@ -30,9 +31,11 @@ export const Directory: React.FC = () => {
 
   const filtered = allListings
     .filter(v => {
-      const matchesSearch = v.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.craftCategory.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const normalizedSearch = searchTerm.trim().toLowerCase();
+      const matchesSearch = !normalizedSearch ||
+        v.vendorName.toLowerCase().includes(normalizedSearch) ||
+        v.craftCategory.toLowerCase().includes(normalizedSearch) ||
+        v.location.toLowerCase().includes(normalizedSearch);
       const matchesCat = selectedCategory === 'All' || v.displayCategory === selectedCategory;
       return matchesSearch && matchesCat;
     });
@@ -160,19 +163,14 @@ export const Directory: React.FC = () => {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-brand-olive/5 mb-12 flex flex-col md:flex-row gap-6 items-center sticky top-24 z-10">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/30" size={20} />
-            <input
-              type="text"
-              placeholder="Search by name, category, or area…"
-              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-brand-cream/50 border-none focus:ring-2 focus:ring-brand-olive/20 text-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-wrap gap-2 justify-center">
+        {/* Inclusive Search */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-brand-olive/5 mb-12 sticky top-24 z-10">
+          <InclusiveDirectorySearch
+            value={searchTerm}
+            onChange={setSearchTerm}
+            onSubmit={() => setSearchTerm(searchTerm.trim())}
+          />
+          <div className="flex flex-wrap gap-2 justify-center mt-4">
             {counts.map(({ cat, count }) => (
               <button
                 key={cat}
