@@ -7,16 +7,18 @@ export const FeedbackBookPrompt: React.FC = () => {
   const navigate = useNavigate();
   if (closed) return null;
 
+  const startFeedback = () => navigate('/feedback?open=1');
+
   return (
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm print:hidden">
       <div
         role="button"
         tabIndex={0}
-        onClick={() => navigate('/feedback')}
+        onClick={startFeedback}
         onKeyDown={event => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            navigate('/feedback');
+            startFeedback();
           }
         }}
         aria-label="Start the Farmers Table Feedback Book"
