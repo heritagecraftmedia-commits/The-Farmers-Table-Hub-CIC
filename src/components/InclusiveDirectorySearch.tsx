@@ -78,28 +78,39 @@ export const InclusiveDirectorySearch: React.FC<InclusiveDirectorySearchProps> =
 
   return (
     <div className="w-full" role="search" aria-label="Farmers Table directory search">
-      <div className="relative flex items-center">
-        <Search aria-hidden="true" className="absolute left-4 text-brand-ink/30" size={20} />
-        <input
-          type="search"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') onSubmit?.();
-          }}
-          placeholder={placeholder}
-          aria-label="Search the Farmers Table directory"
-          className="w-full pl-12 pr-14 py-4 rounded-2xl bg-brand-cream/50 border-none focus:ring-2 focus:ring-brand-olive/20 text-lg"
-        />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex items-center flex-1">
+          <Search aria-hidden="true" className="absolute left-4 text-brand-ink/30" size={20} />
+          <input
+            type="search"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') onSubmit?.();
+            }}
+            placeholder={placeholder}
+            aria-label="Search the Farmers Table directory"
+            className="w-full pl-12 pr-14 py-4 rounded-2xl bg-brand-cream/50 border-none focus:ring-2 focus:ring-brand-olive/20 text-lg"
+          />
+          <button
+            type="button"
+            onClick={toggleVoice}
+            aria-label={listening ? 'Stop voice search' : 'Start voice search'}
+            aria-pressed={listening}
+            title={listening ? 'Stop listening' : 'Search by voice'}
+            className={`absolute right-2 p-3 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-brand-olive/40 ${listening ? 'bg-brand-olive text-white' : 'text-brand-olive hover:bg-brand-olive/10'}`}
+          >
+            {listening ? <MicOff size={20} aria-hidden="true" /> : <Mic size={20} aria-hidden="true" />}
+          </button>
+        </div>
         <button
           type="button"
-          onClick={toggleVoice}
-          aria-label={listening ? 'Stop voice search' : 'Start voice search'}
-          aria-pressed={listening}
-          title={listening ? 'Stop listening' : 'Search by voice'}
-          className={`absolute right-2 p-3 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-brand-olive/40 ${listening ? 'bg-brand-olive text-white' : 'text-brand-olive hover:bg-brand-olive/10'}`}
+          onClick={onSubmit}
+          aria-label="Search the Farmers Table directory"
+          className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-brand-olive text-white font-bold hover:bg-brand-olive/90 transition-all focus:outline-none focus:ring-2 focus:ring-brand-olive/40 min-h-[56px]"
         >
-          {listening ? <MicOff size={20} aria-hidden="true" /> : <Mic size={20} aria-hidden="true" />}
+          <Search size={18} aria-hidden="true" />
+          <span>Search</span>
         </button>
       </div>
       <div className="min-h-6 mt-2" aria-live="polite">
