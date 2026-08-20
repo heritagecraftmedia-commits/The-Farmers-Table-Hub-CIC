@@ -4,10 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Farmers Table Hub CIC | Local Food & Community Radio</title>
+    <style>
+      @media print {
+        .feedback-print-qr { display: flex !important; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        if (window.location.pathname !== '/feedback') return;
+        var observer = new MutationObserver(function () {
+          if (document.querySelector('.feedback-print-qr') || !document.querySelector('h1')) return;
+          var box = document.createElement('div');
+          box.className = 'feedback-print-qr';
+          box.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:18px;margin:20px auto 10px;padding:16px;border:2px solid #ddd;border-radius:18px;max-width:520px;background:#fff;';
+          box.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fthe-farmers-table-hub-cic.vercel.app%2Ffeedback" alt="QR code for the Farmers Table Feedback Book" width="180" height="180" style="display:block;image-rendering:pixelated;" /><div style="text-align:left;font-family:Arial,sans-serif;max-width:260px"><strong style="font-size:18px">Scan to give feedback</strong><p style="margin:8px 0 0;color:#555">Use your phone camera to open the Farmers Table Feedback Book.</p><p style="margin:8px 0 0;font-size:12px;color:#777">Test this QR code before printing larger batches.</p></div>';
+          document.querySelector('h1').parentElement.insertBefore(box, document.querySelector('h1'));
+        });
+        observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+      })();
+    </script>
   </body>
 </html>
-
