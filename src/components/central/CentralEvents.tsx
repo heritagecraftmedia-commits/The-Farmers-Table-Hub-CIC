@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { hubService } from '../../services/hubService';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface CommunityEvent {
   id: string;
@@ -20,7 +13,7 @@ interface CommunityEvent {
 
 export const CentralEvents: React.FC = () => {
   const [search, setSearch] = useState('');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,20 +46,69 @@ export const CentralEvents: React.FC = () => {
     return () => { cancelled = true; };
   }, []);
 
+  const categories = ['all', ...Array.from(new Set(events.map((event) => event.category)))];
   const filteredEvents = events.filter((event) => {
     const searchTerm = search.toLowerCase().trim();
-    return (event.title.toLowerCase().includes(searchTerm) || event.description.toLowerCase().includes(searchTerm)) &&
-      (activeCategory === 'all' || event.category === activeCategory) &&
-      (!selectedDate || new Date(event.date).toDateString() === selectedDate.toDateString());
+    const matchesSearch = !searchTerm || event.title.toLowerCase().includes(searchTerm) || event.description.toLowerCase().includes(searchTerm);
+    const matchesCategory = activeCategory === 'all' || event.category === activeCategory;
+    const matchesDate = !selectedDate || event.date.slice(0, 10) === selectedDate;
+    return matchesSearch && matchesCategory && matchesDate;
   });
 
-  return <div className="container mx-auto px-4 py-8 space-y-6">
-    <div className="flex flex-col space-y-2 md:flex-row md:justify-between md:items-center"><div><h1 className="text-3xl font-bold tracking-tight">Central Events</h1><p className="text-muted-foreground">Discover community gatherings, radio shows, and local workshops.</p></div><Button onClick={() => { window.location.href = '/submit-listing'; }}>Host an Event</Button></div>
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center"><Input placeholder="Search events..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" /><Popover><PopoverTrigger asChild><Button variant="outline">{selectedDate ? selectedDate.toLocaleDateString() : 'Pick a date'}</Button></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus /></PopoverContent></Popover>{selectedDate && <Button variant="ghost" onClick={() => setSelectedDate(undefined)}>Clear Date</Button>}</div>
-    <div className="flex flex-wrap gap-2">{['all', ...Array.from(new Set(events.map((event) => event.category)))].map((cat) => <Badge key={cat} variant={activeCategory === cat ? 'default' : 'secondary'} className="cursor-pointer capitalize px-3 py-1 text-sm" onClick={() => setActiveCategory(cat)}>{cat.replace('-', ' ')}</Badge>)}</div>
-    {isLoading && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{[1,2,3].map((i) => <Card key={i}><CardHeader><Skeleton className="h-5 w-2/3" /><Skeleton className="h-4 w-1/2" /></CardHeader><CardContent><Skeleton className="h-16 w-full" /></CardContent></Card>)}</div>}
-    {error && <div className="text-center py-12 text-destructive"><p>Failed to load events. Please try again later.</p></div>}
-    {!isLoading && !error && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{filteredEvents.length ? filteredEvents.map((event) => <Card key={event.id} className="flex flex-col justify-between hover:shadow-md transition-shadow"><CardHeader><div className="flex justify-between items-start mb-2"><Badge variant="outline" className="capitalize">{event.category.replace('-', ' ')}</Badge><span className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span></div><CardTitle className="line-clamp-1">{event.title}</CardTitle><CardDescription>{event.location}</CardDescription></CardHeader><CardContent><p className="text-sm text-muted-foreground line-clamp-3">{event.description}</p></CardContent><CardFooter className="pt-0 flex justify-between items-center text-xs text-muted-foreground border-t mt-4 p-4"><span>By {event.organiser}</span><Button size="sm" variant="ghost">View Details</Button></CardFooter></Card>) : <div className="col-span-full text-center py-12 text-muted-foreground">No events found matching your criteria.</div>}</div>}
-  </div>;
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="flex flex-col space-y-2 md:flex-row md:justify-between md:items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Central Events</h1>
+          <p className="text-muted-foreground">Discover community gatherings, radio shows, and local workshops.</p>
+        </div>
+        <button type="button" onClick={() => { window.location.href = '/submit-listing'; }} className="rounded-lg bg-brand-olive px-4 py-2 font-semibold text-white hover:opacity-90">
+          Host an Event
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <label className="sr-only" htmlFor="event-search">Search events</label>
+        <input id="event-search" type="search" placeholder="Search events..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full max-w-md rounded-lg border border-brand-olive/20 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-olive/40" />
+        <label className="sr-only" htmlFor="event-date">Filter events by date</label>
+        <input id="event-date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="rounded-lg border border-brand-olive/20 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-olive/40" />
+        {selectedDate && <button type="button" onClick={() => setSelectedDate('')} className="rounded-lg px-3 py-2 text-sm text-brand-olive hover:bg-brand-olive/10">Clear date</button>}
+      </div>
+
+      <div className="flex flex-wrap gap-2" aria-label="Event categories">
+        {categories.map((cat) => (
+          <button key={cat} type="button" onClick={() => setActiveCategory(cat)} aria-pressed={activeCategory === cat} className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${activeCategory === cat ? 'bg-brand-olive text-white' : 'bg-brand-olive/10 text-brand-olive hover:bg-brand-olive/20'}`}>
+            {cat.replace('-', ' ')}
+          </button>
+        ))}
+      </div>
+
+      {isLoading && <div className="py-12 text-center text-muted-foreground">Loading events...</div>}
+      {error && <div className="py-12 text-center text-red-700"><p>Failed to load events. Please try again later.</p></div>}
+
+      {!isLoading && !error && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredEvents.length ? filteredEvents.map((event) => (
+            <article key={event.id} className="flex flex-col justify-between rounded-xl border border-brand-olive/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div>
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <span className="rounded-full border border-brand-olive/20 px-2 py-1 text-xs capitalize text-brand-olive">{event.category.replace('-', ' ')}</span>
+                  <time className="text-xs text-muted-foreground" dateTime={event.date}>{new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time>
+                </div>
+                <h2 className="text-lg font-semibold">{event.title}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{event.location}</p>
+                <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{event.description}</p>
+              </div>
+              <div className="mt-5 flex items-center justify-between border-t border-brand-olive/10 pt-4 text-xs text-muted-foreground">
+                <span>By {event.organiser}</span>
+                <button type="button" className="rounded px-2 py-1 text-brand-olive hover:bg-brand-olive/10">View Details</button>
+              </div>
+            </article>
+          )) : <div className="col-span-full py-12 text-center text-muted-foreground">No events found matching your criteria.</div>}
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default CentralEvents;
