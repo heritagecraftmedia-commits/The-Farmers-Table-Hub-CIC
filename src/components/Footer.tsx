@@ -10,11 +10,11 @@ export const Footer: React.FC = () => {
           <div className="col-span-1 md:col-span-2">
             <h3 className="font-serif text-3xl mb-6">The Farmers Table Hub CIC</h3>
             <p className="text-brand-cream/70 max-w-md leading-relaxed">
-              A community-led social enterprise dedicated to supporting local food producers, 
+              A community-led social enterprise dedicated to supporting local food producers,
               fostering community through radio, and providing inclusive training opportunities.
             </p>
           </div>
-          
+
           <div>
             <h4 className="font-bold uppercase text-xs tracking-widest mb-6 opacity-50">Explore</h4>
             <ul className="space-y-4">
@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
               <li><Link to="/radio" className="hover:text-white transition-colors">Community Radio</Link></li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="font-bold uppercase text-xs tracking-widest mb-6 opacity-50">Get Involved</h4>
             <ul className="space-y-4">
@@ -37,7 +37,7 @@ export const Footer: React.FC = () => {
               <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="font-bold uppercase text-xs tracking-widest mb-6 opacity-50">Contact</h4>
             <ul className="space-y-4 text-brand-cream/70">
@@ -49,12 +49,13 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="mt-16 pt-8 border-t border-brand-cream/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-brand-cream/50">
           <p>© {new Date().getFullYear()} The Farmers Table Hub CIC. All rights reserved.</p>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
             <Link to="/privacy" className="hover:text-white">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-white">Terms of Service</Link>
+            <Link to="/accessibility" className="hover:text-white">Accessibility</Link>
           </div>
         </div>
       </div>
