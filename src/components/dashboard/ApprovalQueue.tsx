@@ -19,11 +19,7 @@ export const ApprovalQueue: React.FC<Props> = ({ listings, onApprove, onReject }
                     <h2 className="text-3xl font-serif mb-1">Approval Queue</h2>
                     <p className="text-brand-ink/60">Review pending listings before they go live.</p>
                 </div>
-                {pending.length > 0 && (
-                    <span className="px-3 py-1 bg-brand-olive/10 text-brand-olive rounded-full text-xs font-bold">
-                        {pending.length} pending
-                    </span>
-                )}
+                {pending.length > 0 && (<span className="px-3 py-1 bg-brand-olive/10 text-brand-olive rounded-full text-xs font-bold">{pending.length} pending</span>)}
             </div>
 
             {pending.length === 0 ? (
@@ -35,53 +31,20 @@ export const ApprovalQueue: React.FC<Props> = ({ listings, onApprove, onReject }
             ) : (
                 <div className="grid gap-4">
                     {pending.map((listing: any) => (
-                        <div
-                            key={listing.id}
-                            className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm flex flex-col md:flex-row md:items-center gap-4"
-                        >
+                        <div key={listing.id} className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm flex flex-col md:flex-row md:items-center gap-4">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-bold">
-                                        {listing.displayName || listing.vendorName || listing.title || 'Untitled listing'}
-                                    </h4>
-                                    {listing.sourcePlatform && (
-                                        <span className="text-[10px] font-bold bg-brand-cream px-2 py-0.5 rounded-full text-brand-ink/50">
-                                            {listing.sourcePlatform}
-                                        </span>
-                                    )}
+                                    <h4 className="font-bold">{listing.displayName || listing.vendorName || listing.title || 'Untitled listing'}</h4>
+                                    {listing.sourcePlatform && (<span className="text-[10px] font-bold bg-brand-cream px-2 py-0.5 rounded-full text-brand-ink/50">{listing.sourcePlatform}</span>)}
                                 </div>
-                                <p className="text-xs text-brand-ink/50 mb-2">
-                                    {[listing.categoryHint || listing.craftCategory, listing.locationHint || listing.location]
-                                        .filter(Boolean)
-                                        .join(' · ')}
-                                </p>
-                                {(listing.bioText || listing.description) && (
-                                    <p className="text-sm text-brand-ink/70 line-clamp-2">
-                                        {listing.bioText || listing.description}
-                                    </p>
-                                )}
-                              {(listing.profileUrl || listing.website) && (<a href={listing.profileUrl || listing.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-olive mt-2 inline-flex items-center gap-1"><ExternalLink size={12} /> View Profile</a>)}
-                                    </a>
-                                )}
-                                {listing.discoveredAt && (
-                                    <p className="text-[10px] text-brand-ink/30 mt-2">
-                                        Submitted {new Date(listing.discoveredAt).toLocaleDateString()}
-                                    </p>
-                                )}
+                                <p className="text-xs text-brand-ink/50 mb-2">{[listing.categoryHint || listing.craftCategory, listing.locationHint || listing.location].filter(Boolean).join(' · ')}</p>
+                                {(listing.bioText || listing.description) && (<p className="text-sm text-brand-ink/70 line-clamp-2">{listing.bioText || listing.description}</p>)}
+                                {(listing.profileUrl || listing.website) && (<a href={listing.profileUrl || listing.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-olive mt-2 inline-flex items-center gap-1"><ExternalLink size={12} /> View Profile</a>)}
+                                {listing.discoveredAt && (<p className="text-[10px] text-brand-ink/30 mt-2">Submitted {new Date(listing.discoveredAt).toLocaleDateString()}</p>)}
                             </div>
                             <div className="flex gap-2 flex-shrink-0">
-                                <button
-                                    onClick={() => onReject(listing.id)}
-                                    className="px-4 py-2 border border-red-100 text-red-400 rounded-full text-xs font-bold hover:bg-red-50 flex items-center gap-1"
-                                >
-                                    <X size={12} /> Reject
-                                </button>
-                                <button
-                                    onClick={() => onApprove(listing.id)}
-                                    className="px-4 py-2 bg-brand-olive text-white rounded-full text-xs font-bold flex items-center gap-1"
-                                >
-                                    <Check size={12} /> Approve
-                                </button>
+                                <button onClick={() => onReject(listing.id)} className="px-4 py-2 border border-red-100 text-red-400 rounded-full text-xs font-bold hover:bg-red-50 flex items-center gap-1"><X size={12} /> Reject</button>
+                                <button onClick={() => onApprove(listing.id)} className="px-4 py-2 bg-brand-olive text-white rounded-full text-xs font-bold flex items-center gap-1"><Check size={12} /> Approve</button>
                             </div>
                         </div>
                     ))}
