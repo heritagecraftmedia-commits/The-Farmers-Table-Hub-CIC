@@ -42,11 +42,24 @@ export const radioService = {
   async addMedia(input: Omit<RadioMedia, 'id' | 'isActive'>) {
     requireConfigured(); const { data, error } = await supabase.from('radio_media').insert({ title: input.title, artist: input.artist, category: input.category, file_url: input.fileUrl, duration_seconds: input.durationSeconds, is_active: true }).select().single(); if (error) throw error; return data;
   },
-  async createPlaylist(name: string, description = '') {
-    requireConfigured(); const { data, error } = await supabase.from('radio_playlists').insert({ name, description, status: 'draft' }).select().single(); if (error) throw error; return data;
+  async createPlaylist(name: string, description = '', status: 'draft' | 'ready' = 'draft') {
+    requireConfigured(); const { data, error } = await supabase.from('radio_playlists').insert({ name, description, status }).select().single(); if (error) throw error; return data;
+  },
+  async updatePlaylist(playlistId: string, input: { name?: string; description?: string; durationSeconds?: number; status?: 'draft' | 'ready' | 'archived' }) {
+    requireConfigured();
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.description !== undefined) patch.description = input.description;
+    if (input.durationSeconds !== undefined) patch.duration_seconds = input.durationSeconds;
+    if (input.status !== undefined) patch.status = input.status;
+    patch.updated_at = new Date().toISOString();
+    const { data, error } = await supabase.from('radio_playlists').update(patch).eq('id', playlistId).select().single(); if (error) throw error; return data;
   },
   async addPlaylistItem(playlistId: string, mediaId: string, orderIndex: number) {
     requireConfigured(); const { data, error } = await supabase.from('radio_playlist_items').insert({ playlist_id: playlistId, media_id: mediaId, order_index: orderIndex }).select().single(); if (error) throw error; return data;
+  },
+  async clearPlaylistItems(playlistId: string) {
+    requireConfigured(); const { error } = await supabase.from('radio_playlist_items').delete().eq('playlist_id', playlistId); if (error) throw error;
   },
   async createSponsor(input: { businessName: string; contactName?: string; contactEmail?: string; package: '15s' | '30s' | '60s' | 'sponsorship'; adScript?: string; audioUrl?: string; readsPerShow?: number; directoryListingId?: string }) {
     requireConfigured(); const { data, error } = await supabase.from('radio_sponsors').insert({ business_name: input.businessName, contact_name: input.contactName, contact_email: input.contactEmail, package: input.package, ad_script: input.adScript, audio_url: input.audioUrl, reads_per_show: input.readsPerShow ?? 1, directory_listing_id: input.directoryListingId }).select().single(); if (error) throw error; return data;
