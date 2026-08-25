@@ -1,7 +1,31 @@
 import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
-const ai = new GoogleGenAI({ apiKey });
+
+/**
+ * The client is built on first use, not at module load.
+ *
+ * `new GoogleGenAI({ apiKey: "" })` throws immediately. Because this module is
+ * pulled into the single app bundle (via aiAgentService -> Dashboard), that
+ * throw happened during import and took down EVERY page — the whole public
+ * site rendered a blank white screen whenever GEMINI_API_KEY was missing or
+ * invalid. A key for an admin-only discovery agent must not be able to break
+ * the community's public website.
+ *
+ * Now a missing key degrades only the AI features that actually need it.
+ */
+let client: GoogleGenAI | null = null;
+
+const getAi = (): GoogleGenAI => {
+  if (!apiKey) {
+    throw new Error('Gemini API key is not configured. Set GEMINI_API_KEY to use the AI agents.');
+  }
+  if (!client) client = new GoogleGenAI({ apiKey });
+  return client;
+};
+
+/** True when the AI agent features can run. Use this to hide or disable them. */
+export const isGeminiConfigured = (): boolean => Boolean(apiKey);
 
 // ── Community Content Generator ──
 export const generateCommunityContent = async () => {
@@ -20,7 +44,7 @@ export const generateCommunityContent = async () => {
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" },
@@ -65,7 +89,7 @@ Return exactly 5 profiles as a JSON array with these fields:
 }]`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" },
@@ -112,7 +136,7 @@ Return JSON: { "artisanScore": number, "qualificationNotes": string (2-3 sentenc
 If uncertain, score conservatively. qualified = true only if score >= 3.`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" },
@@ -144,7 +168,7 @@ RULES:
 Return plain text only.`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }] }],
     });
@@ -183,7 +207,7 @@ RULES:
 Return the message text only. No subject line.`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }] }],
     });
