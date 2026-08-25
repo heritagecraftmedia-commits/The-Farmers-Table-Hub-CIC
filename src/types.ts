@@ -133,6 +133,11 @@ export interface DirectoryListing {
   affiliateLinks?: { label: string; url: string }[];
   outreachStatus?: 'not_contacted' | 'contacted' | 'responded' | 'opted_out';
   outreachDate?: string;
+  /** Set by an admin in the dashboard. directory-outreach refuses to email without it. */
+  outreachApproved: boolean;
+  outreachApprovedAt?: string;
+  /** Business asked not to be contacted. Withdraws any approval. */
+  outreachOptedOut: boolean;
   response?: string;
   claimed?: boolean;
 }

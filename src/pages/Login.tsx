@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, demoModeAvailable } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { LogIn, User, ShieldCheck, Store, Mail, Lock, AlertCircle } from 'lucide-react';
@@ -113,6 +113,10 @@ export const Login: React.FC = () => {
                   Forgot password?
                 </button>
               </form>
+              <p className="text-sm text-brand-ink/50 mt-6">
+                New here?{' '}
+                <Link to="/signup" className="text-brand-olive font-bold hover:underline">Create an account</Link>
+              </p>
             </>
           ) : (
             // Demo mode when Supabase not yet configured

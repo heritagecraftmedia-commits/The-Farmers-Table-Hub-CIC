@@ -98,6 +98,8 @@ const realListings: DirectoryListing[] = [
     listingTier: v.tier as any,
     approved: true,
     published: true,
+    outreachApproved: false,
+    outreachOptedOut: false,
     claimedAt: new Date().toISOString()
   })),
   ...makerListings.map(m => ({
@@ -114,6 +116,8 @@ const realListings: DirectoryListing[] = [
     listingTier: m.tier as any,
     approved: true,
     published: true,
+    outreachApproved: false,
+    outreachOptedOut: false,
     claimedAt: new Date().toISOString()
   }))
 ];
@@ -371,6 +375,9 @@ export const hubService = {
       claimedAt: r.created_at,
       outreachStatus: r.outreach_status ?? 'not_contacted',
       outreachDate: r.outreach_date,
+      outreachApproved: r.outreach_approved ?? false,
+      outreachApprovedAt: r.outreach_approved_at,
+      outreachOptedOut: r.outreach_opted_out ?? false,
       response: r.response,
       claimed: r.claimed ?? false,
     }));
@@ -715,5 +722,38 @@ export const hubService = {
   approveSocialPost: async (id: string): Promise<void> => {
     if (!isConfigured()) { mockSocialPosts.forEach(p => { if (p.id === id) p.status = 'approved'; }); return; }
     await supabase.from('social_posts').update({ status: 'approved' }).eq('id', id);
+  },
+
+  // ── Outreach approval (human-in-the-loop gate) ───────────────────────────
+  // directory-outreach refuses to email a listing unless outreach_approved is
+  // true, so approving is a deliberate, recorded act by a named admin rather
+  // than a side effect of pressing "send".
+
+  setOutreachApproval: async (listingId: string, approved: boolean): Promise<{ error: string | null }> => {
+    if (!isConfigured()) return { error: 'Supabase is not configured.' };
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('directory_listings')
+      .update({
+        outreach_approved: approved,
+        outreach_approved_by: approved ? user?.id ?? null : null,
+        outreach_approved_at: approved ? new Date().toISOString() : null,
+      })
+      .eq('id', listingId);
+    return { error: error ? error.message : null };
+  },
+
+  setOutreachOptOut: async (listingId: string, optedOut: boolean): Promise<{ error: string | null }> => {
+    if (!isConfigured()) return { error: 'Supabase is not configured.' };
+    const { error } = await supabase
+      .from('directory_listings')
+      .update({
+        outreach_opted_out: optedOut,
+        // Opting out also withdraws any approval, so a later bulk action
+        // cannot pick the row back up.
+        ...(optedOut ? { outreach_approved: false, outreach_approved_by: null, outreach_approved_at: null } : {}),
+      })
+      .eq('id', listingId);
+    return { error: error ? error.message : null };
   },
 };

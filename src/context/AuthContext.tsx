@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
+  signup: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
   loginAsRole: (role: UserRole) => void; // fallback for demo/no-Supabase mode
   logout: () => Promise<void>;
@@ -122,6 +123,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { error: null };
   };
 
+  /**
+   * Create a member account.
+   *
+   * No role is passed in options.data on purpose. Anything sent there lands in
+   * user_metadata, which the user can rewrite later — it must never influence
+   * authorisation. The handle_new_user trigger creates the profiles row with
+   * is_admin = false and role = 'member', and only an admin or the
+   * service_role key can change it afterwards.
+   */
+  const signup = async (
+    email: string,
+    password: string,
+  ): Promise<{ error: string | null; needsConfirmation: boolean }> => {
+    if (!isSupabaseConfigured()) {
+      return { error: 'Supabase is not configured, so accounts cannot be created.', needsConfirmation: false };
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/members` },
+    });
+    if (error) return { error: error.message, needsConfirmation: false };
+
+    // With email confirmation on, Supabase returns a user but no session.
+    return { error: null, needsConfirmation: Boolean(data.user && !data.session) };
+  };
+
   // Sends the recovery email that lands the user on /reset-password.
   const requestPasswordReset = async (email: string): Promise<{ error: string | null }> => {
     if (!isSupabaseConfigured()) {
@@ -153,7 +181,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, requestPasswordReset, loginAsRole, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, requestPasswordReset, loginAsRole, logout }}>
       {children}
     </AuthContext.Provider>
   );
