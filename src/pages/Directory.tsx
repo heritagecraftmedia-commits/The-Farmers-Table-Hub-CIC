@@ -41,11 +41,16 @@ export const Directory: React.FC = () => {
     });
 
   const groupedByCat = CATEGORY_ORDER.reduce((acc, cat) => {
+    // Alphabetical, NOT by tier. This sorted featured -> supporter -> free,
+    // which placed paying listings above free ones in every category on the
+    // main public directory. That is pay-to-rank, and the project's stated
+    // commitment is that free listings stay permanent and are never outranked.
+    //
+    // Paid tiers keep what they actually sell: the badge, the card highlight,
+    // the website/contact block, and the separate clearly-promoted featured
+    // rotation above. What they no longer buy is a better position in the list.
     const items = filtered.filter(f => f.displayCategory === cat)
-      .sort((a, b) => {
-        const tierOrder = { featured: 0, supporter: 1, free: 2 };
-        return tierOrder[a.listingTier] - tierOrder[b.listingTier];
-      });
+      .sort((a, b) => a.vendorName.localeCompare(b.vendorName));
     if (items.length > 0) acc.push({ cat, items });
     return acc;
   }, [] as { cat: string; items: DirectoryListing[] }[]);

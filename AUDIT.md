@@ -378,25 +378,94 @@ Ids are now namespaced on merge.
 
 ---
 
-## 4b. Still open
+## 4b. Third pass — the remaining "still needed" list
 
-1. **`ChangesDraft.tsx` claims changes "are saved in your current session".**
-   They are `useState` and lost on refresh. It is behind a staff guard now, but
-   the copy is still misleading.
-2. **`MembersArea.tsx` is a "Coming Soon" stub.** Deliberate, per the original
-   "stubs" commit — left as-is.
-3. **`system_controls` is decorative.** The Dashboard's agent toggles and
-   maintenance-mode switch read and write an in-memory mock via
-   `hubService.getSystemSettings()`; they never touch the table, and nothing
-   reads them to decide whether an agent runs. Flipping them changes nothing.
-4. **`MakersShop.tsx` still renders static data** from `src/data/makerListings.ts`
-   with no purchase path. `Subscriptions.tsx` remains the only real checkout,
-   via Stripe Payment Links.
-5. **Duplicate migrations.** `20260317_create_directory_listings.sql` and
-   `..._table.sql` both create the same table, differing only in seed rows. One
-   should go — I left both rather than guess which your live project ran.
-6. **Bundle size.** One ~1.3 MB chunk, no code splitting. Worth route-level
-   `lazy()` if mobile load time matters.
+### Pay-to-rank, found while wiring the shop — **this one matters**
+
+`MakersShop.tsx` and `Directory.tsx` both sorted listings
+`featured -> supporter -> free`:
+
+```ts
+const tierOrder = { featured: 0, supporter: 1, free: 2 };
+```
+
+On the main public directory this ran inside every category, so paying
+listings sat above free ones everywhere a visitor looked. That is pay-to-rank,
+and it contradicts the project's own stated commitment that free listings stay
+permanent and are never outranked. Both now sort alphabetically.
+
+Paid tiers keep what they actually sell — the badge, the card highlight, the
+website/contact block, and the separate clearly-promoted featured rotation at
+the top of the directory. What they no longer buy is a better position in the
+ordinary list.
+
+I did **not** touch the tier-gating of *content* (free listings don't show a bio
+or contact block). That is the disclosed £15/month product described in your own
+outreach email, and changing it is a commercial decision, not a bug fix.
+
+### The agent kill switches did nothing
+
+The AI Agent Permissions toggles and Maintenance Mode read and wrote an
+in-memory object in `hubService` that nothing else consulted. `system_controls`
+was seeded but no code path touched it, and no agent checked whether it was
+allowed to run. A switch that silently does nothing is worse than none, because
+it gets trusted.
+
+Now: settings read/write `system_controls`; all four agents check before doing
+any work; Maintenance Mode disables all of them; a missing control row fails
+closed; and toggle failures surface instead of appearing to save.
+
+The half that counts is server-side — `directory-outreach` re-checks
+`outreach_enabled` and `maintenance_mode` itself, before any other gate. A check
+that only lives in the browser is advisory, since anyone can call the function
+directly.
+
+### Edge functions now type-check
+
+They had none at all. Excluding `supabase/functions` from the app tsconfig was
+right (Deno, not browser TS) but left both files unchecked, including the whole
+new `whats-on-agent`. Swapped the `deno.land` std `serve` for built-in
+`Deno.serve` and the `esm.sh` URL import for an `npm:` specifier, pinned in
+`supabase/functions/deno.json`. Both pass:
+
+```
+deno check supabase/functions/whats-on-agent/index.ts
+deno check supabase/functions/directory-outreach/index.ts
+```
+
+### Code splitting
+
+First-load JS **1,317 kB -> 571 kB** (gzip 332 -> 172 kB). Dashboard (165 kB)
+and Command Centre (77 kB) are now separate chunks a public visitor never
+downloads. Home and the 404 stay eager. Verified: 82 page loads still clean.
+
+### Smaller items
+
+- **`ChangesDraft`** claimed drafts were "saved in your current session" but used
+  plain `useState` and lost them on refresh. Now persisted to this browser, with
+  copy that says exactly that and no more.
+- **`MakersShop`** read the static `src/data/makerListings.ts`, so nothing a
+  maker changed or the founder approved ever appeared. Now reads published
+  directory listings.
+- **Duplicate migration** `20260317_create_directory_listings_table.sql` is now
+  an explicit no-op explaining which file supersedes it — left in place rather
+  than deleted so environments that recorded the filename don't see it vanish.
+
+---
+
+## 4c. Still open
+
+1. **`MembersArea.tsx` is a "Coming Soon" stub** and `/members-area` overlaps
+   with `/members`, which is the real page. Deliberate per the original "stubs"
+   commit — left alone. Worth deciding whether the route should just redirect.
+2. **Xero, HubSpot and Notion are not wired.** Those `hubService` helpers return
+   placeholder data and perform no fetch. The Command Centre now says so on the
+   card rather than showing green "synced" dots.
+3. **Main chunk is still 571 kB** (172 kB gzipped). Fine, but a vendor split of
+   React/motion/supabase would take it lower if mobile load time matters.
+4. **No automated tests.** There is no test framework in the project. Everything
+   here was verified by typecheck, build, and a scripted browser sweep — which
+   catches crashes and layout breaks but not logic regressions.
 
 ---
 
