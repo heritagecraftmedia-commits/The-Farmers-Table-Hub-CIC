@@ -23,12 +23,24 @@ export interface MakerListing {
   tier: ListingTier;
 }
 
-export type UserRole = 'founder' | 'staff' | 'customer' | null;
+// Roles come from the profiles table (see
+// supabase/migrations/20260826_rls_admin_hardening.sql). They are never read
+// from user_metadata, which the client can write.
+export type UserRole =
+  | 'founder'
+  | 'radio_manager'
+  | 'staff'
+  | 'presenter'
+  | 'customer'
+  | 'member'
+  | null;
 
 export interface User {
   id: string;
   name: string;
   role: UserRole;
+  /** Mirrors profiles.is_admin. Authoritative check is still RLS, server-side. */
+  isAdmin: boolean;
 }
 
 export interface RawLead {
