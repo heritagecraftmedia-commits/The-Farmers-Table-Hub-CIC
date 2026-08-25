@@ -12,7 +12,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFog } from '../context/FogContext';
 import { aiAgentService } from '../services/aiAgentService';
-import { hubService } from '../services/hubService';
+import { hubService, SystemSettings } from '../services/hubService';
 import { OutreachApproval } from '../components/dashboard/OutreachApproval';
 import { DirectoryListing, RawLead, QualifiedLead, EnrichedLead, OutreachLog, HubEvent, StaffMember, RadioShow, FounderJob, MakerStory, PendingListing } from '../types';
 import { stripeService } from '../services/stripeService';
@@ -66,7 +66,11 @@ export const Dashboard: React.FC = () => {
   const [directoryListings, setDirectoryListings] = useState<DirectoryListing[]>([]);
   const [claimedVendors, setClaimedVendors] = useState<any[]>([]);
   const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
-  const [systemSettings, setSystemSettings] = useState(hubService.getSystemSettings());
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({
+    discoveryAgentEnabled: false, qualificationAgentEnabled: false,
+    enrichmentAgentEnabled: false, outreachAgentEnabled: false, maintenanceMode: false,
+  });
+  const [settingsError, setSettingsError] = useState('');
   const [loadingData, setLoadingData] = useState(false);
 
   // Modal state
@@ -109,7 +113,7 @@ export const Dashboard: React.FC = () => {
     setRawLeads(rl); setEnrichedLeads(el); setOutreachLogs(ol);
     setEvents(ev); setEventMakerLinks(evLinks); setStaff(st); setRadioShows(rs); setFounderJobs(fj);
     setMakerStories(ms); setDirectoryListings(dl); setClaimedVendors(cv); setPendingListings(pl);
-    setSystemSettings(hubService.getSystemSettings());
+    setSystemSettings(await hubService.getSystemSettings());
     setLoadingData(false);
   };
 
@@ -1169,6 +1173,12 @@ export const Dashboard: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white p-8 rounded-[40px] border border-brand-olive/5 shadow-sm">
                   <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><Bot className="text-brand-olive" /> AI Agent Permissions</h3>
+                  {settingsError && (
+                    <div className="mb-4 p-3 bg-red-50 rounded-xl text-red-600 text-xs">{settingsError}</div>
+                  )}
+                  <p className="text-xs text-brand-ink/40 mb-6">
+                    Saved to the database and checked before any agent runs. Maintenance Mode switches all four off.
+                  </p>
                   <div className="space-y-6">
                     {[
                       { id: 'discoveryAgentEnabled', label: 'Discovery Agent', desc: 'Allows AI to search for new maker leads' },
@@ -1178,9 +1188,15 @@ export const Dashboard: React.FC = () => {
                     ].map(agent => (
                       <div key={agent.id} className="flex items-center justify-between">
                         <div><p className="font-bold text-sm">{agent.label}</p><p className="text-xs text-brand-ink/40">{agent.desc}</p></div>
-                        <button onClick={() => { const n = hubService.updateSystemSettings({ [agent.id]: !systemSettings[agent.id as keyof typeof systemSettings] }); setSystemSettings(n); }}
-                          className={`p-1 rounded-full transition-colors ${systemSettings[agent.id as keyof typeof systemSettings] ? 'text-brand-olive' : 'text-brand-ink/20'}`}>
-                          {systemSettings[agent.id as keyof typeof systemSettings] ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                        <button onClick={async () => {
+                            setSettingsError('');
+                            try {
+                              const n = await hubService.updateSystemSettings({ [agent.id]: !systemSettings[agent.id as keyof SystemSettings] } as Partial<SystemSettings>);
+                              setSystemSettings(n);
+                            } catch (err) { setSettingsError(err instanceof Error ? err.message : 'Could not save that setting.'); }
+                          }}
+                          className={`p-1 rounded-full transition-colors ${systemSettings[agent.id as keyof SystemSettings] ? 'text-brand-olive' : 'text-brand-ink/20'}`}>
+                          {systemSettings[agent.id as keyof SystemSettings] ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
                         </button>
                       </div>
                     ))}
@@ -1190,7 +1206,13 @@ export const Dashboard: React.FC = () => {
                   <h3 className="text-xl font-serif mb-6 flex items-center gap-2"><ShieldAlert className="text-red-400" /> Global Safety</h3>
                   <div className="flex items-center justify-between mb-8">
                     <div><p className="font-bold text-sm">Maintenance Mode</p><p className="text-xs text-brand-ink/40">Disable all public-facing features</p></div>
-                    <button onClick={() => { const n = hubService.updateSystemSettings({ maintenanceMode: !systemSettings.maintenanceMode }); setSystemSettings(n); }}
+                    <button onClick={async () => {
+                        setSettingsError('');
+                        try {
+                          const n = await hubService.updateSystemSettings({ maintenanceMode: !systemSettings.maintenanceMode });
+                          setSystemSettings(n);
+                        } catch (err) { setSettingsError(err instanceof Error ? err.message : 'Could not save that setting.'); }
+                      }}
                       className={`p-1 rounded-full transition-colors ${systemSettings.maintenanceMode ? 'text-red-400' : 'text-brand-ink/20'}`}>
                       {systemSettings.maintenanceMode ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
                     </button>

@@ -1,6 +1,24 @@
 import { RawLead, EnrichedLead, OutreachLog } from '../types';
 import { supabase } from '../lib/supabase';
 import { runDiscoverySearch, qualifyArtisan, enrichArtisanProfile, draftOutreachMessage } from './geminiService';
+import { hubService, SystemSettings } from './hubService';
+
+/**
+ * Every agent checks its kill switch before doing any work.
+ *
+ * The founder's toggles in the dashboard write to system_controls, but until
+ * now nothing read them back — the agents ran regardless. Maintenance Mode
+ * disables all four (see hubService.isAgentEnabled).
+ *
+ * This is the client-side half. The server-side half matters more: the
+ * directory-outreach edge function re-checks outreach_enabled itself, because
+ * a check that only lives in the browser is advisory, not a control.
+ */
+const assertAgentEnabled = async (agent: keyof SystemSettings, label: string): Promise<void> => {
+  if (!(await hubService.isAgentEnabled(agent))) {
+    throw new Error(`${label} is switched off in Settings. Turn it on before running it.`);
+  }
+};
 
 const isConfigured = () => {
   const url = import.meta.env.VITE_SUPABASE_URL;
@@ -41,6 +59,7 @@ export const aiAgentService = {
 
   // Run the AI Discovery Agent to find new makers
   runDiscoveryAgent: async (location: string, craftCategory: string): Promise<RawLead[]> => {
+    await assertAgentEnabled('discoveryAgentEnabled', 'The Discovery Agent');
     const results = await runDiscoverySearch(location, craftCategory);
     if (!results.length) return [];
 
@@ -83,6 +102,7 @@ export const aiAgentService = {
 
   // ── QUALIFICATION AGENT ──
   qualifyLead: async (rawLead: RawLead): Promise<{ artisanScore: number; qualificationNotes: string; qualified: boolean }> => {
+    await assertAgentEnabled('qualificationAgentEnabled', 'The Qualification Agent');
     const result = await qualifyArtisan(rawLead.displayName, rawLead.bioText, rawLead.sourcePlatform);
 
     if (isConfigured()) {
@@ -100,6 +120,7 @@ export const aiAgentService = {
 
   // ── ENRICHMENT AGENT ──
   enrichLead: async (rawLead: RawLead): Promise<EnrichedLead | null> => {
+    await assertAgentEnabled('enrichmentAgentEnabled', 'The Enrichment Agent');
     // Call AI to generate a polished bio
     const aiSummary = await enrichArtisanProfile(rawLead.bioText, rawLead.displayName);
 
@@ -142,6 +163,7 @@ export const aiAgentService = {
 
   // ── OUTREACH AGENT ──
   draftOutreach: async (enrichedLead: EnrichedLead): Promise<OutreachLog | null> => {
+    await assertAgentEnabled('outreachAgentEnabled', 'The Outreach Agent');
     // Call AI to draft the invitation
     const message = await draftOutreachMessage(enrichedLead.vendorName, enrichedLead.craftCategory, enrichedLead.location);
 

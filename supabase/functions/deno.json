@@ -1,0 +1,16 @@
+{
+  "_comment": [
+    "Import map for the Supabase Edge Functions in this directory.",
+    "These run on Deno, not in the browser, so they are excluded from the app's",
+    "tsconfig.json. Pinning the dependencies here means `deno check` can verify",
+    "them locally — before this file they had no type checking at all.",
+    "npm: specifiers are used rather than esm.sh URLs so versions resolve from",
+    "one place and match what the Edge Runtime installs."
+  ],
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.98.0",
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@^0.70.0",
+    "nodemailer": "npm:nodemailer@^7.0.9"
+  },
+  "nodeModulesDir": "auto"
+}

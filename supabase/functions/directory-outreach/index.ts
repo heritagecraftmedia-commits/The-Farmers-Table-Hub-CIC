@@ -3,7 +3,10 @@
  *
  * HUMAN-IN-THE-LOOP: this function never decides who to email.
  *
- * It sends only to listings that satisfy BOTH gates:
+ * It sends only when ALL of these hold:
+ *   0. system_controls.outreach_enabled is true and maintenance_mode is false
+ *      (the global kill switch, re-checked server-side so it cannot be
+ *      bypassed by calling the function directly),
  *   1. the caller passed the listing id explicitly in `listingIds`, and
  *   2. an admin has already set outreach_approved = true on that row
  *      (recorded with outreach_approved_by / outreach_approved_at).
@@ -29,8 +32,7 @@
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
  */
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import nodemailer from 'npm:nodemailer';
 
 const APP_URL = 'https://the-farmers-table-hub-cic.vercel.app';
@@ -137,7 +139,7 @@ function emailHtml(businessName: string, claimUrl: string): string {
 
 // ── Main handler ───────────────────────────────────────────────────────────
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
@@ -171,6 +173,24 @@ serve(async (req) => {
 
     if (!profile || !(profile.is_admin || profile.role === 'founder')) {
       return json({ error: 'Forbidden — admin role required' }, 403);
+    }
+
+    // GATE 0 — the global kill switch. The dashboard toggle writes
+    // system_controls.outreach_enabled; checking it only in the browser would
+    // make it advisory, so it is re-checked here where it cannot be bypassed.
+    // maintenance_mode disables outreach regardless.
+    const { data: controls } = await admin
+      .from('system_controls')
+      .select('key, value')
+      .in('key', ['outreach_enabled', 'maintenance_mode']);
+
+    const control = new Map((controls ?? []).map(r => [r.key, Boolean(r.value)]));
+    // A missing row fails closed: absent config must not mean "allowed to send".
+    if (control.get('outreach_enabled') !== true) {
+      return json({ error: 'Outreach is switched off in Settings (outreach_enabled).' }, 409);
+    }
+    if (control.get('maintenance_mode') === true) {
+      return json({ error: 'Maintenance mode is on. Outreach is disabled.' }, 409);
     }
 
     // GATE 1 — the caller must name the recipients explicitly. There is no

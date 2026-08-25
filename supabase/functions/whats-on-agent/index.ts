@@ -24,8 +24,7 @@
  * step in the dashboard, as with the rest of the agent pipeline.
  */
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk';
 
 const APP_URL = 'https://the-farmers-table-hub-cic.vercel.app';
@@ -96,7 +95,7 @@ If you do not have confirmed real-time data, clearly label items as "check to co
 
 Produce the full weekly update in the format specified. Plain English only. No emojis. Short sentences.`;
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
