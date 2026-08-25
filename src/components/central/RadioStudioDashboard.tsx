@@ -17,6 +17,7 @@ export const RadioStudioDashboard: React.FC = () => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [slotMinutes, setSlotMinutes] = useState(60);
+  const [playlistName, setPlaylistName] = useState('');
   const [status, setStatus] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
@@ -63,6 +64,7 @@ export const RadioStudioDashboard: React.FC = () => {
     try {
       const items = await radioService.getPlaylistItems(playlist.id);
       setQueue(items.map((item, i) => ({ ...item, queueId: `${item.id}-${i}-${Date.now()}` })));
+      setPlaylistName(playlist.name);
       setStatus(`${playlist.name} loaded into today's slot.`);
     } catch (e) {
       console.error(e);
@@ -70,16 +72,18 @@ export const RadioStudioDashboard: React.FC = () => {
     }
   };
 
-  const saveSlot = async () => {
+  const savePlaylist = async (ready: boolean) => {
     if (!queue.length) return setStatus('Add something to the slot first.');
+    if (!playlistName.trim()) return setStatus('Give this playlist a name first.');
     try {
-      const playlist = await radioService.createPlaylist(`Studio Slot ${new Date().toLocaleDateString('en-GB')}`, `Prepared in the Farmers Table Studio Dashboard. ${formatTime(used)}.`);
+      const playlist = await radioService.createPlaylist(playlistName.trim(), `Prepared in the Farmers Table Studio Dashboard. ${formatTime(used)}.`, ready ? 'ready' : 'draft');
       for (let i = 0; i < queue.length; i++) await radioService.addPlaylistItem(playlist.id, queue[i].id, i);
-      setStatus('Slot saved as a draft playlist. It is ready for review before scheduling.');
+      await radioService.updatePlaylist(playlist.id, { durationSeconds: used, status: ready ? 'ready' : 'draft' });
+      setStatus(ready ? `${playlistName.trim()} saved and made ready for staff to load.` : `${playlistName.trim()} saved as a draft playlist.`);
       await load();
     } catch (e) {
       console.error(e);
-      setStatus('Could not save the slot. Check the Radio V1 database is applied.');
+      setStatus('Could not save the playlist. Check the Radio V1 database and your staff permissions.');
     }
   };
 
@@ -127,12 +131,15 @@ export const RadioStudioDashboard: React.FC = () => {
           <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
             {queue.length === 0 ? <div className="border border-dashed border-white/15 rounded-2xl p-8 text-center text-sm text-brand-cream/40">Add something from the library, or load a ready playlist below.</div> : queue.map((item, index) => <div key={item.queueId} className="rounded-2xl bg-white/5 p-3 flex items-center gap-3"><span className="w-6 text-center text-xs text-brand-cream/40">{index + 1}</span><div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{item.title}</p><p className="text-[11px] text-brand-cream/40">{item.category} · {formatTime(item.durationSeconds)}</p></div><button onClick={() => move(index, -1)} className="p-1.5 hover:bg-white/10 rounded-lg"><ChevronUp size={15} /></button><button onClick={() => move(index, 1)} className="p-1.5 hover:bg-white/10 rounded-lg"><ChevronDown size={15} /></button><button onClick={() => setQueue(q => q.filter(x => x.queueId !== item.queueId))} className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-300"><Trash2 size={15} /></button></div>)}
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-6"><button onClick={() => setQueue([])} className="py-3 rounded-xl bg-white/10 text-sm font-bold hover:bg-white/15">Clear</button><button onClick={saveSlot} className="py-3 rounded-xl bg-brand-cream text-brand-ink text-sm font-bold hover:opacity-90">Save Slot</button></div>
+          <div className="mt-6 space-y-3">
+            <input value={playlistName} onChange={e => setPlaylistName(e.target.value)} placeholder="Playlist name e.g. Farmers Table Morning 01" className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder:text-white/30 outline-none text-sm" />
+            <div className="grid grid-cols-3 gap-3"><button onClick={() => setQueue([])} className="py-3 rounded-xl bg-white/10 text-sm font-bold hover:bg-white/15">Clear</button><button onClick={() => savePlaylist(false)} className="py-3 rounded-xl bg-white/15 text-sm font-bold hover:bg-white/20">Save draft</button><button onClick={() => savePlaylist(true)} className="py-3 rounded-xl bg-brand-cream text-brand-ink text-sm font-bold hover:opacity-90">Save ready</button></div>
+          </div>
         </section>
       </div>
 
       <section className="bg-white rounded-[32px] border border-brand-olive/5 p-6 md:p-8">
-        <div className="flex items-center gap-3 mb-5"><ListMusic className="text-brand-olive" /><div><h3 className="text-2xl font-serif">Ready playlists</h3><p className="text-sm text-brand-ink/50">Load a prepared hour, then change individual items if needed.</p></div></div>
+        <div className="flex items-center gap-3 mb-5"><ListMusic className="text-brand-olive" /><div><h3 className="text-2xl font-serif">Ready playlists</h3><p className="text-sm text-brand-ink/50">Load a prepared slot, then change individual items if needed.</p></div></div>
         {playlists.length === 0 ? <p className="text-sm text-brand-ink/50">No ready playlists yet.</p> : <div className="grid md:grid-cols-3 gap-4">{playlists.map(p => <div key={p.id} className="rounded-2xl bg-brand-cream p-5"><p className="font-bold">{p.name}</p><p className="text-xs text-brand-ink/50 mt-1">{formatTime(p.durationSeconds)}</p><button onClick={() => loadPlaylist(p)} className="mt-4 w-full py-2.5 rounded-xl bg-brand-olive text-white text-xs font-bold flex items-center justify-center gap-2"><SkipForward size={14} /> Load playlist</button></div>)}</div>}
       </section>
     </div>
