@@ -293,54 +293,110 @@ writes to it. Storage policies are not in this repo and were not audited.
 
 ---
 
-## 4. Still open — needs a decision from you
+## 4. Second pass — completing the build
 
-These were left alone deliberately. They are product decisions, or they touch
-founder-facing admin tools where guessing would be worse than asking.
+After the audit above, the remaining gaps were built out. The four decisions I
+had parked are marked **[my call]** with the reasoning, so you can overrule any
+of them cheaply.
 
-1. **There is no signup anywhere in the app.** No `signUp` call exists. Makers
-   can claim a listing without an account (that path works), but nobody can
-   create one. Members / MembersArea assume accounts exist. Who is supposed to
-   be able to sign up, and how — open signup, invite-only, or founder-created?
+### 4.1 Signup — built **[my call: open member signup]**
 
-2. **`CentralOverview` shows fabricated numbers.** "12 Active People", "£3.4k
-   Monthly Income", "9 Advertisers", today's schedule, and the Xero / Notion /
-   HubSpot / Live365 status chips in the Command Centre header are all
-   hardcoded literals. A founder dashboard presenting invented figures as real
-   is a bad failure mode. Should these read from `hubService`, or be labelled
-   as sample data until wired?
+There was no signup anywhere in the app. Added `/signup` with email/password,
+confirmation handling, and links both ways with Login.
 
-3. **Commerce is UI-only.** `Marketplace.tsx` has a hardcoded "0 listings", an
-   always-on empty state, no data source, and three buttons with no handlers.
-   `MakersShop.tsx` renders static data from `src/data/makerListings.ts` with no
-   purchase path. `Subscriptions.tsx` is the only page with real checkout, via
-   Stripe Payment Links. `ChangesDraft.tsx` is an internal scratchpad whose text
-   claims changes "are saved in your current session" — they are `useState` and
-   are lost on refresh.
+I went with open signup because `Privacy.tsx` already tells visitors they can
+"register for a member account", and because it is now safe to: the
+`handle_new_user` trigger writes `is_admin = false, role = 'member'`, and no
+role is passed in `options.data` (that lands in `user_metadata`, which the user
+can rewrite, so it must never influence authorisation). A new account can read
+its own profile row and nothing else.
 
-4. **Tables used in code with no migration in this repo**: `notes`,
-   `applications`, `feedback_book_responses`, `pending_listings`, `playlists`,
-   `sponsor_rotations`, `ad_schedules`, `social_posts`. They exist only in the
-   live database, if at all. **Their RLS was not audited and is not covered by
-   the migration** — I could not see their definitions. Worth exporting the live
-   schema into `supabase/migrations/` so the repo matches reality.
+If you want invite-only instead, turn off signups in Supabase Auth settings —
+the page will surface the error rather than needing a code change.
 
-5. **`system_controls` is decorative.** The Dashboard's agent toggles and
-   maintenance-mode switch call `hubService.getSystemSettings()` /
-   `updateSystemSettings()`, which read and write an in-memory mock object. They
-   never touch the `system_controls` table, and nothing reads those toggles to
-   decide whether an agent runs. Flipping them changes nothing.
+### 4.2 Outreach approval UI — built
 
-6. **`CommandCenter` grants `staff` the same access as `founder`** — Finance,
-   Records, People, Safe Mode included. `StudioDashboardV1.md` describes a
-   narrower staff role. Intentional?
+Gating the edge function on `outreach_approved` left nothing able to set it, so
+the pipeline was unusable until this existed. The old UI was a single "Run
+Outreach" button — the front end of the bulk sender.
 
-7. **Duplicate migrations.** `20260317_create_directory_listings.sql` and
-   `20260317_create_directory_listings_table.sql` both create the same table and
-   differ only in seed rows. One should go.
+`OutreachApproval` now lists contactable businesses, approves them **one at a
+time** (recorded against the approving admin), records opt-outs, and sends only
+to an explicitly selected set of at most 25, behind a confirmation naming the
+recipients. Skipped rows come back with their reason.
 
-8. **Bundle size.** One 1.3 MB chunk (332 KB gzipped), no code splitting. Fine
-   for now; worth route-level `lazy()` if mobile load time matters.
+### 4.3 Fabricated dashboard figures — replaced **[my call: show real or show nothing]**
+
+Every number on the Command Centre overview was a hardcoded literal. All of it
+now reads from the database: active staff, published listings, active sponsors,
+open tasks, today's schedule merged from broadcasts and approved events, and
+urgent actions from real jobs by priority.
+
+"Monthly Income" is **removed rather than faked** — no financial data source is
+wired, and a plausible-looking wrong number on a founder dashboard is worse than
+an absent one. The integration dots now reflect whether each credential is
+actually configured, with a note on the card that Xero, HubSpot and Notion still
+return placeholder data and perform no real fetch.
+
+### 4.4 Staff vs founder — split **[my call: Finance, Records, Safe Mode are founder-only]**
+
+`CommandCenter` gave staff identical access to the founder. Those three tabs are
+now founder-only, gated on both the button and the rendered pane. This mirrors
+the convention `Dashboard.tsx` already used and the narrower staff role in
+`StudioDashboardV1.md`. Everything else stays available to staff.
+
+### 4.5 Marketplace — wired up
+
+Was a shell: hardcoded "0 listings", an unconditional empty state, no data
+source, three buttons with no `onClick`. Now reads published directory listings
+with working search and category filters built from the data itself; CTAs route
+to `/apply`.
+
+**Ordering is alphabetical on purpose.** Paid tiers get a badge but never a
+better position — free listings stay free and nothing ranks by what it pays.
+
+### 4.6 The eight untracked tables — migrated
+
+`notes`, `applications`, `feedback_book_responses`, `pending_listings`,
+`playlists`, `sponsor_rotations`, `ad_schedules`, `social_posts` now have a
+migration (`20260827_untracked_tables.sql`) with columns derived from the exact
+select/insert calls in `src/`, and RLS following the model set in the hardening
+migration.
+
+`create table if not exists` **cannot reshape a table that already exists**, so
+after running it, diff against live — the queries are at the bottom of the file,
+including one that finds any table left with RLS on and no policy (which denies
+everything, admins included).
+
+### 4.7 A data collision found while testing
+
+`foodVendors` and `makerListings` both number their ids from 1, and **29 ids
+collide**. `hubService` merges them, so any list rendering the combined set had
+duplicate React keys — which silently breaks reconciliation (wrong row updated
+or removed). It only surfaced once the Marketplace actually rendered the list.
+Ids are now namespaced on merge.
+
+---
+
+## 4b. Still open
+
+1. **`ChangesDraft.tsx` claims changes "are saved in your current session".**
+   They are `useState` and lost on refresh. It is behind a staff guard now, but
+   the copy is still misleading.
+2. **`MembersArea.tsx` is a "Coming Soon" stub.** Deliberate, per the original
+   "stubs" commit — left as-is.
+3. **`system_controls` is decorative.** The Dashboard's agent toggles and
+   maintenance-mode switch read and write an in-memory mock via
+   `hubService.getSystemSettings()`; they never touch the table, and nothing
+   reads them to decide whether an agent runs. Flipping them changes nothing.
+4. **`MakersShop.tsx` still renders static data** from `src/data/makerListings.ts`
+   with no purchase path. `Subscriptions.tsx` remains the only real checkout,
+   via Stripe Payment Links.
+5. **Duplicate migrations.** `20260317_create_directory_listings.sql` and
+   `..._table.sql` both create the same table, differing only in seed rows. One
+   should go — I left both rather than guess which your live project ran.
+6. **Bundle size.** One ~1.3 MB chunk, no code splitting. Worth route-level
+   `lazy()` if mobile load time matters.
 
 ---
 
@@ -363,8 +419,8 @@ founder-facing admin tools where guessing would be worse than asking.
 |---|---|---|
 | 1 | Apply RLS fix | Done, adapted — see 1.1–1.3. **Verification is yours to run** (Section 3.4); I have no database access. |
 | 2 | Read `StudioDashboardV1.md` first | Done. Drove the `is_radio_staff()` design. No contradiction introduced. |
-| 3 | Verify auth flow end to end | Login works. **Reset was unreachable and is now fixed.** **Signup does not exist** — see 4.1. |
-| 4 | Audit commerce pages | Done — see 4.3. Subscriptions has real checkout; the rest are shells. |
+| 3 | Verify auth flow end to end | Login works. Reset was unreachable, now fixed. Signup did not exist, now built — see 4.1. Full flow present. |
+| 4 | Audit commerce pages | Done. Marketplace now wired to real data (4.5). Subscriptions has real checkout. MakersShop and ChangesDraft remain as noted in 4b. |
 | 5 | Confirm human-in-the-loop | `WhatsOnAgent` was already compliant (draft text only, no writes). **`directory-outreach` was not** — see 1.4. Discovery/enrichment write `status='draft'` and never publish. |
 | 6 | Confirm Vercel matches latest commits | **Confirmed current.** Production deployment `dpl_CimGc6or…` is READY at commit `148b1f3`, which is `main` HEAD. No stale build. |
 | 7 | Build, type errors, console errors, mobile | Build passes. Typecheck 0 errors (was unusable — see 2.2). **Whole site was blank** — see 2.1. After the fix: 80 page loads (40 routes x 2 viewports), no blank pages, no horizontal overflow, no app-level console errors. |

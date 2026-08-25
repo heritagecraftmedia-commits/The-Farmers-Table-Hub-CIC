@@ -83,9 +83,14 @@ const getListingCategory = (typeOrCraft: string): DirectoryListing['displayCateg
   return 'Crafters'; // Default for makers/artisans
 };
 
+// foodVendors and makerListings both number their ids from 1, and 29 ids
+// collide across the two files. Merging them raw produced duplicate keys in any
+// list that rendered them, which breaks React's reconciliation (wrong row
+// updated or removed). Namespacing on merge keeps each source's ids stable
+// while making the combined set unique.
 const realListings: DirectoryListing[] = [
   ...foodVendors.map(v => ({
-    id: v.id,
+    id: `vendor-${v.id}`,
     vendorName: titleCase(v.name),
     craftCategory: v.type,
     displayCategory: getListingCategory(v.type),
@@ -103,7 +108,7 @@ const realListings: DirectoryListing[] = [
     claimedAt: new Date().toISOString()
   })),
   ...makerListings.map(m => ({
-    id: m.id,
+    id: `maker-${m.id}`,
     vendorName: m.businessName || m.name,
     craftCategory: m.craft,
     displayCategory: getListingCategory(m.craft),
