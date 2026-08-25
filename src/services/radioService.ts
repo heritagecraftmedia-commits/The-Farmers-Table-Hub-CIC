@@ -2,12 +2,12 @@ import { supabase } from '../lib/supabase';
 
 export type RadioShow = { id: string; title: string; host: string; schedule: string; status: 'live' | 'pre-recorded' | 'planned'; lastBroadcast?: string; };
 export type RadioPlaylist = { id: string; name: string; description: string | null; durationSeconds: number; status: 'draft' | 'ready' | 'archived'; };
-export type RadioMedia = { id: string; title: string; artist: string | null; category: 'music' | 'jingle' | 'community' | 'ad' | 'emergency'; fileUrl: string; durationSeconds: number; isActive: boolean; };
+export type RadioMedia = { id: string; title: string; artist: string | null; category: 'music' | 'jingle' | 'advert' | 'community' | 'interview' | 'feature'; fileUrl: string | null; durationSeconds: number; isActive: boolean; };
 export type RadioBroadcast = { id: string; title: string; broadcastType: 'scheduled' | 'live' | 'outside'; startsAt: string; endsAt: string | null; status: 'scheduled' | 'live' | 'completed' | 'cancelled'; showId: string | null; playlistId: string | null; };
 
 const configured = () => Boolean(import.meta.env.VITE_SUPABASE_URL?.includes('supabase.co'));
 const requireConfigured = () => { if (!configured()) throw new Error('Supabase is not configured.'); };
-const mapMedia = (r: any): RadioMedia => ({ id: r.id, title: r.title, artist: r.artist, category: r.category, fileUrl: r.file_url, durationSeconds: r.duration_seconds, isActive: r.is_active });
+const mapMedia = (r: any): RadioMedia => ({ id: r.id, title: r.title, artist: r.artist, category: r.media_type, fileUrl: r.audio_url, durationSeconds: r.duration_seconds, isActive: r.is_active });
 
 export const radioService = {
   async getShows(): Promise<RadioShow[]> {
@@ -22,12 +22,12 @@ export const radioService = {
   },
   async getActiveMedia(): Promise<RadioMedia[]> {
     if (!configured()) return [];
-    const { data, error } = await supabase.from('radio_media').select('id,title,artist,category,file_url,duration_seconds,is_active').eq('is_active', true).order('created_at', { ascending: false }); if (error) throw error;
+    const { data, error } = await supabase.from('radio_media').select('id,title,artist,media_type,audio_url,duration_seconds,is_active').eq('is_active', true).order('created_at', { ascending: false }); if (error) throw error;
     return (data ?? []).map(mapMedia);
   },
   async getPlaylistItems(playlistId: string): Promise<RadioMedia[]> {
     if (!configured()) return [];
-    const { data, error } = await supabase.from('radio_playlist_items').select('order_index,radio_media(*)').eq('playlist_id', playlistId).order('order_index'); if (error) throw error;
+    const { data, error } = await supabase.from('radio_playlist_items').select('position,radio_media(*)').eq('playlist_id', playlistId).order('position'); if (error) throw error;
     return (data ?? []).map((r: any) => mapMedia(r.radio_media)).filter(Boolean);
   },
   async getUpcomingBroadcasts(limit = 8): Promise<RadioBroadcast[]> {
@@ -40,7 +40,7 @@ export const radioService = {
     const { data, error } = await supabase.from('directory_listings').select('id,name,category,location,description,website,tier,status').eq('status', 'active').order('name').limit(limit); if (error) throw error; return data ?? [];
   },
   async addMedia(input: Omit<RadioMedia, 'id' | 'isActive'>) {
-    requireConfigured(); const { data, error } = await supabase.from('radio_media').insert({ title: input.title, artist: input.artist, category: input.category, file_url: input.fileUrl, duration_seconds: input.durationSeconds, is_active: true }).select().single(); if (error) throw error; return data;
+    requireConfigured(); const { data, error } = await supabase.from('radio_media').insert({ title: input.title, artist: input.artist, media_type: input.category, audio_url: input.fileUrl, duration_seconds: input.durationSeconds, is_active: true }).select().single(); if (error) throw error; return data;
   },
   async createPlaylist(name: string, description = '', status: 'draft' | 'ready' = 'draft') {
     requireConfigured(); const { data, error } = await supabase.from('radio_playlists').insert({ name, description, status }).select().single(); if (error) throw error; return data;
@@ -55,8 +55,8 @@ export const radioService = {
     patch.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from('radio_playlists').update(patch).eq('id', playlistId).select().single(); if (error) throw error; return data;
   },
-  async addPlaylistItem(playlistId: string, mediaId: string, orderIndex: number) {
-    requireConfigured(); const { data, error } = await supabase.from('radio_playlist_items').insert({ playlist_id: playlistId, media_id: mediaId, order_index: orderIndex }).select().single(); if (error) throw error; return data;
+  async addPlaylistItem(playlistId: string, mediaId: string, position: number) {
+    requireConfigured(); const { data, error } = await supabase.from('radio_playlist_items').insert({ playlist_id: playlistId, media_id: mediaId, position }).select().single(); if (error) throw error; return data;
   },
   async clearPlaylistItems(playlistId: string) {
     requireConfigured(); const { error } = await supabase.from('radio_playlist_items').delete().eq('playlist_id', playlistId); if (error) throw error;
