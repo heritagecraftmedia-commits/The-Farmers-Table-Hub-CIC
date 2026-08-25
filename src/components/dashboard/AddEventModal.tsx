@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { X, Calendar, MapPin, Globe, Info } from 'lucide-react';
-import { HubEvent } from '../../types';
+import { EventCategory, HubEvent } from '../../types';
+
+const EVENT_CATEGORIES: EventCategory[] = [
+    'Wood & Furniture', 'Textiles & Clothing', 'Pottery & Ceramics', 'Metal & Tools',
+    'Heritage & Skills', 'Workshops & Talks', 'Food & Produce', 'Community', 'Other',
+];
 
 interface Props {
     onClose: () => void;
@@ -8,9 +13,13 @@ interface Props {
 }
 
 export const AddEventModal: React.FC<Props> = ({ onClose, onSave }) => {
-    const [form, setForm] = useState({
+    // craftType was missing entirely. HubEvent requires it, WhatsOn.tsx filters
+    // the public listing on it, and every event added here therefore had no
+    // category and could only ever be found under "All".
+    const [form, setForm] = useState<Omit<HubEvent, 'id' | 'createdAt'>>({
         title: '', description: '', startDate: '', endDate: '',
-        location: '', venue: '', websiteUrl: '', source: 'Manual', approved: true,
+        location: '', venue: '', websiteUrl: '', craftType: 'Community',
+        source: 'Manual', approved: true,
     });
 
     const handle = (e: React.FormEvent) => {
@@ -65,6 +74,13 @@ export const AddEventModal: React.FC<Props> = ({ onClose, onSave }) => {
                     <Field label="City / Area" icon={MapPin}>
                         <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
                             className={inputCls()} placeholder="Farnham, Surrey" />
+                    </Field>
+
+                    <Field label="Category">
+                        <select value={form.craftType} onChange={e => setForm({ ...form, craftType: e.target.value as EventCategory })}
+                            className={inputCls(false)}>
+                            {EVENT_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
                     </Field>
 
                     <Field label="Venue Name">

@@ -8,7 +8,11 @@ export const MakerStories: React.FC = () => {
   const [stories, setStories] = useState<MakerStory[]>([]);
 
   useEffect(() => {
-    setStories(hubService.getMakerStories().filter(s => s.published));
+    // getMakerStories is async — calling .filter on the Promise threw
+    // "filter is not a function" and left the page permanently empty.
+    hubService.getMakerStories()
+      .then(all => setStories(all.filter(s => s.published)))
+      .catch(err => console.error('Could not load maker stories:', err));
   }, []);
 
   return (

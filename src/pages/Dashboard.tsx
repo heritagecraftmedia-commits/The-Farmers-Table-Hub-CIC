@@ -804,7 +804,7 @@ export const Dashboard: React.FC = () => {
                       {show.lastBroadcast && <p className="text-xs text-brand-ink/30 mt-0.5">Last broadcast: {show.lastBroadcast}</p>}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${show.status === 'live' ? 'bg-red-50 text-red-600 animate-pulse' : show.status === 'recorded' ? 'bg-blue-50 text-blue-600' : 'bg-brand-cream text-brand-ink/40'}`}>{show.status}</span>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${show.status === 'live' ? 'bg-red-50 text-red-600 animate-pulse' : show.status === 'pre-recorded' ? 'bg-blue-50 text-blue-600' : 'bg-brand-cream text-brand-ink/40'}`}>{show.status}</span>
                       <button onClick={() => setEditingShow(show)} title="Edit show" className="w-9 h-9 flex items-center justify-center rounded-full bg-brand-cream hover:bg-brand-olive/10 transition-colors">
                         <Settings size={16} className="text-brand-ink/40 hover:text-brand-olive" />
                       </button>

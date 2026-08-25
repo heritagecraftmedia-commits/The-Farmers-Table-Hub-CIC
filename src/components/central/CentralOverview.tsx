@@ -6,7 +6,12 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export const CentralOverview: React.FC = () => {
+interface CentralOverviewProps {
+    /** Supplied by CommandCenter to switch tabs. */
+    onNavigate?: (tab: string) => void;
+}
+
+export const CentralOverview: React.FC<CentralOverviewProps> = ({ onNavigate }) => {
     const stats = [
         { label: "Active People", value: "12", sub: "Staff & Volunteers", icon: <Users size={20} /> },
         { label: "Monthly Income", value: "£3.4k", sub: "Radio & Directory", icon: <Coins size={20} /> },
@@ -64,8 +69,16 @@ export const CentralOverview: React.FC = () => {
                 <Link to="/notes" className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-olive rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
                     <FileText size={16} /> Draft Notes
                 </Link>
-                {['Add Person', 'Log Stock', 'Add Task'].map(action => (
-                    <button key={action} className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-ink/40 rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
+                {([
+                    { action: 'Add Person', tab: 'people' },
+                    { action: 'Log Stock', tab: 'stock' },
+                    { action: 'Add Task', tab: 'tasks' },
+                ]).map(({ action, tab }) => (
+                    <button
+                        key={action}
+                        onClick={() => onNavigate?.(tab)}
+                        className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-ink/40 rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2"
+                    >
                         <Plus size={16} /> {action}
                     </button>
                 ))}
