@@ -38,7 +38,12 @@ export const ClaimListing: React.FC = () => {
             const isConfigured = url && url !== 'https://placeholder.supabase.co' && url.includes('supabase.co');
 
             if (isConfigured) {
-                const { data, error: fetchErr } = await supabase.from('enriched_leads').select('*').eq('id', id).single();
+                // enriched_leads holds pre-consent scraped contact data and is
+                // admin-only. get_claimable_listing returns just this one row,
+                // and only once a human has approved it for outreach.
+                const { data, error: fetchErr } = await supabase
+                    .rpc('get_claimable_listing', { listing_id: id })
+                    .maybeSingle<DraftListing>();
                 if (fetchErr || !data) {
                     setError('Listing not found. It may have already been claimed or the link is invalid.');
                     setLoading(false);
@@ -75,17 +80,23 @@ export const ClaimListing: React.FC = () => {
         const isConfigured = url && url !== 'https://placeholder.supabase.co' && url.includes('supabase.co');
 
         if (isConfigured) {
-            await supabase.from('claimed_vendors').insert({
-                enriched_lead_id: id,
-                vendor_name: vendorName,
-                craft_category: craft,
-                location,
-                bio,
-                website,
-                approved: false,
-                published: false,
+            // Claimants arrive from an emailed link and are normally not signed
+            // in, so the insert goes through submit_listing_claim, which records
+            // the claim as unapproved and unpublished. The founder still has to
+            // approve it before it appears anywhere public.
+            setError('');
+            const { error: claimErr } = await supabase.rpc('submit_listing_claim', {
+                listing_id: id,
+                p_vendor_name: vendorName,
+                p_craft_category: craft,
+                p_location: location,
+                p_bio: bio,
+                p_website: website,
             });
-            await supabase.from('enriched_leads').update({ status: 'claimed' }).eq('id', id);
+            if (claimErr) {
+                setError('We could not save your claim. Please try again, or reply to the email we sent you.');
+                return;
+            }
         }
         setSubmitted(true);
     };
