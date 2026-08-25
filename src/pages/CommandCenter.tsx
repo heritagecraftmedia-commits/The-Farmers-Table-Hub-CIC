@@ -10,6 +10,7 @@ import { CentralTasks } from '../components/central/CentralTasks';
 import { CentralRadio } from '../components/central/CentralRadio';
 import { RadioStudioDashboard } from '../components/central/RadioStudioDashboard';
 import { RadioLibraryManager } from '../components/central/RadioLibraryManager';
+import { RadioAdvertiserStudio } from '../components/central/RadioAdvertiserStudio';
 import { CentralStock } from '../components/central/CentralStock';
 import { CentralAdvertisers } from '../components/central/CentralAdvertisers';
 import { CentralFinance } from '../components/central/CentralFinance';
@@ -22,7 +23,7 @@ type CentralTab = 'overview' | 'people' | 'advertisers' | 'stock' | 'radio' | 'f
 export const CommandCenter: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<CentralTab>('overview');
-  const [radioView, setRadioView] = useState<'studio' | 'library' | 'overview'>('studio');
+  const [radioView, setRadioView] = useState<'studio' | 'library' | 'promotions' | 'overview'>('studio');
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => { const timer = setInterval(() => setCurrentTime(new Date()), 1000); return () => clearInterval(timer); }, []);
   const getGreeting = () => { const hour = currentTime.getHours(); if (hour < 12) return 'Good morning'; if (hour < 17) return 'Good afternoon'; return 'Good evening'; };
@@ -35,7 +36,7 @@ export const CommandCenter: React.FC = () => {
     <main className="max-w-7xl mx-auto px-4 pt-10"><AnimatePresence mode="wait"><motion.div key={`${activeTab}-${radioView}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
       {activeTab === 'overview' && <CentralOverview onNavigate={(tab) => setActiveTab(tab as CentralTab)} />}
       {activeTab === 'safemode' && <CentralSafeMode />}{activeTab === 'people' && <CentralPeople />}{activeTab === 'tasks' && <CentralTasks />}
-      {activeTab === 'radio' && <div className="space-y-5"><div className="flex justify-end gap-2 flex-wrap"><button onClick={() => setRadioView('studio')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'studio' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Studio Dashboard</button><button onClick={() => setRadioView('library')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'library' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Audio Library</button><button onClick={() => setRadioView('overview')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'overview' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Station Overview</button></div>{radioView === 'studio' ? <RadioStudioDashboard /> : radioView === 'library' ? <RadioLibraryManager /> : <CentralRadio />}</div>}
+      {activeTab === 'radio' && <div className="space-y-5"><div className="flex justify-end gap-2 flex-wrap"><button onClick={() => setRadioView('studio')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'studio' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Studio Dashboard</button><button onClick={() => setRadioView('library')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'library' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Audio Library</button><button onClick={() => setRadioView('promotions')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'promotions' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Local Promotions</button><button onClick={() => setRadioView('overview')} className={`px-4 py-2 rounded-full text-sm font-bold ${radioView === 'overview' ? 'bg-brand-olive text-white' : 'bg-white text-brand-ink/60'}`}>Station Overview</button></div>{radioView === 'studio' ? <RadioStudioDashboard /> : radioView === 'library' ? <RadioLibraryManager /> : radioView === 'promotions' ? <RadioAdvertiserStudio /> : <CentralRadio />}</div>}
       {activeTab === 'stock' && <CentralStock />}{activeTab === 'advertisers' && <CentralAdvertisers />}{activeTab === 'finance' && <CentralFinance />}{activeTab === 'schedules' && <CentralSchedules />}{activeTab === 'events' && <CentralEvents />}{activeTab === 'records' && <CentralRecords />}
     </motion.div></AnimatePresence></main>
   </div>;
