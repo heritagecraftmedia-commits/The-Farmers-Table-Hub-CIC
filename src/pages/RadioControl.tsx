@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ExternalLink, HelpCircle, Radio, Wifi, Mic2 } from 'lucide-react';
+import { ChevronDown, ExternalLink, HelpCircle, Radio, Wifi, Mic2, LibraryBig } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { RadioStudioDashboard } from '../components/central/RadioStudioDashboard';
+import { RadioLibraryManager } from '../components/central/RadioLibraryManager';
 
 const LIVE365_PLAYER_URL = import.meta.env.VITE_LIVE365_PLAYER_URL || '';
 const LIVE365_DASHBOARD_URL = 'https://dashboard.live365.com/';
@@ -39,11 +40,22 @@ export const RadioControl: React.FC = () => {
           <ChevronDown className={`transition-transform ${showExplain ? 'rotate-180' : ''}`} />
         </button>
         {showExplain && <div className="px-6 pb-6 grid md:grid-cols-4 gap-4 text-sm">
-          <div className="rounded-2xl bg-white p-4"><strong>Prepare</strong><p className="mt-1 text-brand-ink/60">Load a ready playlist or add individual items to today's slot.</p></div>
-          <div className="rounded-2xl bg-white p-4"><strong>Check variety</strong><p className="mt-1 text-brand-ink/60">Mix music with a sensible number of jingles, adverts and local/community features.</p></div>
-          <div className="rounded-2xl bg-white p-4"><strong>Save ready</strong><p className="mt-1 text-brand-ink/60">Give the slot a clear name and choose Save ready when it is finished.</p></div>
-          <div className="rounded-2xl bg-white p-4"><strong>Go live only when needed</strong><p className="mt-1 text-brand-ink/60">For a live show, use BUTT. For unattended hours, let Live365 AutoDJ run the prepared programming.</p></div>
+          <div className="rounded-2xl bg-white p-4"><strong>1. Add audio</strong><p className="mt-1 text-brand-ink/60">Put finished music, jingles, adverts and community audio into the library.</p></div>
+          <div className="rounded-2xl bg-white p-4"><strong>2. Build the slot</strong><p className="mt-1 text-brand-ink/60">Choose a programme recipe or pick items from the library. Check the mix.</p></div>
+          <div className="rounded-2xl bg-white p-4"><strong>3. Save ready</strong><p className="mt-1 text-brand-ink/60">Give the slot a clear name and choose Save ready when it is finished.</p></div>
+          <div className="rounded-2xl bg-white p-4"><strong>4. Broadcast</strong><p className="mt-1 text-brand-ink/60">For unattended hours, use Live365 AutoDJ. For a live presenter, use BUTT.</p></div>
         </div>}
+      </section>
+
+      <section className="rounded-[28px] bg-white border border-brand-olive/10 p-6 md:p-8">
+        <div className="flex items-start gap-3 mb-5">
+          <LibraryBig className="text-brand-olive mt-1" />
+          <div>
+            <h2 className="text-2xl font-serif">Step 1 — Build the audio library</h2>
+            <p className="text-sm text-brand-ink/55 mt-1 max-w-3xl">This is where we build the variety that makes the station sound local and interesting. Add real music, station jingles, community notices, interviews, features and approved local advertising. Nothing is invented for broadcast.</p>
+          </div>
+        </div>
+        <RadioLibraryManager />
       </section>
 
       <RadioStudioDashboard />
