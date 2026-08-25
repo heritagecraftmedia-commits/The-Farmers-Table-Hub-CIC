@@ -90,10 +90,34 @@ create policy "Public can read active sponsors" on radio_sponsors for select usi
 create policy "Public can read scheduled ad slots" on radio_ad_slots for select using (status = 'scheduled');
 create policy "Public can read scheduled broadcasts" on radio_broadcasts for select using (status in ('scheduled','live','completed'));
 
--- Founder controls the operational data.
-create policy "Founder manages radio playlists" on radio_playlists for all using (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder')) with check (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder'));
-create policy "Founder manages radio media" on radio_media for all using (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder')) with check (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder'));
-create policy "Founder manages playlist items" on radio_playlist_items for all using (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder')) with check (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder'));
-create policy "Founder manages radio sponsors" on radio_sponsors for all using (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder')) with check (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder'));
-create policy "Founder manages ad slots" on radio_ad_slots for all using (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder')) with check (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder'));
-create policy "Founder manages broadcasts" on radio_broadcasts for all using (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder')) with check (exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') = 'founder'));
+-- Radio staff can manage operational content. Founder retains full control.
+create policy "Radio staff manage radio playlists" on radio_playlists for all using (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+) with check (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+);
+create policy "Radio staff manage radio media" on radio_media for all using (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+) with check (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+);
+create policy "Radio staff manage playlist items" on radio_playlist_items for all using (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+) with check (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+);
+create policy "Radio staff manage radio sponsors" on radio_sponsors for all using (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+) with check (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+);
+create policy "Radio staff manage ad slots" on radio_ad_slots for all using (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+) with check (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+);
+create policy "Radio staff manage broadcasts" on radio_broadcasts for all using (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+) with check (
+  exists (select 1 from auth.users where auth.users.id = auth.uid() and (auth.users.raw_user_meta_data->>'role') in ('founder','radio_manager','staff'))
+);
