@@ -7,6 +7,7 @@ import { RadioLibraryManager } from '../components/central/RadioLibraryManager';
 import { RadioMonthPlanner } from '../components/central/RadioMonthPlanner';
 import { RadioBuildRecipes } from '../components/central/RadioBuildRecipes';
 import { RadioOperationalChecklist } from '../components/central/RadioOperationalChecklist';
+import { RadioRunSheet } from '../components/central/RadioRunSheet';
 
 const LIVE365_PLAYER_URL = import.meta.env.VITE_LIVE365_PLAYER_URL || '';
 const LIVE365_DASHBOARD_URL = 'https://dashboard.live365.com/';
@@ -46,6 +47,7 @@ export const RadioControl: React.FC = () => {
       </section>
 
       <RadioOperationalChecklist />
+      <RadioRunSheet />
 
       <section className="rounded-[28px] bg-white border border-brand-olive/10 p-6 md:p-8"><div className="flex items-start gap-3 mb-5"><LibraryBig className="text-brand-olive mt-1" /><div><h2 className="text-2xl font-serif">Step 1 — Build the audio library</h2><p className="text-sm text-brand-ink/55 mt-1 max-w-3xl">This is where we build the variety that makes the station sound local and interesting. Add real music, station jingles, community notices, interviews, features and approved local advertising. Nothing is invented for broadcast.</p></div></div><RadioLibraryManager /></section>
 
