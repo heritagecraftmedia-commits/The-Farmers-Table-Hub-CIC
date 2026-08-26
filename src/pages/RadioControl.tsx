@@ -6,6 +6,7 @@ import { RadioStudioDashboard } from '../components/central/RadioStudioDashboard
 import { RadioLibraryManager } from '../components/central/RadioLibraryManager';
 import { RadioMonthPlanner } from '../components/central/RadioMonthPlanner';
 import { RadioBuildRecipes } from '../components/central/RadioBuildRecipes';
+import { RadioOperationalChecklist } from '../components/central/RadioOperationalChecklist';
 
 const LIVE365_PLAYER_URL = import.meta.env.VITE_LIVE365_PLAYER_URL || '';
 const LIVE365_DASHBOARD_URL = 'https://dashboard.live365.com/';
@@ -41,27 +42,18 @@ export const RadioControl: React.FC = () => {
           <span className="flex items-center gap-3"><HelpCircle className="text-brand-olive" /><span><strong>What do I do next?</strong><span className="block text-sm text-brand-ink/50 font-normal">A simple reminder for anyone using the station.</span></span></span>
           <ChevronDown className={`transition-transform ${showExplain ? 'rotate-180' : ''}`} />
         </button>
-        {showExplain && <div className="px-6 pb-6 grid md:grid-cols-4 gap-4 text-sm">
-          <div className="rounded-2xl bg-white p-4"><strong>1. Add audio</strong><p className="mt-1 text-brand-ink/60">Put finished music, jingles, adverts and community audio into the library.</p></div>
-          <div className="rounded-2xl bg-white p-4"><strong>2. Build the slot</strong><p className="mt-1 text-brand-ink/60">Choose a programme recipe or pick items from the library. Check the mix.</p></div>
-          <div className="rounded-2xl bg-white p-4"><strong>3. Save ready</strong><p className="mt-1 text-brand-ink/60">Give the slot a clear name and choose Save ready when it is finished.</p></div>
-          <div className="rounded-2xl bg-white p-4"><strong>4. Broadcast</strong><p className="mt-1 text-brand-ink/60">For unattended hours use RadioDJ/Live365 automation. For an outside broadcast use BUTT.</p></div>
-        </div>}
+        {showExplain && <div className="px-6 pb-6 grid md:grid-cols-4 gap-4 text-sm"><div className="rounded-2xl bg-white p-4"><strong>1. Add audio</strong><p className="mt-1 text-brand-ink/60">Put finished music, jingles, adverts and community audio into the library.</p></div><div className="rounded-2xl bg-white p-4"><strong>2. Build the slot</strong><p className="mt-1 text-brand-ink/60">Choose a programme recipe or pick items from the library. Check the mix.</p></div><div className="rounded-2xl bg-white p-4"><strong>3. Save ready</strong><p className="mt-1 text-brand-ink/60">Give the slot a clear name and choose Save ready when it is finished.</p></div><div className="rounded-2xl bg-white p-4"><strong>4. Broadcast</strong><p className="mt-1 text-brand-ink/60">For unattended hours use RadioDJ/Live365 automation. For an outside broadcast use BUTT.</p></div></div>}
       </section>
 
-      <section className="rounded-[28px] bg-white border border-brand-olive/10 p-6 md:p-8">
-        <div className="flex items-start gap-3 mb-5"><LibraryBig className="text-brand-olive mt-1" /><div><h2 className="text-2xl font-serif">Step 1 — Build the audio library</h2><p className="text-sm text-brand-ink/55 mt-1 max-w-3xl">This is where we build the variety that makes the station sound local and interesting. Add real music, station jingles, community notices, interviews, features and approved local advertising. Nothing is invented for broadcast.</p></div></div>
-        <RadioLibraryManager />
-      </section>
+      <RadioOperationalChecklist />
+
+      <section className="rounded-[28px] bg-white border border-brand-olive/10 p-6 md:p-8"><div className="flex items-start gap-3 mb-5"><LibraryBig className="text-brand-olive mt-1" /><div><h2 className="text-2xl font-serif">Step 1 — Build the audio library</h2><p className="text-sm text-brand-ink/55 mt-1 max-w-3xl">This is where we build the variety that makes the station sound local and interesting. Add real music, station jingles, community notices, interviews, features and approved local advertising. Nothing is invented for broadcast.</p></div></div><RadioLibraryManager /></section>
 
       <RadioBuildRecipes />
       <RadioStudioDashboard />
       <RadioMonthPlanner />
 
-      <section className="grid md:grid-cols-2 gap-6">
-        <section className="rounded-[28px] bg-white border border-brand-olive/10 p-6"><h2 className="text-xl font-serif">Live365</h2><p className="mt-2 text-sm text-brand-ink/60">Live365 provides the public stream, AutoDJ and cloud-side station controls. The Farmers Table website can embed the player, while authorised staff use Live365 for station-level controls.</p><div className="mt-5 rounded-2xl bg-brand-cream p-4"><div className="font-bold">Player connection</div><div className="text-sm mt-1 text-brand-ink/60">{LIVE365_PLAYER_URL ? 'Live365 player configured.' : 'Live365 player URL not configured yet.'}</div></div></section>
-        <section className="rounded-[28px] bg-white border border-brand-olive/10 p-6"><h2 className="text-xl font-serif">BUTT live encoder</h2><p className="mt-2 text-sm text-brand-ink/60">BUTT runs on the broadcaster's computer and sends live audio to Live365. The website deliberately does not pretend it can remotely press BUTT's buttons.</p><div className="mt-5 rounded-2xl bg-brand-cream p-4"><div className="font-bold">When you are live</div><div className="text-sm mt-1 text-brand-ink/60">Start BUTT, check the connection, then present. Stop BUTT when the live session is finished.</div></div></section>
-      </section>
+      <section className="grid md:grid-cols-2 gap-6"><section className="rounded-[28px] bg-white border border-brand-olive/10 p-6"><h2 className="text-xl font-serif">Live365</h2><p className="mt-2 text-sm text-brand-ink/60">Live365 provides the public stream, AutoDJ and cloud-side station controls. The Farmers Table website can embed the player, while authorised staff use Live365 for station-level controls.</p><div className="mt-5 rounded-2xl bg-brand-cream p-4"><div className="font-bold">Player connection</div><div className="text-sm mt-1 text-brand-ink/60">{LIVE365_PLAYER_URL ? 'Live365 player configured.' : 'Live365 player URL not configured yet.'}</div></div></section><section className="rounded-[28px] bg-white border border-brand-olive/10 p-6"><h2 className="text-xl font-serif">BUTT live encoder</h2><p className="mt-2 text-sm text-brand-ink/60">BUTT runs on the broadcaster's computer and sends live audio to Live365. The website deliberately does not pretend it can remotely press BUTT's buttons.</p><div className="mt-5 rounded-2xl bg-brand-cream p-4"><div className="font-bold">When you are live</div><div className="text-sm mt-1 text-brand-ink/60">Start BUTT, check the connection, then present. Stop BUTT when the live session is finished.</div></div></section></section>
 
       <div className="flex flex-wrap gap-3"><Link className="rounded-xl px-4 py-3 border border-brand-olive/10 bg-white font-bold" to="/radio">Public Radio Page</Link><Link className="rounded-xl px-4 py-3 border border-brand-olive/10 bg-white font-bold" to="/dashboard">Main Dashboard</Link></div>
     </div>
