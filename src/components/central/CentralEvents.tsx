@@ -46,7 +46,7 @@ export const CentralEvents: React.FC = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const categories = ['all', ...Array.from(new Set(events.map((event) => event.category)))];
+  const categories = ['all', ...new Set(events.map((event) => event.category))];
   const filteredEvents = events.filter((event) => {
     const searchTerm = search.toLowerCase().trim();
     const matchesSearch = !searchTerm || event.title.toLowerCase().includes(searchTerm) || event.description.toLowerCase().includes(searchTerm);

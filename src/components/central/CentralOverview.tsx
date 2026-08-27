@@ -6,12 +6,17 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export const CentralOverview: React.FC = () => {
+interface CentralOverviewProps {
+    /** Switches the Command Centre tab. Optional so the panel still renders standalone. */
+    onNavigate?: (tab: string) => void;
+}
+
+export const CentralOverview: React.FC<CentralOverviewProps> = ({ onNavigate }) => {
     const stats = [
-        { label: "Active People", value: "12", sub: "Staff & Volunteers", icon: <Users size={20} /> },
-        { label: "Monthly Income", value: "£3.4k", sub: "Radio & Directory", icon: <Coins size={20} /> },
-        { label: "Advertisers", value: "9", sub: "Live campaigns", icon: <Radio size={20} /> },
-        { label: "Open Tasks", value: "5", sub: "Assigned to team", icon: <ClipboardList size={20} /> },
+        { label: "Active People", value: "12", sub: "Staff & Volunteers", icon: <Users size={20} />, tab: 'people' },
+        { label: "Monthly Income", value: "£3.4k", sub: "Radio & Directory", icon: <Coins size={20} />, tab: 'finance' },
+        { label: "Advertisers", value: "9", sub: "Live campaigns", icon: <Radio size={20} />, tab: 'advertisers' },
+        { label: "Open Tasks", value: "5", sub: "Assigned to team", icon: <ClipboardList size={20} />, tab: 'tasks' },
     ];
 
     const schedule = [
@@ -44,7 +49,16 @@ export const CentralOverview: React.FC = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.05 }}
-                        className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm"
+                        className={`bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm${onNavigate ? ' cursor-pointer hover:border-brand-olive/20 transition-colors' : ''}`}
+                        {...(onNavigate ? {
+                            role: 'button',
+                            tabIndex: 0,
+                            'aria-label': `View ${stat.label}`,
+                            onClick: () => onNavigate(stat.tab),
+                            onKeyDown: (e: React.KeyboardEvent) => {
+                                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(stat.tab); }
+                            },
+                        } : {})}
                     >
                         <div className="w-10 h-10 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-olive mb-4">
                             {stat.icon}
@@ -115,7 +129,7 @@ export const CentralOverview: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-                        <button className="w-full mt-6 py-3 border border-dashed border-brand-olive/20 rounded-2xl text-xs font-bold text-brand-olive hover:bg-brand-olive/5 transition-all">
+                        <button type="button" onClick={() => onNavigate?.('tasks')} className="w-full mt-6 py-3 border border-dashed border-brand-olive/20 rounded-2xl text-xs font-bold text-brand-olive hover:bg-brand-olive/5 transition-all">
                             View All Tasks
                         </button>
                     </div>

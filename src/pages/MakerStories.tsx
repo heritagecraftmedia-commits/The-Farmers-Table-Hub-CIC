@@ -8,7 +8,11 @@ export const MakerStories: React.FC = () => {
   const [stories, setStories] = useState<MakerStory[]>([]);
 
   useEffect(() => {
-    setStories(hubService.getMakerStories().filter(s => s.published));
+    const load = async () => {
+      const data = await hubService.getMakerStories();
+      setStories(data.filter(s => s.published));
+    };
+    load();
   }, []);
 
   return (

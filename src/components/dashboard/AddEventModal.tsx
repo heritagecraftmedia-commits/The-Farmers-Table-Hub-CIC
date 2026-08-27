@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { X, Calendar, MapPin, Globe, Info } from 'lucide-react';
-import { HubEvent } from '../../types';
+import { HubEvent, EventCategory } from '../../types';
+
+const EVENT_CATEGORIES: EventCategory[] = [
+    'Wood & Furniture', 'Textiles & Clothing', 'Pottery & Ceramics', 'Metal & Tools',
+    'Heritage & Skills', 'Workshops & Talks', 'Food & Produce', 'Community', 'Other',
+];
 
 interface Props {
     onClose: () => void;
@@ -11,6 +16,7 @@ export const AddEventModal: React.FC<Props> = ({ onClose, onSave }) => {
     const [form, setForm] = useState({
         title: '', description: '', startDate: '', endDate: '',
         location: '', venue: '', websiteUrl: '', source: 'Manual', approved: true,
+        craftType: 'Community' as EventCategory,
     });
 
     const handle = (e: React.FormEvent) => {
@@ -70,6 +76,13 @@ export const AddEventModal: React.FC<Props> = ({ onClose, onSave }) => {
                     <Field label="Venue Name">
                         <input value={form.venue} onChange={e => setForm({ ...form, venue: e.target.value })}
                             className={inputCls(false)} placeholder="Market Square" />
+                    </Field>
+
+                    <Field label="Category">
+                        <select value={form.craftType} onChange={e => setForm({ ...form, craftType: e.target.value as EventCategory })}
+                            className={inputCls(false)}>
+                            {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
                     </Field>
 
                     <Field label="Website URL" icon={Globe}>

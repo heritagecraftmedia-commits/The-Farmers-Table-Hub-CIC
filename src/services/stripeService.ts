@@ -1,4 +1,3 @@
-import { loadStripe } from '@stripe/stripe-js';
 
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 const PRICE_SUPPORTER = import.meta.env.VITE_STRIPE_PRICE_SUPPORTER;
