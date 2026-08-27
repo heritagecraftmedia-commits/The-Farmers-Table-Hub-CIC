@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, ExternalLink, Star, Crown, ArrowRight } from 'lucide-react';
+import { MapPin, ExternalLink, Star, Crown, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { hubService } from '../services/hubService';
@@ -15,6 +15,7 @@ export const Directory: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [allListings, setAllListings] = useState<DirectoryListing[]>([]);
   const [featuredRotation, setFeaturedRotation] = useState<DirectoryListing[]>([]);
+  const [loadError, setLoadError] = useState('');
 
   React.useEffect(() => {
     const load = async () => {
@@ -26,7 +27,11 @@ export const Directory: React.FC = () => {
       const shuffled = [...featured].sort(() => 0.5 - Math.random());
       setFeaturedRotation(shuffled.slice(0, 10));
     };
-    load();
+    // getPublicListings throws rather than falling back to invented listings.
+    // Say the directory could not be loaded; the empty state below claims
+    // nobody has listed yet, which would be untrue and would send real
+    // producers away thinking the directory is empty.
+    load().catch(() => setLoadError('The directory could not be loaded just now. Please try again shortly.'));
   }, []);
 
   const filtered = allListings
@@ -259,7 +264,13 @@ export const Directory: React.FC = () => {
           ))}
         </div>
 
-        {allListings.length === 0 && (
+        {loadError && (
+          <div className="flex items-center justify-center gap-2 text-center py-24 text-brand-ink/70">
+            <AlertCircle size={18} /> {loadError}
+          </div>
+        )}
+
+        {!loadError && allListings.length === 0 && (
           <div className="text-center py-24 max-w-md mx-auto">
             <p className="text-3xl font-serif mb-4">Be the first to list your business</p>
             <p className="text-brand-ink/50 mb-8">

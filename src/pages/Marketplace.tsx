@@ -27,7 +27,9 @@ export const Marketplace: React.FC = () => {
 
   useEffect(() => {
     let active = true;
-    hubService.getListings()
+    // Public route, so this must read the curated public view, not the
+    // admin-only directory_listings table.
+    hubService.getPublicListings()
       .then(rows => { if (active) setListings(rows.filter((l: DirectoryListing) => l.published)); })
       .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Could not load listings.'); })
       .finally(() => { if (active) setLoading(false); });

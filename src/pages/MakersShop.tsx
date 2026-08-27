@@ -70,8 +70,10 @@ export const MakersShop: React.FC = () => {
         const load = async () => {
             // Was reading the static src/data/makerListings.ts file, so nothing a
             // maker changed and nothing the founder approved ever showed up here.
+            // Public route, so this must read the curated public view, not the
+            // admin-only directory_listings table.
             const [allListings, allEvents, allLinks] = await Promise.all([
-                hubService.getListings(),
+                hubService.getPublicListings(),
                 hubService.getEvents(),
                 hubService.getEventMakerLinks()
             ]);

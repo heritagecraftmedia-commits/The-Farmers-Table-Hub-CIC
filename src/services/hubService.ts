@@ -384,13 +384,23 @@ export const hubService = {
   // contact_email or phone except for paid tiers, and none of the outreach /
   // moderation fields. getListings() below stays for admin screens, where the
   // caller is an authenticated admin and RLS allows the base table.
+  //
+  // Every public route that shows directory data must come through here.
+  // directory_listings itself is admin-only from 20260828 onwards, so an
+  // anonymous visitor calling getListings() gets "permission denied".
+  //
+  // On failure this throws rather than substituting mockListings. Those are
+  // invented businesses; serving them from the live site would present fiction
+  // as a real trader directory. Callers show an error or an empty state
+  // instead. Mock data survives only for local development without Supabase,
+  // matching demoModeAvailable() in AuthContext.
   getPublicListings: async (): Promise<any[]> => {
-    if (!isConfigured()) return mockListings;
+    if (!isConfigured()) return import.meta.env.DEV ? mockListings : [];
     const { data, error } = await supabase
       .from('public_directory_listings')
       .select('id,name,category,location,description,website,tier,status,created_at,contact_email,phone')
       .order('name');
-    if (error) { console.error('getPublicListings:', error); return mockListings; }
+    if (error) { console.error('getPublicListings:', error); throw error; }
     return data.map((r: any) => ({
       id: r.id,
       vendorName: r.name,
