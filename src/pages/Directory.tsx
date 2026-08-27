@@ -18,7 +18,7 @@ export const Directory: React.FC = () => {
 
   React.useEffect(() => {
     const load = async () => {
-      const data = await hubService.getListings();
+      const data = await hubService.getPublicListings();
       setAllListings(data);
 
       // Select 10 featured spots randomly
