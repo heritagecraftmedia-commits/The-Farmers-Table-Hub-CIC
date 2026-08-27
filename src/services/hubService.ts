@@ -379,6 +379,41 @@ export const hubService = {
     await supabase.from('directory_listings').update({ affiliate_links: links }).eq('id', listingId);
   },
 
+  // Public directory reader. Reads the curated `public_directory_listings`
+  // view, which exposes only the columns a visitor is meant to see: no
+  // contact_email or phone except for paid tiers, and none of the outreach /
+  // moderation fields. getListings() below stays for admin screens, where the
+  // caller is an authenticated admin and RLS allows the base table.
+  getPublicListings: async (): Promise<any[]> => {
+    if (!isConfigured()) return mockListings;
+    const { data, error } = await supabase
+      .from('public_directory_listings')
+      .select('id,name,category,location,description,website,tier,status,created_at,contact_email,phone')
+      .order('name');
+    if (error) { console.error('getPublicListings:', error); return mockListings; }
+    return data.map((r: any) => ({
+      id: r.id,
+      vendorName: r.name,
+      craftCategory: r.category,
+      displayCategory: getListingCategory(r.category ?? ''),
+      location: r.location,
+      website: r.website ?? '',
+      bio: r.description ?? '',
+      email: r.contact_email ?? '',
+      phone: r.phone ?? '',
+      socialLinks: {},
+      affiliateLinks: [],
+      listingTier: r.tier ?? 'free',
+      approved: r.status === 'active',
+      published: r.status === 'active',
+      claimedAt: r.created_at,
+      outreachStatus: 'not_contacted',
+      outreachDate: null,
+      response: null,
+      claimed: false,
+    }));
+  },
+
   getListings: async (): Promise<any[]> => {
     if (!isConfigured()) return mockListings;
     const { data, error } = await supabase.from('directory_listings').select('*').order('name');
