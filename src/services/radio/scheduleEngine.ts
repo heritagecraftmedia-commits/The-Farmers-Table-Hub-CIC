@@ -257,7 +257,7 @@ export const resolveDay = (
   const displacedSomething = new Set<string>();
   for (const candidate of candidates) {
     for (const winner of placed) {
-      if (winner.key !== candidate.key && overlaps(winner, candidate.slot)) {
+      if (winner.key !== candidate.slot.key && overlaps(winner, candidate.slot)) {
         displacedSomething.add(winner.key);
       }
     }

@@ -134,6 +134,16 @@ test('a higher priority rule displaces an overlapping regular one', () => {
   assert.equal(slots[0].isOverride, true);
 });
 
+test('an ordinary slot that displaced nothing is not flagged as an override', () => {
+  const rules = [
+    rule({ id: 'a', startTime: '06:00', endTime: '08:00', programmeId: 'p1' }),
+    rule({ id: 'b', startTime: '08:00', endTime: '10:00', programmeId: 'p2' }),
+  ];
+  const slots = resolveDay(TUE, rules, [], programmes);
+  assert.equal(slots.length, 2);
+  assert.equal(slots.every((s) => s.isOverride === false), true);
+});
+
 test('emergency programming outranks every other schedule type', () => {
   const rules = [
     rule({ id: 'christmas', startTime: '10:00', endTime: '12:00', programmeId: 'p1', scheduleType: 'christmas' }),
