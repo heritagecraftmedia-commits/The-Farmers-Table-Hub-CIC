@@ -23,7 +23,7 @@ export interface MakerListing {
   tier: ListingTier;
 }
 
-export type UserRole = 'founder' | 'staff' | 'customer' | null;
+export type UserRole = 'founder' | 'staff' | 'radio_manager' | 'presenter' | 'customer' | null;
 
 export interface User {
   id: string;
