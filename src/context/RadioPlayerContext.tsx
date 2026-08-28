@@ -7,6 +7,7 @@
 import React, {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { createStreamProvider } from '../services/radio/providerRegistry';
 import {
@@ -73,12 +74,21 @@ export const RadioPlayerProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [volume, setVolumeState] = useState<number>(readStoredVolume);
   const [isMuted, setIsMuted] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  // The provider is mounted app-wide so playback survives navigation, but the
+  // station only needs loading where it is actually used: on a radio page, or
+  // once a listener has started the stream and the mini player is following
+  // them around the site. Without this gate every page on the site would run
+  // station queries and a 60-second schedule poll it never uses.
+  const [hasActivated, setHasActivated] = useState(false);
+  const location = useLocation();
+  const needsStation = location.pathname.startsWith('/radio') || hasActivated;
 
   const provider = useMemo(() => createStreamProvider(config), [config]);
   const streamUrl = useMemo(() => provider.getStreamUrl(), [provider]);
 
   // --- Load station identity and streaming configuration once -------------
   useEffect(() => {
+    if (!needsStation) return;
     let cancelled = false;
     (async () => {
       try {
@@ -96,7 +106,7 @@ export const RadioPlayerProvider: React.FC<{ children: ReactNode }> = ({ childre
       }
     })();
     return () => { cancelled = true; };
-  }, [refreshToken]);
+  }, [refreshToken, needsStation]);
 
   // --- Poll provider status / now playing ---------------------------------
   useEffect(() => {
@@ -127,6 +137,7 @@ export const RadioPlayerProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   // --- Keep the current/next programme in step with the clock -------------
   useEffect(() => {
+    if (!needsStation) return;
     let cancelled = false;
     const load = async () => {
       try {
@@ -139,14 +150,21 @@ export const RadioPlayerProvider: React.FC<{ children: ReactNode }> = ({ childre
     load();
     const interval = window.setInterval(load, 60_000);
     return () => { cancelled = true; window.clearInterval(interval); };
-  }, [refreshToken]);
+  }, [refreshToken, needsStation]);
 
   // --- Audio element wiring ------------------------------------------------
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onPlaying = () => { setIsPlaying(true); setIsBuffering(false); setPlaybackError(null); };
+    const onPlaying = () => {
+      setIsPlaying(true);
+      setIsBuffering(false);
+      setPlaybackError(null);
+      // Keep the station loaded from now on, so the mini player still shows the
+      // current programme after the listener navigates away from /radio.
+      setHasActivated(true);
+    };
     const onPause = () => setIsPlaying(false);
     const onWaiting = () => setIsBuffering(true);
     const onError = () => {
