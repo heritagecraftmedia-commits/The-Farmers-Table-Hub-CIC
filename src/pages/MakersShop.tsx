@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Instagram, Crown, Star, ArrowRight, Palette } from 'lucide-react';
+import { Search, Instagram, Crown, Star, ArrowRight, Palette, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { DirectoryListing, MakerListing, HubEvent } from '../types';
@@ -64,6 +64,7 @@ export const MakersShop: React.FC = () => {
     const [events, setEvents] = useState<HubEvent[]>([]);
     const [links, setLinks] = useState<{ eventId: string, makerId: string, makerName?: string }[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
 
     React.useEffect(() => {
         let active = true;
@@ -83,7 +84,14 @@ export const MakersShop: React.FC = () => {
             setLinks(allLinks);
             setLoading(false);
         };
-        load().catch(() => { if (active) setLoading(false); });
+        // getPublicListings throws rather than falling back to invented makers.
+        // Say so: the empty state below reads "No makers found matching your
+        // search", which would blame the visitor's search for a failed query.
+        load().catch(() => {
+            if (!active) return;
+            setLoadError('The makers directory could not be loaded just now. Please try again shortly.');
+            setLoading(false);
+        });
         return () => { active = false; };
     }, []);
 
@@ -228,7 +236,13 @@ export const MakersShop: React.FC = () => {
                     })}
                 </div>
 
-                {filtered.length === 0 && (
+                {loadError && (
+                    <div className="flex items-center justify-center gap-2 text-center py-24 text-brand-ink/70">
+                        <AlertCircle size={18} /> {loadError}
+                    </div>
+                )}
+
+                {!loadError && filtered.length === 0 && (
                     <div className="text-center py-24">
                         <p className="text-2xl text-brand-ink/40 font-serif italic">No makers found matching your search.</p>
                     </div>
