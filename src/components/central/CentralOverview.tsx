@@ -1,159 +1,454 @@
-// ILLUSTRATIVE DASHBOARD — the figures and the on-air list below are worked
-// examples, not live data. The people, income, task counts, presenter names,
-// guests and programme titles here are placeholders showing the intended shape
-// of the screen; none of them come from the database.
+// Founder Control Centre overview.
 //
-// Real advertiser records are in the Advertisers tab, and the real radio
-// schedule is in the Radio Control Centre. Do not read anything on this screen
-// as a real figure or a real booking until it is wired to a data source.
+// Every figure on this screen comes from src/services/radio/stationService.ts,
+// which is the only trustworthy data layer available here: it returns an empty
+// result when Supabase is unconfigured or the radio migration has not been
+// applied, and THROWS on any other error rather than substituting content.
+//
+// hubService is deliberately NOT used. Its getStaff/getFounderJobs/getEvents
+// silently fall back to invented people and tasks both when unconfigured and on
+// error, so any count derived from it could be fiction without saying so.
+//
+// Anything without a trustworthy source is omitted rather than estimated:
+//   * income / revenue      — no financial data source exists in this app
+//   * staff and task counts — only available via hubService's mock fallback
+//   * recent activity       — there is no audit/activity table
+//   * Xero / Notion / HubSpot status — no such integration exists here
 
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-    TrendingUp, Users, Coins, ClipboardList, Plus,
-    Clock, AlertCircle, Database, LayoutDashboard, Radio, Edit3, FileText, TriangleAlert } from 'lucide-react';
+  AlertCircle, CalendarClock, CheckCircle2, Handshake, Inbox, Megaphone,
+  Mic2, Radio, RefreshCw, Settings, ShieldCheck,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export const CentralOverview: React.FC = () => {
-    const stats = [
-        { label: "Active People", value: "12", sub: "Staff & Volunteers", icon: <Users size={20} /> },
-        { label: "Monthly Income", value: "£3.4k", sub: "Radio & Directory", icon: <Coins size={20} /> },
-        { label: "Advertisers", value: "9", sub: "Live campaigns", icon: <Radio size={20} /> },
-        { label: "Open Tasks", value: "5", sub: "Assigned to team", icon: <ClipboardList size={20} /> },
-    ];
+import {
+  advertPublishBlockers, getAllAdverts, getAllSponsorships, getDaySchedule,
+  getMusicAwaitingLicenceCheck, getNowAndNext, getStation, getStreamConfig,
+  getSubmissionQueue, isRadioConfigured,
+} from '../../services/radio/stationService';
+import type {
+  NowAndNext, RadioAdvert, RadioLibraryItem, RadioSponsorship, RadioStation,
+  RadioSubmission, ScheduleSlot, StationStreamConfig,
+} from '../../services/radio/types';
 
-    const schedule = [
-        { time: "09:00", status: "done", title: "Café Opening & Stock Check", meta: "Staff: Alice & Tom" },
-        { time: "11:30", status: "now", title: "Surrey Hills Morning Live", meta: "Presenter: Sarah Willow" },
-        { time: "14:00", status: "upcoming", title: "Maker Spotlight Interview", meta: "Guest: Thomas Ironworks" },
-        { time: "16:30", status: "upcoming", title: "Inventory Delivery", meta: "Supplier: Local Dairy" },
-    ];
+interface OverviewData {
+  nowNext: NowAndNext;
+  today: ScheduleSlot[];
+  adverts: RadioAdvert[];
+  sponsorships: RadioSponsorship[];
+  submissions: RadioSubmission[];
+  unlicensed: RadioLibraryItem[];
+  station: RadioStation | null;
+  stream: StationStreamConfig | null;
+}
 
-    const urgentTasks = [
-        { title: "Review Overdue Radio Ad Invoices", priority: "HIGH", assigned: "Finance" },
-        { title: "Approve 3 New Directory Drafts", priority: "MED", assigned: "Ops" },
-        { title: "Update Staff Rota for Weekend", priority: "MED", assigned: "Admin" },
-    ];
+const EXPIRY_WARNING_DAYS = 30;
+const isoToday = () => new Date().toISOString().slice(0, 10);
 
-    const systems = [
-        { name: "Xero", status: "synced" },
-        { name: "Notion", status: "synced" },
-        { name: "HubSpot", status: "pending" },
-        { name: "Live365", status: "synced" },
-    ];
+const daysUntil = (date: string | null): number | null => {
+  if (!date) return null;
+  const diff = new Date(`${date}T00:00:00`).getTime() - new Date(`${isoToday()}T00:00:00`).getTime();
+  return Math.round(diff / 86_400_000);
+};
 
+const inWindow = (start: string | null, end: string | null): boolean => {
+  const today = isoToday();
+  if (start && start > today) return false;
+  if (end && end < today) return false;
+  return true;
+};
+
+const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className={`bg-white rounded-[32px] p-6 md:p-8 border border-brand-olive/5 shadow-sm ${className}`}>
+    {children}
+  </div>
+);
+
+const CardTitle: React.FC<{ icon: React.ElementType; children: React.ReactNode; action?: React.ReactNode }> = ({
+  icon: Icon, children, action,
+}) => (
+  <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <h3 className="text-xl font-serif flex items-center gap-2.5">
+      <Icon size={19} className="text-brand-olive" aria-hidden="true" /> {children}
+    </h3>
+    {action}
+  </div>
+);
+
+const Empty: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <p className="rounded-2xl bg-brand-cream/50 p-4 text-sm text-brand-ink/55">{children}</p>
+);
+
+export const CentralOverview: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
+  const [data, setData] = useState<OverviewData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const station = await getStation();
+      const [nowNext, today, adverts, sponsorships, submissions, unlicensed, stream] = await Promise.all([
+        getNowAndNext(new Date()),
+        getDaySchedule(new Date()),
+        getAllAdverts(),
+        getAllSponsorships(),
+        getSubmissionQueue('pending'),
+        getMusicAwaitingLicenceCheck(),
+        station ? getStreamConfig(station.id) : Promise.resolve(null),
+      ]);
+      setData({ nowNext, today, adverts, sponsorships, submissions, unlicensed, station, stream });
+      setError(null);
+    } catch (loadError) {
+      // Never fall back to invented content — say the data could not be read.
+      console.error('CentralOverview:', loadError);
+      setData(null);
+      setError('Live data could not be loaded, so nothing is shown rather than showing figures that might be wrong.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const attention = useMemo(() => {
+    if (!data) return [];
+    const { adverts, sponsorships, submissions, unlicensed } = data;
+
+    const incomplete = adverts.filter((a) => advertPublishBlockers(a).length > 0);
+    const draftAdverts = adverts.filter((a) => a.contentStatus === 'draft');
+    const expiringSoon = adverts.filter((a) => {
+      const left = daysUntil(a.endDate);
+      return a.contentStatus === 'published' && a.runState === 'active'
+        && left !== null && left >= 0 && left <= EXPIRY_WARNING_DAYS;
+    });
+    const paused = adverts.filter((a) => a.runState === 'paused');
+    const draftSponsorships = sponsorships.filter((s) => !['published', 'live'].includes(s.status));
+
+    return [
+      { key: 'submissions', count: submissions.length, label: 'submissions awaiting moderation',
+        tab: 'radio', tone: 'high' as const },
+      { key: 'draft-adverts', count: draftAdverts.length, label: 'adverts still in draft',
+        tab: 'advertisers', tone: 'normal' as const },
+      { key: 'incomplete', count: incomplete.length, label: 'adverts missing details needed to publish',
+        tab: 'advertisers', tone: 'high' as const },
+      { key: 'expiring', count: expiringSoon.length, label: `advert campaigns ending within ${EXPIRY_WARNING_DAYS} days`,
+        tab: 'advertisers', tone: 'high' as const },
+      { key: 'paused', count: paused.length, label: 'adverts paused',
+        tab: 'advertisers', tone: 'normal' as const },
+      { key: 'draft-sponsorships', count: draftSponsorships.length, label: 'sponsorships not yet published',
+        tab: 'advertisers', tone: 'normal' as const },
+      { key: 'licence', count: unlicensed.length, label: 'tracks awaiting a licensing check',
+        tab: 'radio', tone: 'normal' as const },
+    ].filter((item) => item.count > 0);
+  }, [data]);
+
+  const advertStats = useMemo(() => {
+    if (!data) return null;
+    const { adverts, sponsorships } = data;
+    return {
+      live: adverts.filter((a) => a.contentStatus === 'published' && a.runState === 'active'
+        && inWindow(a.startDate, a.endDate)).length,
+      total: adverts.length,
+      sponsorshipsLive: sponsorships.filter((s) => ['published', 'live'].includes(s.status)
+        && inWindow(s.startDate, s.endDate)).length,
+      sponsorshipsTotal: sponsorships.length,
+    };
+  }, [data]);
+
+  const presentersToday = useMemo(() => {
+    if (!data) return [];
+    const names = new Map<string, string>();
+    for (const slot of data.today) {
+      const presenter = slot.programme?.presenter;
+      if (presenter) names.set(presenter.id, presenter.name);
+      else if (slot.programme?.host) names.set(`host:${slot.programme.host}`, slot.programme.host);
+    }
+    return [...names.entries()].map(([id, name]) => ({ id, name }));
+  }, [data]);
+
+  const go = (tab: string) => { if (onNavigate) onNavigate(tab); };
+
+  if (isLoading) {
+    return <div className="py-16 text-center text-brand-ink/50">Loading the control centre…</div>;
+  }
+
+  if (error) {
     return (
-        <div className="space-y-8">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex gap-3 mb-8">
-                <TriangleAlert className="text-amber-600 shrink-0" size={20} />
-                <div>
-                    <strong className="text-amber-950">Illustrative figures — not live data</strong>
-                    <p className="text-sm text-amber-900/75 mt-1">
-                        The totals and the on-air list on this screen are worked examples showing the
-                        intended layout. They are not read from the database and are not real.
-                        Real advertisers are in the Advertisers tab; the real schedule is in the
-                        Radio Control Centre.
-                    </p>
-                </div>
-            </div>
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {stats.map((stat, idx) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="bg-white p-6 rounded-[32px] border border-brand-olive/5 shadow-sm"
-                    >
-                        <div className="w-10 h-10 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-olive mb-4">
-                            {stat.icon}
-                        </div>
-                        <p className="text-3xl font-serif text-brand-olive">{stat.value}</p>
-                        <p className="text-sm font-bold mt-1">{stat.label}</p>
-                        <p className="text-xs text-brand-ink/40 mt-1">{stat.sub}</p>
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex flex-wrap gap-3">
-                <Link to="/changes" className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-olive rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
-                    <Edit3 size={16} /> Edit Changes
-                </Link>
-                <Link to="/notes" className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-olive rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
-                    <FileText size={16} /> Draft Notes
-                </Link>
-                {['Add Person', 'Log Stock', 'Add Task'].map(action => (
-                    <button key={action} className="px-6 py-3 bg-white border border-brand-olive/10 text-brand-ink/40 rounded-full text-sm font-bold hover:bg-brand-olive/5 transition-all shadow-sm flex items-center gap-2">
-                        <Plus size={16} /> {action}
-                    </button>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Today's Schedule */}
-                <div className="lg:col-span-2 bg-white rounded-[40px] p-8 border border-brand-olive/5 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-2xl font-serif italic text-brand-olive">Today's Schedule</h3>
-                        <button className="p-2 hover:bg-brand-cream rounded-full"><Clock size={18} className="text-brand-ink/40" /></button>
-                    </div>
-                    <div className="space-y-8">
-                        {schedule.map((slot, idx) => (
-                            <div key={idx} className="flex gap-6 relative">
-                                <div className="w-16 pt-1">
-                                    <span className="text-xs font-bold font-mono text-brand-ink/40">{slot.time}</span>
-                                </div>
-                                <div className="relative flex flex-col items-center">
-                                    <div className={`w-3 h-3 rounded-full z-10 ${slot.status === 'done' ? 'bg-green-500' : slot.status === 'now' ? 'bg-brand-olive animate-pulse' : 'bg-brand-cream border-2 border-brand-olive/20'
-                                        }`} />
-                                    {idx !== schedule.length - 1 && <div className="w-px h-full bg-brand-olive/10 absolute top-3" />}
-                                </div>
-                                <div className="flex-1 pb-6">
-                                    <h4 className={`font-bold ${slot.status === 'done' ? 'text-brand-ink/40 line-through' : 'text-brand-ink'}`}>{slot.title}</h4>
-                                    <p className="text-xs text-brand-ink/50 mt-1">{slot.meta}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Sidebar panels */}
-                <div className="space-y-8">
-                    {/* Urgent Actions */}
-                    <div className="bg-white rounded-[40px] p-8 border border-brand-olive/5 shadow-sm">
-                        <h3 className="text-xl font-serif mb-6">Urgent Actions</h3>
-                        <div className="space-y-4">
-                            {urgentTasks.map((task, idx) => (
-                                <div key={idx} className="p-4 bg-brand-cream/30 rounded-2xl border border-brand-olive/5 group hover:border-brand-olive/20 transition-all cursor-pointer">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${task.priority === 'HIGH' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                                            }`}>{task.priority}</span>
-                                        <span className="text-[10px] font-bold text-brand-ink/30 uppercase tracking-tight">{task.assigned}</span>
-                                    </div>
-                                    <p className="text-sm font-bold text-brand-ink/80 group-hover:text-brand-olive transition-colors">{task.title}</p>
-                                </div>
-                            ))}
-                        </div>
-                        <button className="w-full mt-6 py-3 border border-dashed border-brand-olive/20 rounded-2xl text-xs font-bold text-brand-olive hover:bg-brand-olive/5 transition-all">
-                            View All Tasks
-                        </button>
-                    </div>
-
-                    {/* Connected Systems */}
-                    <div className="bg-white rounded-[40px] p-8 border border-brand-olive/5 shadow-sm">
-                        <h3 className="text-xl font-serif mb-6">Connected Systems</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {systems.map(system => (
-                                <div key={system.name} className="flex items-center justify-between p-3 bg-brand-cream/20 rounded-xl">
-                                    <span className="text-xs font-bold text-brand-ink/70">{system.name}</span>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${system.status === 'synced' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-amber-500 animate-pulse'}`} title={system.status} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <Card>
+        <p role="alert" className="flex items-start gap-3 text-brand-ink/75">
+          <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={20} aria-hidden="true" />
+          <span>
+            <strong className="block">Live data unavailable</strong>
+            {error}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={load}
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-olive px-5 py-2.5 text-sm font-bold text-white"
+        >
+          <RefreshCw size={15} aria-hidden="true" /> Try again
+        </button>
+      </Card>
     );
+  }
+
+  const configured = isRadioConfigured();
+  const now = data?.nowNext.current ?? null;
+  const next = data?.nowNext.next ?? null;
+
+  return (
+    <div className="space-y-8">
+      {/* ---------- NEEDS ATTENTION ---------- */}
+      <Card>
+        <CardTitle
+          icon={AlertCircle}
+          action={
+            <button
+              type="button"
+              onClick={load}
+              aria-label="Refresh the control centre"
+              className="p-2 rounded-full hover:bg-brand-cream text-brand-ink/40"
+            >
+              <RefreshCw size={16} aria-hidden="true" />
+            </button>
+          }
+        >
+          Needs attention
+        </CardTitle>
+
+        {attention.length === 0 ? (
+          <p className="flex items-center gap-2.5 rounded-2xl bg-brand-cream/50 p-4 text-sm text-brand-ink/65">
+            <CheckCircle2 size={18} className="text-brand-olive shrink-0" aria-hidden="true" />
+            Nothing is waiting on you right now.
+          </p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {attention.map((item) => (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  onClick={() => go(item.tab)}
+                  className="w-full text-left p-4 rounded-2xl bg-brand-cream/40 border border-brand-olive/5 hover:border-brand-olive/25 transition-all flex items-start gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-olive"
+                >
+                  <span className={`text-2xl font-serif leading-none ${
+                    item.tone === 'high' ? 'text-amber-700' : 'text-brand-olive'
+                  }`}>
+                    {item.count}
+                  </span>
+                  <span className="text-sm font-bold text-brand-ink/80 pt-1">{item.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ---------- RADIO NOW + TODAY ---------- */}
+        <div className="lg:col-span-2 space-y-8">
+          <Card>
+            <CardTitle
+              icon={Radio}
+              action={
+                <Link to="/radio/control" className="text-xs font-bold text-brand-olive hover:underline">
+                  Radio Control Centre
+                </Link>
+              }
+            >
+              Radio now
+            </CardTitle>
+
+            {now ? (
+              <div className="rounded-2xl bg-brand-ink text-brand-cream p-6">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-cream/50">On air now</p>
+                <p className="text-2xl font-serif mt-1">{now.title}</p>
+                <p className="text-sm text-brand-cream/65 mt-1">
+                  {now.programme?.presenter?.name ?? now.programme?.host ?? 'Presenter not set'}
+                  {' · '}{now.startTime}–{now.endTime}
+                </p>
+              </div>
+            ) : (
+              <Empty>No programme currently scheduled.</Empty>
+            )}
+
+            <div className="mt-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-ink/40">Next</p>
+              {next ? (
+                <p className="mt-1">
+                  <span className="font-bold">{next.title}</span>
+                  <span className="block text-sm text-brand-ink/55">
+                    {next.startTime}
+                    {next.programme?.presenter?.name ? ` · ${next.programme.presenter.name}` : ''}
+                  </span>
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-brand-ink/55">Nothing scheduled after this.</p>
+              )}
+            </div>
+          </Card>
+
+          <Card>
+            <CardTitle icon={CalendarClock}>Today&rsquo;s schedule</CardTitle>
+            {(data?.today.length ?? 0) === 0 ? (
+              <Empty>
+                No programmes are scheduled for today. Slots are set in the Radio Control Centre schedule.
+              </Empty>
+            ) : (
+              <ol className="space-y-5">
+                {data!.today.map((slot) => {
+                  const isNow = now?.key === slot.key;
+                  const isDone = slot.endsAt < new Date();
+                  return (
+                    <li key={slot.key} className="flex gap-5">
+                      <span className="w-14 pt-0.5 text-xs font-bold font-mono text-brand-ink/40 tabular-nums">
+                        {slot.startTime}
+                      </span>
+                      <span className="relative flex flex-col items-center">
+                        <span className={`w-3 h-3 rounded-full z-10 ${
+                          isNow ? 'bg-brand-olive animate-pulse'
+                            : isDone ? 'bg-brand-olive/30'
+                            : 'bg-brand-cream border-2 border-brand-olive/20'
+                        }`} />
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className={`block font-bold ${isDone && !isNow ? 'text-brand-ink/40' : 'text-brand-ink'}`}>
+                          {slot.title}
+                        </span>
+                        <span className="block text-xs text-brand-ink/50 mt-0.5">
+                          {slot.programme?.presenter?.name ?? slot.programme?.host ?? 'Presenter not set'}
+                          {isNow && <span className="ml-2 font-bold text-brand-olive uppercase">On air</span>}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </Card>
+        </div>
+
+        {/* ---------- SIDEBAR ---------- */}
+        <div className="space-y-8">
+          {/* Advertising & sponsorship */}
+          <Card>
+            <CardTitle
+              icon={Megaphone}
+              action={
+                <button type="button" onClick={() => go('advertisers')} className="text-xs font-bold text-brand-olive hover:underline">
+                  Manage
+                </button>
+              }
+            >
+              Advertising
+            </CardTitle>
+            {advertStats && advertStats.total === 0 && advertStats.sponsorshipsTotal === 0 ? (
+              <Empty>No advertisers or sponsorships have been added yet.</Empty>
+            ) : (
+              <dl className="space-y-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-sm text-brand-ink/65">Live advertisers</dt>
+                  <dd className="text-2xl font-serif text-brand-olive">{advertStats?.live ?? 0}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-sm text-brand-ink/65">Advertiser records</dt>
+                  <dd className="text-lg font-bold text-brand-ink/70">{advertStats?.total ?? 0}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3 pt-3 border-t border-brand-olive/5">
+                  <dt className="text-sm text-brand-ink/65 flex items-center gap-1.5">
+                    <Handshake size={14} className="text-brand-olive/60" aria-hidden="true" /> Live sponsorships
+                  </dt>
+                  <dd className="text-2xl font-serif text-brand-olive">{advertStats?.sponsorshipsLive ?? 0}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-sm text-brand-ink/65">Sponsorship records</dt>
+                  <dd className="text-lg font-bold text-brand-ink/70">{advertStats?.sponsorshipsTotal ?? 0}</dd>
+                </div>
+              </dl>
+            )}
+          </Card>
+
+          {/* Presenters on air today */}
+          <Card>
+            <CardTitle icon={Mic2}>Presenters today</CardTitle>
+            {presentersToday.length === 0 ? (
+              <Empty>
+                No presenters are attached to today&rsquo;s programmes.
+              </Empty>
+            ) : (
+              <ul className="space-y-2">
+                {presentersToday.map((presenter) => (
+                  <li key={presenter.id} className="flex items-center gap-3 p-3 rounded-xl bg-brand-cream/40">
+                    <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0">
+                      <Mic2 size={14} className="text-brand-olive" aria-hidden="true" />
+                    </span>
+                    <span className="text-sm font-bold">{presenter.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {/* System health — only checks this app can actually perform */}
+          <Card>
+            <CardTitle icon={ShieldCheck}>System</CardTitle>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-center justify-between gap-3">
+                <span className="text-brand-ink/65">Database</span>
+                <span className={`font-bold ${configured ? 'text-brand-olive' : 'text-amber-700'}`}>
+                  {configured ? 'Connected' : 'Not configured'}
+                </span>
+              </li>
+              <li className="flex items-center justify-between gap-3">
+                <span className="text-brand-ink/65">Station record</span>
+                <span className={`font-bold ${data?.station ? 'text-brand-olive' : 'text-amber-700'}`}>
+                  {data?.station ? 'Found' : 'Not found'}
+                </span>
+              </li>
+              <li className="flex items-center justify-between gap-3">
+                <span className="text-brand-ink/65">Stream</span>
+                <span className={`font-bold ${
+                  data?.stream?.isStreamEnabled && data?.stream?.streamUrl ? 'text-brand-olive' : 'text-brand-ink/55'
+                }`}>
+                  {!data?.stream ? 'Not configured'
+                    : !data.stream.streamUrl ? 'No stream URL'
+                    : data.stream.isStreamEnabled ? 'On air' : 'Off air'}
+                </span>
+              </li>
+            </ul>
+            <Link
+              to="/radio/control"
+              className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-brand-olive hover:underline"
+            >
+              <Settings size={13} aria-hidden="true" /> Stream configuration
+            </Link>
+          </Card>
+
+          {/* Moderation shortcut */}
+          <Card>
+            <CardTitle icon={Inbox}>Moderation</CardTitle>
+            <p className="text-3xl font-serif text-brand-olive">{data?.submissions.length ?? 0}</p>
+            <p className="text-sm text-brand-ink/60 mt-1">
+              {(data?.submissions.length ?? 0) === 1 ? 'submission awaiting review' : 'submissions awaiting review'}
+            </p>
+            <Link to="/radio/control" className="mt-4 inline-block text-xs font-bold text-brand-olive hover:underline">
+              Open the moderation queue
+            </Link>
+          </Card>
+        </div>
+      </div>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-xs text-brand-ink/40 text-center"
+      >
+        Every figure here is read live from the station database. Sections without a trustworthy data
+        source — income, staffing and task counts — are omitted rather than estimated.
+      </motion.p>
+    </div>
+  );
 };
