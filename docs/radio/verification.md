@@ -79,3 +79,62 @@ build; see `acceptance.md`.
 The **co-presenter write path**: the read path now works, but nothing in the
 Control Centre assigns a co-presenter, so `radio_programme_presenters` rows
 have to be created directly in the database.
+
+---
+
+## Gap-closing pass
+
+### Advertising and sponsorship
+
+`RadioAdvertiserStudio` was traced first and found to be the authoritative
+*intake* tool: it is the only component that ever wrote to `radio_sponsors`.
+It was create-only, offered 4 of the 11 package types, set no status or dates,
+and never touched `radio_sponsorships`. Spec §21 places "Adverts" and
+"Sponsorship" under the Radio Control Centre → CONTENT, so placement followed
+the specification rather than a judgement call.
+
+The Studio was **extended, not replaced**: it now uses the shared package list,
+saves through the same `saveAdvert` path as the manager, saves as a draft
+rather than something publishable, and is embedded inside the advertising panel
+as its first step. There is one advertising system.
+
+No schema change was required — `radio_sponsors` and `radio_sponsorships`
+already carried every field and both already had RLS.
+
+Two axes are kept separate and both gate public visibility:
+`status` (active/paused/expired, the commercial arrangement) and
+`content_status` (draft…published). An advert is public only when published
+AND active AND inside its date window, which the RLS policy enforces.
+
+### Fabricated content removed
+
+`CentralAdvertisers` listed five invented businesses — Surrey Ironworks,
+Local Veg Co., The Potters Studio, Rural Candle Co., Farnham Brewery — with
+invented payment statuses and renewal dates under a false "HubSpot Synced"
+badge and a non-functional billing-report button. It now reads the real
+`radio_sponsors` records and shows an honest empty state.
+
+`CentralOverview` was found to fabricate income, counts, an on-air list and
+presenter/guest names. It is labelled as illustrative but deliberately not
+wired to invented data sources — see acceptance.md.
+
+### Defects found during this pass
+
+1. Creating an advertiser did not refresh the Sponsorship panel's sponsor list,
+   so a newly added business could not be selected without a page reload.
+2. The admin form controls wrapped their control inside the `<label>`, so a
+   select announced as "Sponsor Choose an advertiser…". Controls are now
+   associated by id, with the hint exposed via `aria-describedby`.
+
+### Test results
+
+| Suite | Assertions | Result |
+| --- | --- | --- |
+| `run-radio-tests.sh` (migration + RLS) | 7 steps + full RLS matrix | pass |
+| `02_api_flow_test.sh` | 29 | pass |
+| `03_advertising_flow_test.sh` | 21 | pass |
+| `04_copresenter_flow_test.sh` | 11 | pass |
+| `npm run test:radio` | 21 | pass |
+| Browser: public routes, a11y, keyboard, favicon | 30 | pass |
+| Browser: admin CRUD, mobile | 20 | pass |
+| Browser: failure states, DB offline | 27 | pass |

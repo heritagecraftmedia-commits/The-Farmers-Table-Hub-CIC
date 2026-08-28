@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Megaphone, Copy, Save, Building2, Radio, Clock3 } from 'lucide-react';
 import { radioService } from '../../services/radioService';
+import { saveAdvert } from '../../services/radio/stationService';
+import { ADVERT_PACKAGES } from '../../services/radio/types';
+import type { AdvertPackage } from '../../services/radio/types';
 
 type Listing = { id: string; name: string; category: string | null; location: string | null; description: string | null; website: string | null; tier: string | null; };
 
-const packages = [
-  { id: '15s', label: '15 second spot', hint: 'Short reminder / event mention' },
-  { id: '30s', label: '30 second advert', hint: 'Standard local business advert' },
-  { id: '60s', label: '60 second feature', hint: 'Longer story-led promotion' },
-  { id: 'sponsorship', label: 'Programme sponsorship', hint: 'Sponsor a show or feature' },
-] as const;
+// The full package list lives in one place so the studio and the advertising
+// manager can never drift apart.
+const packages = ADVERT_PACKAGES.map(p => ({ id: p.value, label: p.label, hint: p.hint }));
 
-export const RadioAdvertiserStudio: React.FC = () => {
+export const RadioAdvertiserStudio: React.FC<{ onSaved?: () => void }> = ({ onSaved }) => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [selected, setSelected] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
-  const [pkg, setPkg] = useState<(typeof packages)[number]['id']>('30s');
+  const [pkg, setPkg] = useState<AdvertPackage>('30s');
   const [script, setScript] = useState('');
   const [reads, setReads] = useState('1');
   const [message, setMessage] = useState('');
@@ -45,8 +45,21 @@ export const RadioAdvertiserStudio: React.FC = () => {
     if (!script.trim()) return setMessage('Add a simple script before saving.');
     setSaving(true); setMessage('Saving promotion…');
     try {
-      await radioService.createSponsor({ businessName: businessName.trim(), contactName: contactName.trim() || undefined, contactEmail: contactEmail.trim() || undefined, package: pkg, adScript: script.trim(), readsPerShow: Math.max(1, Number(reads) || 1), directoryListingId: selected || undefined });
-      setMessage('Promotion saved. The business can now be matched with approved radio audio when it is produced.');
+      // Saved as a DRAFT: a promotion drafted here is never publicly visible
+      // until someone publishes it in the advertising manager.
+      await saveAdvert({
+        businessName: businessName.trim(),
+        contactName: contactName.trim() || null,
+        contactEmail: contactEmail.trim() || null,
+        package: pkg,
+        adScript: script.trim(),
+        readsPerShow: Math.max(1, Number(reads) || 1),
+        directoryListingId: selected || null,
+        runState: 'active',
+        contentStatus: 'draft',
+      });
+      setMessage('Promotion saved as a draft. Publish it in the advertising list when the real audio and dates are confirmed.');
+      onSaved?.();
     } catch (e) { console.error(e); setMessage('Could not save this promotion. Check the radio database migration and staff permissions.'); }
     finally { setSaving(false); }
   };

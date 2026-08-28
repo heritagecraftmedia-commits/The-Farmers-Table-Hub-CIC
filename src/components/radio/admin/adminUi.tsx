@@ -1,6 +1,6 @@
 // Shared building blocks for the Radio Control Centre panels.
 
-import React from 'react';
+import React, { useId } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 export const inputClasses =
@@ -28,18 +28,28 @@ export const Panel: React.FC<{
   </section>
 );
 
+/**
+ * Wrapping a control in its <label> makes the accessible name the label text
+ * PLUS the control's own text, so a select announces as
+ * "Sponsor Choose an advertiser…". Associating them explicitly by id keeps the
+ * name to just the label, and lets the hint be read as a description.
+ */
 export const Field: React.FC<{
   label: string;
   hint?: string;
-  children: React.ReactNode;
+  children: (ids: { id: string; describedBy?: string }) => React.ReactNode;
   className?: string;
-}> = ({ label, hint, children, className = '' }) => (
-  <label className={`block ${className}`}>
-    <span className="text-sm font-bold">{label}</span>
-    {hint && <span className="mt-0.5 block text-xs text-brand-ink/50">{hint}</span>}
-    {children}
-  </label>
-);
+}> = ({ label, hint, children, className = '' }) => {
+  const id = useId();
+  const hintId = `${id}-hint`;
+  return (
+    <div className={`block ${className}`}>
+      <label htmlFor={id} className="text-sm font-bold">{label}</label>
+      {hint && <span id={hintId} className="mt-0.5 block text-xs text-brand-ink/50">{hint}</span>}
+      {children({ id, describedBy: hint ? hintId : undefined })}
+    </div>
+  );
+};
 
 export const TextField: React.FC<{
   label: string;
@@ -52,14 +62,18 @@ export const TextField: React.FC<{
   className?: string;
 }> = ({ label, value, onChange, hint, type = 'text', required, placeholder, className }) => (
   <Field label={label} hint={hint} className={className}>
-    <input
-      type={type}
-      value={value}
-      required={required}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
-      className={inputClasses}
-    />
+    {({ id, describedBy }) => (
+      <input
+        id={id}
+        aria-describedby={describedBy}
+        type={type}
+        value={value}
+        required={required}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className={inputClasses}
+      />
+    )}
   </Field>
 );
 
@@ -72,12 +86,16 @@ export const TextArea: React.FC<{
   className?: string;
 }> = ({ label, value, onChange, hint, rows = 3, className }) => (
   <Field label={label} hint={hint} className={className}>
-    <textarea
-      rows={rows}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className={inputClasses}
-    />
+    {({ id, describedBy }) => (
+      <textarea
+        id={id}
+        aria-describedby={describedBy}
+        rows={rows}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={inputClasses}
+      />
+    )}
   </Field>
 );
 
@@ -90,11 +108,19 @@ export const SelectField: React.FC<{
   className?: string;
 }> = ({ label, value, onChange, options, hint, className }) => (
   <Field label={label} hint={hint} className={className}>
-    <select value={value} onChange={(event) => onChange(event.target.value)} className={inputClasses}>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>{option.label}</option>
-      ))}
-    </select>
+    {({ id, describedBy }) => (
+      <select
+        id={id}
+        aria-describedby={describedBy}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={inputClasses}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    )}
   </Field>
 );
 

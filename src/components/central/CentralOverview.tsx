@@ -1,9 +1,17 @@
+// ILLUSTRATIVE DASHBOARD — the figures and the on-air list below are worked
+// examples, not live data. The people, income, task counts, presenter names,
+// guests and programme titles here are placeholders showing the intended shape
+// of the screen; none of them come from the database.
+//
+// Real advertiser records are in the Advertisers tab, and the real radio
+// schedule is in the Radio Control Centre. Do not read anything on this screen
+// as a real figure or a real booking until it is wired to a data source.
+
 import React from 'react';
 import { motion } from 'motion/react';
 import {
     TrendingUp, Users, Coins, ClipboardList, Plus,
-    Clock, AlertCircle, Database, LayoutDashboard, Radio, Edit3, FileText
-} from 'lucide-react';
+    Clock, AlertCircle, Database, LayoutDashboard, Radio, Edit3, FileText, TriangleAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const CentralOverview: React.FC = () => {
@@ -36,6 +44,18 @@ export const CentralOverview: React.FC = () => {
 
     return (
         <div className="space-y-8">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex gap-3 mb-8">
+                <TriangleAlert className="text-amber-600 shrink-0" size={20} />
+                <div>
+                    <strong className="text-amber-950">Illustrative figures — not live data</strong>
+                    <p className="text-sm text-amber-900/75 mt-1">
+                        The totals and the on-air list on this screen are worked examples showing the
+                        intended layout. They are not read from the database and are not real.
+                        Real advertisers are in the Advertisers tab; the real schedule is in the
+                        Radio Control Centre.
+                    </p>
+                </div>
+            </div>
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {stats.map((stat, idx) => (

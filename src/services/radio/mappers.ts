@@ -5,7 +5,8 @@
 // not have been applied to a given environment yet.
 
 import type {
-  AnnouncementType, BroadcastMode, ImagingType, LicenceStatus, PresenterRole,
+  AdvertPackage, AdvertRunState, AnnouncementType, BroadcastMode, ImagingType,
+  LicenceStatus, PresenterRole, RadioAdvert, RadioSponsorship, SponsorshipType,
   ProgrammeFrequency, PromotedEvent, RadioAnnouncement, RadioContentStatus,
   RadioEpisode, RadioLibraryItem, RadioPresenter, RadioProgramme, RadioStation,
   RadioSubmission, ScheduleRule, StationStreamConfig, StreamProviderId,
@@ -222,3 +223,43 @@ export const mapPromotedEvent = (row: any): PromotedEvent => {
     promotedUntil: row.promoted_until ?? null,
   };
 };
+
+export const mapAdvert = (row: any): RadioAdvert => ({
+  id: row.id,
+  businessName: row.business_name,
+  contactName: row.contact_name ?? null,
+  contactEmail: row.contact_email ?? null,
+  website: row.website ?? null,
+  category: row.category ?? null,
+  directoryListingId: row.directory_listing_id ?? null,
+  package: (row.package ?? '30s') as AdvertPackage,
+  adScript: row.ad_script ?? null,
+  audioUrl: row.audio_url ?? null,
+  artworkUrl: row.artwork_url ?? null,
+  readsPerShow: asNumber(row.reads_per_show, 1),
+  startDate: row.start_date ?? null,
+  endDate: row.end_date ?? null,
+  renewalDate: row.renewal_date ?? null,
+  notes: row.notes ?? null,
+  campaignDetails: row.campaign_details ?? null,
+  runState: (row.status ?? 'active') as AdvertRunState,
+  contentStatus: (row.content_status ?? 'draft') as RadioContentStatus,
+});
+
+export const mapSponsorship = (row: any): RadioSponsorship => ({
+  id: row.id,
+  sponsorId: row.sponsor_id,
+  sponsorName: row.radio_sponsors?.business_name ?? null,
+  programmeId: row.programme_id ?? null,
+  programmeTitle: row.radio_shows?.title ?? null,
+  broadcastId: row.broadcast_id ?? null,
+  eventId: row.event_id ?? null,
+  sponsorshipType: (row.sponsorship_type ?? 'programme') as SponsorshipType,
+  package: row.package ?? null,
+  startDate: row.start_date ?? null,
+  endDate: row.end_date ?? null,
+  audioUrl: row.audio_url ?? null,
+  artworkUrl: row.artwork_url ?? null,
+  notes: row.notes ?? null,
+  status: (row.status ?? 'draft') as RadioContentStatus,
+});

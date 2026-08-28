@@ -10,15 +10,16 @@
 
 import { supabase } from '../../lib/supabase';
 import {
-  mapAnnouncement, mapEpisode, mapLibraryItem, mapPresenter, mapProgramme,
-  mapPromotedEvent, mapScheduleRule, mapSpecialBroadcast, mapStation,
-  mapStreamConfig, mapSubmission,
+  mapAdvert, mapAnnouncement, mapEpisode, mapLibraryItem, mapPresenter,
+  mapProgramme, mapPromotedEvent, mapScheduleRule, mapSpecialBroadcast,
+  mapSponsorship, mapStation, mapStreamConfig, mapSubmission,
 } from './mappers';
 import type { SpecialBroadcastWindow } from './scheduleEngine';
 import { addDays, resolveDay, resolveNowAndNext, resolveWeek, startOfWeek, toIsoDate } from './scheduleEngine';
 import type {
-  NowAndNext, PromotedEvent, RadioAnnouncement, RadioContentStatus, RadioEpisode,
-  RadioLibraryItem, RadioPresenter, RadioProgramme, RadioStation, RadioSubmission,
+  AdvertRunState, NowAndNext, PromotedEvent, RadioAdvert, RadioAnnouncement,
+  RadioContentStatus, RadioEpisode, RadioLibraryItem, RadioPresenter,
+  RadioProgramme, RadioSponsorship, RadioStation, RadioSubmission,
   RadioSubmissionInput, ScheduleRule, ScheduleSlot, StationStreamConfig,
 } from './types';
 
@@ -777,5 +778,213 @@ export const moderateSubmission = async (
     reviewed_by: session?.user?.id ?? null,
     reviewed_at: new Date().toISOString(),
   }).eq('id', id);
+  if (error) throw error;
+};
+
+// ------------------------------------------------------------------
+// Advertising and sponsorship (spec §12, §13)
+// ------------------------------------------------------------------
+// radio_sponsors is the advertising CLIENT record and already existed; it is
+// the table RadioAdvertiserStudio writes to. These functions manage those same
+// rows rather than introducing a second advertising store.
+//
+// Two independent axes are deliberately kept apart:
+//   run_state      (active/paused/expired) — the commercial arrangement
+//   content_status (draft…published)       — whether the public may see it
+// An advert is only ever publicly visible when it is published AND active AND
+// inside its date window; the RLS policy enforces exactly that.
+
+const ADVERT_COLUMNS = `
+  id,business_name,contact_name,contact_email,website,category,directory_listing_id,
+  package,ad_script,audio_url,artwork_url,reads_per_show,start_date,end_date,
+  renewal_date,notes,campaign_details,status,content_status
+`;
+
+export const getAllAdverts = (): Promise<RadioAdvert[]> =>
+  safeSelect(
+    () => supabase.from('radio_sponsors').select(ADVERT_COLUMNS).order('business_name'),
+    mapAdvert,
+  );
+
+/** What a listener may see: published, active and inside the date window. */
+export const getPublishedAdverts = (): Promise<RadioAdvert[]> =>
+  safeSelect(
+    () => supabase.from('radio_sponsors').select(ADVERT_COLUMNS)
+      .eq('content_status', 'published').eq('status', 'active').order('business_name'),
+    mapAdvert,
+  );
+
+/**
+ * An advert is only safe to publish once it has enough real detail to go on
+ * air. This keeps half-entered records from reaching the public page.
+ */
+export const advertPublishBlockers = (advert: Partial<RadioAdvert>): string[] => {
+  const blockers: string[] = [];
+  if (!advert.businessName?.trim()) blockers.push('a business name');
+  if (!advert.package) blockers.push('an advert package');
+  if (!advert.adScript?.trim() && !advert.audioUrl?.trim()) {
+    blockers.push('either a script or an audio file');
+  }
+  if (advert.startDate && advert.endDate && advert.startDate > advert.endDate) {
+    blockers.push('an end date that is not before the start date');
+  }
+  return blockers;
+};
+
+export const saveAdvert = async (
+  advert: Partial<RadioAdvert> & { businessName: string },
+): Promise<RadioAdvert> => {
+  requireConfigured();
+  const row = {
+    business_name: advert.businessName,
+    contact_name: advert.contactName ?? null,
+    contact_email: advert.contactEmail ?? null,
+    website: advert.website ?? null,
+    category: advert.category ?? null,
+    directory_listing_id: advert.directoryListingId ?? null,
+    package: advert.package ?? '30s',
+    ad_script: advert.adScript ?? null,
+    audio_url: advert.audioUrl ?? null,
+    artwork_url: advert.artworkUrl ?? null,
+    reads_per_show: advert.readsPerShow ?? 1,
+    start_date: advert.startDate ?? null,
+    end_date: advert.endDate ?? null,
+    renewal_date: advert.renewalDate ?? null,
+    notes: advert.notes ?? null,
+    campaign_details: advert.campaignDetails ?? null,
+    status: advert.runState ?? 'active',
+    content_status: advert.contentStatus ?? 'draft',
+  };
+  const query = advert.id
+    ? supabase.from('radio_sponsors').update(row).eq('id', advert.id)
+    : supabase.from('radio_sponsors').insert(row);
+  const { data, error } = await query.select(ADVERT_COLUMNS).single();
+  if (error) throw error;
+  return mapAdvert(data);
+};
+
+export const setAdvertStatus = async (id: string, status: RadioContentStatus): Promise<void> => {
+  requireConfigured();
+  const { error } = await supabase.from('radio_sponsors').update({ content_status: status }).eq('id', id);
+  if (error) throw error;
+};
+
+export const setAdvertRunState = async (id: string, runState: AdvertRunState): Promise<void> => {
+  requireConfigured();
+  const { error } = await supabase.from('radio_sponsors').update({ status: runState }).eq('id', id);
+  if (error) throw error;
+};
+
+const SPONSORSHIP_COLUMNS = `
+  id,sponsor_id,programme_id,broadcast_id,event_id,sponsorship_type,package,
+  start_date,end_date,audio_url,artwork_url,notes,status,
+  radio_sponsors(business_name),radio_shows(title)
+`;
+
+export const getAllSponsorships = (): Promise<RadioSponsorship[]> =>
+  safeSelect(
+    () => supabase.from('radio_sponsorships').select(SPONSORSHIP_COLUMNS)
+      .order('created_at', { ascending: false }),
+    mapSponsorship,
+  );
+
+export const getPublishedSponsorships = (): Promise<RadioSponsorship[]> =>
+  safeSelect(
+    () => supabase.from('radio_sponsorships').select(SPONSORSHIP_COLUMNS)
+      .in('status', ['published', 'live']).order('created_at', { ascending: false }),
+    mapSponsorship,
+  );
+
+export const saveSponsorship = async (
+  sponsorship: Partial<RadioSponsorship> & { sponsorId: string },
+): Promise<RadioSponsorship> => {
+  requireConfigured();
+  const row = {
+    sponsor_id: sponsorship.sponsorId,
+    programme_id: sponsorship.programmeId ?? null,
+    broadcast_id: sponsorship.broadcastId ?? null,
+    event_id: sponsorship.eventId ?? null,
+    sponsorship_type: sponsorship.sponsorshipType ?? 'programme',
+    package: sponsorship.package ?? null,
+    start_date: sponsorship.startDate ?? null,
+    end_date: sponsorship.endDate ?? null,
+    audio_url: sponsorship.audioUrl ?? null,
+    artwork_url: sponsorship.artworkUrl ?? null,
+    notes: sponsorship.notes ?? null,
+    status: sponsorship.status ?? 'draft',
+  };
+  const query = sponsorship.id
+    ? supabase.from('radio_sponsorships').update(row).eq('id', sponsorship.id)
+    : supabase.from('radio_sponsorships').insert(row);
+  const { data, error } = await query.select(SPONSORSHIP_COLUMNS).single();
+  if (error) throw error;
+  return mapSponsorship(data);
+};
+
+export const setSponsorshipStatus = async (id: string, status: RadioContentStatus): Promise<void> => {
+  requireConfigured();
+  const { error } = await supabase.from('radio_sponsorships').update({ status }).eq('id', id);
+  if (error) throw error;
+};
+
+export const deleteSponsorship = async (id: string): Promise<void> => {
+  requireConfigured();
+  const { error } = await supabase.from('radio_sponsorships').delete().eq('id', id);
+  if (error) throw error;
+};
+
+// ------------------------------------------------------------------
+// Co-presenters (spec §4 "Co-presenters")
+// ------------------------------------------------------------------
+// radio_programme_presenters is a plain join table, so assignment is expressed
+// as "these are the co-presenters now" rather than as individual add/remove
+// calls. The primary presenter stays on radio_shows.presenter_id and is never
+// written here, so the two cannot fight over the same record.
+
+export const getCoPresenterIds = async (programmeId: string): Promise<string[]> => {
+  if (!isRadioConfigured()) return [];
+  const { data, error } = await supabase
+    .from('radio_programme_presenters')
+    .select('presenter_id,sort_order')
+    .eq('programme_id', programmeId)
+    .order('sort_order');
+  if (error) {
+    if (isMissingRelation(error)) return [];
+    throw error;
+  }
+  return (data ?? []).map((row: any) => row.presenter_id);
+};
+
+/**
+ * Replace a programme's co-presenter list.
+ *
+ * The primary presenter is filtered out: listing the same person both as the
+ * named presenter and as a co-presenter would show them twice on the public
+ * page, so that state is not allowed to be created in the first place.
+ */
+export const setCoPresenters = async (
+  programmeId: string,
+  presenterIds: string[],
+  primaryPresenterId?: string | null,
+): Promise<void> => {
+  requireConfigured();
+
+  const unique = Array.from(new Set(presenterIds.filter(Boolean)))
+    .filter((id) => id !== primaryPresenterId);
+
+  const { error: clearError } = await supabase
+    .from('radio_programme_presenters').delete().eq('programme_id', programmeId);
+  if (clearError) throw clearError;
+
+  if (unique.length === 0) return;
+
+  const { error } = await supabase.from('radio_programme_presenters').insert(
+    unique.map((presenterId, index) => ({
+      programme_id: programmeId,
+      presenter_id: presenterId,
+      presenter_role: 'co-presenter',
+      sort_order: index,
+    })),
+  );
   if (error) throw error;
 };

@@ -26,6 +26,8 @@ import { PresenterManager } from '../components/radio/admin/PresenterManager';
 import { ScheduleManager } from '../components/radio/admin/ScheduleManager';
 import { EpisodeManager } from '../components/radio/admin/EpisodeManager';
 import { ImagingManager } from '../components/radio/admin/ImagingManager';
+import { AdvertiserManager } from '../components/radio/admin/AdvertiserManager';
+import { SponsorshipManager } from '../components/radio/admin/SponsorshipManager';
 import { AnnouncementManager } from '../components/radio/admin/AnnouncementManager';
 import { SubmissionQueue } from '../components/radio/admin/SubmissionQueue';
 import { EventPromotionManager } from '../components/radio/admin/EventPromotionManager';
@@ -124,6 +126,8 @@ export const RadioControl: React.FC = () => {
           <ProgrammeManager />
           <EpisodeManager />
           <ImagingManager />
+          <AdvertiserManager />
+          <SponsorshipManager />
         </div>
       )}
 

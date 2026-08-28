@@ -265,6 +265,84 @@ export interface RadioAnnouncement {
   isActive: boolean;
 }
 
+/** Advertising client record (spec §12). Backed by radio_sponsors. */
+export type AdvertPackage =
+  | '10s' | '15s' | '20s' | '30s' | '60s'
+  | 'programme_sponsorship' | 'station_sponsorship' | 'event_sponsorship'
+  | 'community_announcement' | 'sponsored_feature' | 'sponsorship';
+
+export const ADVERT_PACKAGES: { value: AdvertPackage; label: string; hint: string }[] = [
+  { value: '10s', label: '10 second spot', hint: 'A short mention or an opening time.' },
+  { value: '15s', label: '15 second spot', hint: 'Short reminder or event mention.' },
+  { value: '20s', label: '20 second spot', hint: 'A little more detail about what they do.' },
+  { value: '30s', label: '30 second advert', hint: 'Standard local business advert.' },
+  { value: '60s', label: '60 second feature', hint: 'Longer story-led promotion.' },
+  { value: 'programme_sponsorship', label: 'Programme sponsorship', hint: 'Named at the start and end of a programme.' },
+  { value: 'station_sponsorship', label: 'Station sponsorship', hint: 'Supports the station as a whole.' },
+  { value: 'event_sponsorship', label: 'Event sponsorship', hint: 'Backs an outside broadcast.' },
+  { value: 'community_announcement', label: 'Community announcement', hint: 'For charities and community groups.' },
+  { value: 'sponsored_feature', label: 'Sponsored feature', hint: 'A regular segment such as weather or the diary.' },
+  { value: 'sponsorship', label: 'General sponsorship', hint: 'Legacy general sponsorship record.' },
+];
+
+export type AdvertRunState = 'active' | 'paused' | 'expired';
+
+export interface RadioAdvert {
+  id: string;
+  businessName: string;
+  contactName: string | null;
+  contactEmail: string | null;
+  website: string | null;
+  category: string | null;
+  directoryListingId: string | null;
+  package: AdvertPackage;
+  adScript: string | null;
+  audioUrl: string | null;
+  artworkUrl: string | null;
+  readsPerShow: number;
+  startDate: string | null;
+  endDate: string | null;
+  renewalDate: string | null;
+  notes: string | null;
+  campaignDetails: string | null;
+  /** Commercial run state, independent of publication. */
+  runState: AdvertRunState;
+  /** Publication lifecycle: only 'published' is ever publicly visible. */
+  contentStatus: RadioContentStatus;
+}
+
+export type SponsorshipType =
+  | 'programme' | 'segment' | 'community_feature' | 'event'
+  | 'outside_broadcast' | 'special_broadcast' | 'station_feature';
+
+export const SPONSORSHIP_TYPES: { value: SponsorshipType; label: string }[] = [
+  { value: 'programme', label: 'Individual programme' },
+  { value: 'segment', label: 'Programme segment' },
+  { value: 'community_feature', label: 'Community feature' },
+  { value: 'event', label: 'Event' },
+  { value: 'outside_broadcast', label: 'Outside broadcast' },
+  { value: 'special_broadcast', label: 'Special broadcast' },
+  { value: 'station_feature', label: 'Station feature' },
+];
+
+export interface RadioSponsorship {
+  id: string;
+  sponsorId: string;
+  sponsorName?: string | null;
+  programmeId: string | null;
+  programmeTitle?: string | null;
+  broadcastId: string | null;
+  eventId: string | null;
+  sponsorshipType: SponsorshipType;
+  package: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  audioUrl: string | null;
+  artworkUrl: string | null;
+  notes: string | null;
+  status: RadioContentStatus;
+}
+
 export type SubmissionType = 'music' | 'announcement' | 'event' | 'programme_idea' | 'presenter';
 
 export interface RadioSubmission {

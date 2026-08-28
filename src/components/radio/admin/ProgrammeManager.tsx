@@ -9,8 +9,8 @@ import {
 } from './adminUi';
 import { StatusPill } from '../StatusPill';
 import {
-  duplicateProgramme, getAllPresenters, getAllProgrammes, saveProgramme,
-  setFeaturedProgramme, setProgrammeStatus,
+  duplicateProgramme, getAllPresenters, getAllProgrammes, getCoPresenterIds,
+  saveProgramme, setCoPresenters, setFeaturedProgramme, setProgrammeStatus,
 } from '../../../services/radio/stationService';
 import { RADIO_CONTENT_STATUSES } from '../../../services/radio/types';
 import type { RadioContentStatus, RadioPresenter, RadioProgramme } from '../../../services/radio/types';
@@ -52,6 +52,7 @@ export const ProgrammeManager: React.FC = () => {
   const [programmes, setProgrammes] = useState<RadioProgramme[]>([]);
   const [presenters, setPresenters] = useState<RadioPresenter[]>([]);
   const [draft, setDraft] = useState<Partial<RadioProgramme> | null>(null);
+  const [coPresenterIds, setCoPresenterIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,18 +77,29 @@ export const ProgrammeManager: React.FC = () => {
   const set = (patch: Partial<RadioProgramme>) =>
     setDraft((current) => ({ ...(current ?? {}), ...patch }));
 
+  const startEdit = async (programme: Partial<RadioProgramme> | null) => {
+    setDraft(programme);
+    setCoPresenterIds(programme?.id ? await getCoPresenterIds(programme.id).catch(() => []) : []);
+  };
+
+  const toggleCoPresenter = (id: string) =>
+    setCoPresenterIds((current) =>
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
+
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!draft?.title) return;
     setIsSaving(true);
     setError(null);
     try {
-      await saveProgramme({
+      const saved = await saveProgramme({
         ...draft,
         title: draft.title,
         slug: draft.slug || slugify(draft.title),
       } as RadioProgramme);
+      await setCoPresenters(saved.id, coPresenterIds, saved.presenterId);
       setDraft(null);
+      setCoPresenterIds([]);
       await load();
     } catch (saveError) {
       setError(describeError(saveError));
@@ -112,7 +124,7 @@ export const ProgrammeManager: React.FC = () => {
       icon={RadioIcon}
       description="Every programme the station runs. Only published programmes appear on the public site."
       action={
-        <PrimaryButton onClick={() => setDraft(draft ? null : blank())}>
+        <PrimaryButton onClick={() => startEdit(draft ? null : blank())}>
           {draft ? <><X size={15} aria-hidden="true" /> Cancel</> : <><Plus size={15} aria-hidden="true" /> Add programme</>}
         </PrimaryButton>
       }
@@ -163,6 +175,42 @@ export const ProgrammeManager: React.FC = () => {
             <TextArea label="Short introduction" value={draft.intro ?? ''} onChange={(v) => set({ intro: v })} rows={2} className="sm:col-span-2" />
             <TextArea label="Description" value={draft.description ?? ''} onChange={(v) => set({ description: v })} rows={4} className="sm:col-span-2" />
             <div className="sm:col-span-2">
+              <fieldset>
+                <legend className="text-sm font-bold">Co-presenters</legend>
+                <p className="mt-0.5 text-xs text-brand-ink/50">
+                  Anyone else who presents this programme. The named presenter above is already
+                  included and cannot be added twice.
+                </p>
+                {presenters.length === 0 ? (
+                  <p className="mt-2 text-sm text-brand-ink/55">
+                    No presenters exist yet. Add them in the People section first.
+                  </p>
+                ) : (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {presenters
+                      .filter((presenter) => presenter.id !== draft.presenterId)
+                      .map((presenter) => (
+                        <label key={presenter.id} className="flex items-center gap-3 rounded-xl bg-white p-3">
+                          <input
+                            type="checkbox"
+                            checked={coPresenterIds.includes(presenter.id)}
+                            onChange={() => toggleCoPresenter(presenter.id)}
+                            className="h-5 w-5 shrink-0 accent-brand-olive"
+                          />
+                          <span className="text-sm">
+                            <span className="font-bold">{presenter.name}</span>
+                            <span className="block text-xs capitalize text-brand-ink/50">
+                              {presenter.presenterRole.replace(/_/g, ' ')}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                  </div>
+                )}
+              </fieldset>
+            </div>
+
+            <div className="sm:col-span-2">
               <CheckboxField
                 label="Keep an archive of episodes"
                 checked={draft.archiveEnabled ?? true}
@@ -172,7 +220,7 @@ export const ProgrammeManager: React.FC = () => {
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
             <PrimaryButton type="submit" busy={isSaving}>Save programme</PrimaryButton>
-            <SecondaryButton onClick={() => setDraft(null)}>Cancel</SecondaryButton>
+            <SecondaryButton onClick={() => startEdit(null)}>Cancel</SecondaryButton>
           </div>
         </form>
       )}
@@ -204,7 +252,7 @@ export const ProgrammeManager: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <SecondaryButton onClick={() => setDraft(programme)}>Edit</SecondaryButton>
+                  <SecondaryButton onClick={() => startEdit(programme)}>Edit</SecondaryButton>
                   <SecondaryButton onClick={() => run(() => duplicateProgramme(programme.id))}>
                     <Copy size={14} aria-hidden="true" /> Duplicate
                   </SecondaryButton>

@@ -9,8 +9,10 @@ import { Link } from 'react-router-dom';
 import { Handshake, Megaphone, Radio as RadioIcon } from 'lucide-react';
 
 import { ContentSlot, ContentSlotGrid } from '../../components/radio/ContentSlot';
-import { getPublishedProgrammes } from '../../services/radio/stationService';
-import type { RadioProgramme } from '../../services/radio/types';
+import {
+  getPublishedAdverts, getPublishedProgrammes, getPublishedSponsorships,
+} from '../../services/radio/stationService';
+import type { RadioAdvert, RadioProgramme, RadioSponsorship } from '../../services/radio/types';
 
 const SPOT_PACKAGES = [
   { name: '10-second spot', detail: 'A short mention, ideal for a simple message or an opening time.' },
@@ -28,11 +30,18 @@ const SPONSORSHIP_PACKAGES = [
 
 export const RadioAdvertise: React.FC = () => {
   const [programmes, setProgrammes] = useState<RadioProgramme[]>([]);
+  const [adverts, setAdverts] = useState<RadioAdvert[]>([]);
+  const [sponsorships, setSponsorships] = useState<RadioSponsorship[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    getPublishedProgrammes()
-      .then((rows) => { if (!cancelled) setProgrammes(rows); })
+    Promise.all([getPublishedProgrammes(), getPublishedAdverts(), getPublishedSponsorships()])
+      .then(([shows, publishedAdverts, publishedSponsorships]) => {
+        if (cancelled) return;
+        setProgrammes(shows);
+        setAdverts(publishedAdverts);
+        setSponsorships(publishedSponsorships);
+      })
       .catch((error) => console.error('Advertise page:', error));
     return () => { cancelled = true; };
   }, []);
@@ -107,14 +116,67 @@ export const RadioAdvertise: React.FC = () => {
           )}
         </section>
 
-        {/* --- Current advertisers: intentionally empty until real clients exist --- */}
+        {/* --- Real published advertisers only; slots until they exist --- */}
         <section className="mt-8 rounded-[32px] border border-brand-olive/5 bg-white p-8 md:p-10">
           <h2 className="font-serif text-3xl">Our advertisers</h2>
           <p className="mt-2 text-brand-ink/60">
-            These places are reserved for real local businesses. Nothing here is invented.
+            {adverts.length === 0
+              ? 'These places are reserved for real local businesses. Nothing here is invented.'
+              : 'Local businesses currently supporting the station.'}
           </p>
           <div className="mt-7">
-            <ContentSlotGrid count={3} kind="advertisement" />
+            {adverts.length === 0 ? (
+              <ContentSlotGrid count={3} kind="advertisement" />
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {adverts.map((advert) => (
+                  <li key={advert.id} className="rounded-2xl bg-brand-cream p-6">
+                    <p className="font-bold">{advert.businessName}</p>
+                    {advert.category && (
+                      <p className="mt-1 text-sm text-brand-ink/55">{advert.category}</p>
+                    )}
+                    {advert.website && (
+                      <a
+                        href={advert.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-block text-sm font-bold text-brand-olive hover:underline"
+                      >
+                        Visit their website
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {/* --- Real published sponsorships --- */}
+        <section className="mt-8 rounded-[32px] border border-brand-olive/5 bg-white p-8 md:p-10">
+          <h2 className="font-serif text-3xl">Our sponsors</h2>
+          <p className="mt-2 text-brand-ink/60">
+            {sponsorships.length === 0
+              ? 'Reserved for real community partners. Nothing here is invented.'
+              : 'Community partners supporting our programmes and events.'}
+          </p>
+          <div className="mt-7">
+            {sponsorships.length === 0 ? (
+              <ContentSlotGrid count={2} kind="sponsorship" className="grid gap-4 sm:grid-cols-2" />
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {sponsorships.map((sponsorship) => (
+                  <li key={sponsorship.id} className="rounded-2xl bg-brand-cream p-6">
+                    <p className="font-bold">{sponsorship.sponsorName ?? 'Community partner'}</p>
+                    <p className="mt-1 text-sm text-brand-ink/55">
+                      {sponsorship.programmeTitle
+                        ? `Sponsoring ${sponsorship.programmeTitle}`
+                        : 'Supporting the station'}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
 

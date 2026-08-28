@@ -1,3 +1,15 @@
+// STRUCTURAL PLANNING TEMPLATE — NOT THE LIVE SCHEDULE.
+//
+// This is a worked example of a full day's clock, used by the staff month
+// planner and run sheet to think about shape and coverage. It is NOT the
+// station's real schedule and nothing in it is a confirmed booking:
+//   * venue slots carry `placeholder: true` and invented example names
+//   * partner-feed slots describe an intent, not a supplied feed
+//
+// The REAL schedule lives in the radio_schedule table and is what the public
+// site renders (see src/services/radio/scheduleEngine.ts). Never present
+// anything from this file to the public, and never treat a slot here as booked.
+
 export type ScheduleKind = 'fth' | 'partner' | 'music' | 'rural' | 'venue' | 'placeholder';
 
 export type ScheduleEntry = {

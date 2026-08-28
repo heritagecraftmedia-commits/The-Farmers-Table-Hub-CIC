@@ -66,6 +66,8 @@ export const Navbar: React.FC = () => {
 
             <button
               onClick={toggleFogMode}
+              aria-pressed={isFogMode}
+              aria-label={isFogMode ? 'Turn off Fog Mode (larger, calmer layout)' : 'Turn on Fog Mode (larger, calmer layout)'}
               className={`p-2 rounded-full border transition-all ${isFogMode
                   ? 'bg-brand-olive text-white border-brand-olive'
                   : 'bg-white text-brand-olive border-brand-olive/30 hover:bg-brand-olive/5'
@@ -102,6 +104,8 @@ export const Navbar: React.FC = () => {
 
             <button
               onClick={() => setIsOpen(!isOpen)}
+              aria-expanded={isOpen}
+              aria-label={isOpen ? 'Close the navigation menu' : 'Open the navigation menu'}
               className="text-brand-ink p-2 hover:bg-brand-olive/5 rounded-full transition-all"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -112,17 +116,21 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center gap-3">
             <button
               onClick={toggleFogMode}
+              aria-pressed={isFogMode}
+              aria-label={isFogMode ? 'Turn off Fog Mode (larger, calmer layout)' : 'Turn on Fog Mode (larger, calmer layout)'}
               className="p-2 rounded-full border border-brand-olive/30 text-brand-olive"
             >
               {isFogMode ? <Sun size={20} /> : <Cloud size={20} />}
             </button>
             {user ? (
-              <Link to="/dashboard" className="p-2 text-brand-olive"><LayoutDashboard size={24} /></Link>
+              <Link to="/dashboard" aria-label="Go to your dashboard" className="p-2 text-brand-olive"><LayoutDashboard size={24} /></Link>
             ) : (
-              <Link to="/login" className="p-2 text-brand-olive"><LogIn size={24} /></Link>
+              <Link to="/login" aria-label="Log in" className="p-2 text-brand-olive"><LogIn size={24} /></Link>
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
+              aria-expanded={isOpen}
+              aria-label={isOpen ? 'Close the navigation menu' : 'Open the navigation menu'}
               className="text-brand-ink p-2"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}

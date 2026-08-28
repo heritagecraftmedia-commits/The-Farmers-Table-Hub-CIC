@@ -17,8 +17,8 @@ has been entered.
 | 6 | Presenter system works | Built, needs live data | `radio_presenters` + `PresenterManager` + public pages |
 | 7 | Episode archive works | Built, needs live data | `radio_episodes` + `EpisodeManager` + `/radio/listen-again` |
 | 8 | Jingle library works | Built, needs live data | 13 imaging types in `radio_media`; `ImagingManager` |
-| 9 | Advertising system works | Partial — see below | `radio_sponsors` extended; no admin panel yet |
-| 10 | Sponsorship system works | Partial — see below | `radio_sponsorships` table + RLS; no admin panel yet |
+| 9 | Advertising system works | **Built & verified** | `AdvertiserManager` + 21 assertions in `03_advertising_flow_test.sh` |
+| 10 | Sponsorship system works | **Built & verified** | `SponsorshipManager` + `03_advertising_flow_test.sh` |
 | 11 | Community announcements work | Built, needs live data | `radio_announcements` + `AnnouncementManager` + noticeboard |
 | 12 | Events integration works | Built, needs live data | `radio_event_promotions` links to existing `events` |
 | 13 | Submission system works | **Built & verified** | RLS test proves public insert succeeds and pre-approved insert is rejected |
@@ -37,22 +37,25 @@ has been entered.
 
 ## What is not finished
 
-**Advertising and sponsorship admin panels (items 9 and 10).** The database
-side is complete — `radio_sponsors` carries campaign dates, categories,
-artwork, notes and the widened placement types (10s/20s/30s spots, programme,
-station and event sponsorship, community announcements, sponsored features),
-and `radio_sponsorships` records placements against programmes, broadcasts and
-events, with RLS on both. The public `/radio/advertise` page explains the
-packages and shows labelled advertisement slots.
+**Nothing from the specification is now outstanding.** Advertising and
+sponsorship admin (items 9 and 10) are complete: `AdvertiserManager` and
+`SponsorshipManager` in the Radio Control Centre → Content, operating on the
+same `radio_sponsors` / `radio_sponsorships` tables the existing
+`RadioAdvertiserStudio` already wrote to. The Studio was extended rather than
+replaced — it is embedded inside the advertising panel as the intake step, now
+covers all eleven package types, and shares one write path.
 
-What does not exist yet is a Control Centre panel for entering advertisers and
-sponsorship deals. Until it is built, those records have to be created directly
-in Supabase. This was left out because the existing `RadioAdvertiserStudio`
-component already covers part of the advertiser workflow, and folding the two
-together needs a decision about which is authoritative — that is a call for the
-station, not something to guess at.
+Known pre-existing items deliberately left alone, and why:
 
-**Nothing else from the specification was skipped.**
+- **`CentralOverview` (`/command` → Overview)** shows invented figures, an
+  invented on-air list and invented presenter/guest names. It is now clearly
+  labelled as illustrative, but it is NOT wired to real data: the income,
+  people and task counts have no data source in this application, and inventing
+  one would be guesswork. This needs a decision — wire it up or remove it.
+- **`src/data/radioSchedule.ts`** is a structural planning template with
+  invented example venue names. It is staff-only, labelled as a template in
+  both tools that use it, and follows the current month rather than a frozen
+  one. The public schedule is database-backed and authoritative.
 
 ---
 
