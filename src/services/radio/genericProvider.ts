@@ -78,6 +78,8 @@ export class GenericStreamProvider implements StreamProvider {
   ) {}
 
   getStreamUrl(): string | null {
+    // See Live365Provider: an off-air station offers no stream to play.
+    if (!this.config.isStreamEnabled) return null;
     return isSafeUrl(this.config.streamUrl) ? this.config.streamUrl : null;
   }
 

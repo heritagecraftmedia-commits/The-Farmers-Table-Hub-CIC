@@ -9,7 +9,7 @@ import {
   getEpisodesForProgramme, getProgrammeBySlug, getPublishedProgrammes, getScheduleRules,
 } from '../../services/radio/stationService';
 import { DAY_NAMES } from '../../services/radio/scheduleEngine';
-import type { RadioEpisode, RadioProgramme, ScheduleRule } from '../../services/radio/types';
+import type { RadioEpisode, RadioPresenter, RadioProgramme, ScheduleRule } from '../../services/radio/types';
 
 const BROADCAST_MODE_LABELS: Record<string, string> = {
   live: 'Live',
@@ -177,10 +177,12 @@ export const RadioProgrammeDetail: React.FC = () => {
     );
   }
 
-  const presenters = [
-    programme.presenter,
-    ...(programme.coPresenters ?? []),
-  ].filter(Boolean);
+  // The same person can legitimately be both the named presenter and a
+  // co-presenter link, so de-duplicate by id: listing them twice would render
+  // duplicate React keys and show the same person twice.
+  const presenters = [programme.presenter, ...(programme.coPresenters ?? [])]
+    .filter((person): person is RadioPresenter => Boolean(person))
+    .filter((person, index, all) => all.findIndex((other) => other.id === person.id) === index);
 
   return (
     <div className="min-h-screen bg-brand-cream py-16 md:py-24">
@@ -246,7 +248,7 @@ export const RadioProgrammeDetail: React.FC = () => {
             <ContentSlot kind="presenter" hint="Assign a presenter to this programme in the Radio Control Centre." compact />
           ) : (
             <ul className="grid gap-5 sm:grid-cols-2">
-              {presenters.map((presenter) => presenter && (
+              {presenters.map((presenter) => (
                 <li key={presenter.id}>
                   <Link
                     to={`/radio/presenters/${presenter.slug}`}

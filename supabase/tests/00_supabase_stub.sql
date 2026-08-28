@@ -14,11 +14,28 @@ create table if not exists auth.users (
 );
 
 -- auth.uid() / auth.role() are provided by Supabase at runtime.
+-- These match Supabase's own definitions, which read the claim either as a
+-- flat GUC (older PostgREST) or out of the request.jwt.claims JSON (newer).
 create or replace function auth.uid() returns uuid
-  language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+  language sql stable as $$
+  select coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+  )::uuid
+$$;
 
 create or replace function auth.role() returns text
-  language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), 'anon') $$;
+  language sql stable as $$
+  select coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'),
+    'anon'
+  )
+$$;
+
+-- Supabase exposes the signed-in user's metadata to RLS through auth.users;
+-- radio_is_staff() reads it, so the grants below mirror the real project.
+
 
 create table if not exists storage.buckets (
   id text primary key,

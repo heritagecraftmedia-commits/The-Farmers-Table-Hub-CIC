@@ -101,6 +101,10 @@ export class Live365Provider implements StreamProvider {
   constructor(private readonly config: StationStreamConfig) {}
 
   getStreamUrl(): string | null {
+    // is_stream_enabled is the station saying "we are actually broadcasting".
+    // While it is off there is nothing to play, so the player must not offer
+    // playback -- otherwise Listen live looks available and yields silence.
+    if (!this.config.isStreamEnabled) return null;
     return isSafeUrl(this.config.streamUrl) ? this.config.streamUrl : null;
   }
 

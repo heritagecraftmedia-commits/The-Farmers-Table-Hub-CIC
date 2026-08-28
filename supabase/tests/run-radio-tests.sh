@@ -30,7 +30,9 @@ echo "==> creating roles + fresh database"
 for r in anon authenticated service_role; do
   $PSQL -d postgres -c "do \$\$ begin if not exists (select 1 from pg_roles where rolname='$r') then create role $r nologin; end if; end \$\$;" >/dev/null
 done
-$PSQL -d postgres -c "drop database if exists radiotest;" -c "create database radiotest;" >/dev/null
+# WITH (FORCE) drops the database even if something (a local PostgREST, a psql
+# session left open) still holds a connection to it.
+$PSQL -d postgres -c "drop database if exists radiotest with (force);" -c "create database radiotest;" >/dev/null
 
 echo "==> applying migration chain"
 for f in \

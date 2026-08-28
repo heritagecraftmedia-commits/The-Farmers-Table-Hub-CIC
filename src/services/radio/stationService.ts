@@ -24,9 +24,31 @@ import type {
 
 export const STATION_SLUG = 'farmers-table-hub-community-radio';
 
-/** The app runs in a "not configured yet" mode when Supabase is absent. */
-export const isRadioConfigured = (): boolean =>
-  Boolean(import.meta.env.VITE_SUPABASE_URL?.includes('supabase.co'));
+/**
+ * The app runs in a "not configured yet" mode when Supabase is absent.
+ *
+ * This deliberately does NOT test for a `supabase.co` hostname: a self-hosted
+ * Supabase (or any custom domain in front of one) is a perfectly valid target,
+ * and matching on the hostname would make the whole radio system silently show
+ * empty states against a database that is actually working. What matters is
+ * that a real URL and key are configured and are not the placeholders from
+ * src/lib/supabase.ts.
+ */
+const PLACEHOLDER_URL = 'https://placeholder.supabase.co';
+const PLACEHOLDER_KEY = 'placeholder-key';
+
+export const isRadioConfigured = (): boolean => {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) return false;
+  if (url === PLACEHOLDER_URL || key === PLACEHOLDER_KEY) return false;
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
 
 const requireConfigured = () => {
   if (!isRadioConfigured()) {
@@ -179,7 +201,8 @@ const PROGRAMME_COLUMNS = `
   id,title,slug,description,intro,host,presenter_id,category,image_url,colour,icon,
   frequency,schedule,status,archive_enabled,is_featured,website_url,social_links,
   content_status,sort_order,
-  presenter:radio_presenters!radio_shows_presenter_id_fkey(${PRESENTER_COLUMNS})
+  presenter:radio_presenters!radio_shows_presenter_id_fkey(${PRESENTER_COLUMNS}),
+  radio_programme_presenters(presenter_role,sort_order,radio_presenters(${PRESENTER_COLUMNS}))
 `;
 
 export const getPublishedProgrammes = (): Promise<RadioProgramme[]> =>
