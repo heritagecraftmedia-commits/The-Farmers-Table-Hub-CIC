@@ -1,130 +1,139 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ClipboardList, Plus, CheckCircle2, Circle, MoreVertical, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
+import { ClipboardList, Plus, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import { hubService } from '../../services/hubService';
+import { FounderJob } from '../../types';
+import { EmptyState } from '../EmptyState';
 
+/**
+ * Tasks & Operations.
+ *
+ * Previously held seven invented tasks assigned to invented colleagues
+ * ("Order new espresso cups — Alice S.", "Radio FM signal test — David C."),
+ * held in component state so ticking one off changed nothing and survived
+ * nowhere. The header also claimed the list was "Tracked in Notion"; there is
+ * no Notion integration in this application.
+ *
+ * `founder_jobs` is a real table and `hubService.getFounderJobs()` already
+ * reads it, so the list is now genuine and completing a task persists.
+ */
 export const CentralTasks: React.FC = () => {
-    const [tasks, setTasks] = useState([
-        { id: 1, title: "Review Radio Ad Slots for next week", assigned: "Sarah W.", dept: "Radio", priority: "HIGH", done: false },
-        { id: 2, title: "Order new espresso cups for the café", assigned: "Alice S.", dept: "Café", priority: "MED", done: false },
-        { id: 3, title: "Update Makers Hub member guide PDF", assigned: "James I.", dept: "Ops", priority: "LOW", done: false },
-        { id: 4, title: "Call cleaner regarding floor polishing", assigned: "Scott P.", dept: "Facilities", priority: "HIGH", done: false },
-        { id: 5, title: "Draft community newsletter", assigned: "Emma G.", dept: "Marketing", priority: "MED", done: false },
-    ]);
+    const [jobs, setJobs] = useState<FounderJob[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const [completedTasks] = useState([
-        { id: 101, title: "Stock take for Feb completed", assigned: "Tom B.", dept: "Facilities", priority: "LOW", done: true },
-        { id: 102, title: "Radio FM signal test", assigned: "David C.", dept: "Radio", priority: "HIGH", done: true },
-    ]);
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const rows = await hubService.getFounderJobs();
+                if (active) setJobs(rows);
+            } catch {
+                if (active) setError('Could not load tasks.');
+            } finally {
+                if (active) setLoading(false);
+            }
+        })();
+        return () => { active = false; };
+    }, []);
 
-    const toggleTask = (id: number) => {
-        setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+    const complete = async (id: string) => {
+        const previous = jobs;
+        setJobs(js => js.map(j => (j.id === id ? { ...j, status: 'completed' } : j)));
+        try {
+            await hubService.completeJob(id);
+        } catch {
+            setJobs(previous);            // put it back rather than lie about it
+            setError('That task could not be updated. Please try again.');
+        }
     };
+
+    const open = jobs.filter(j => j.status !== 'completed');
+    const done = jobs.filter(j => j.status === 'completed');
+
+    const priorityClass = (p: FounderJob['priority']) =>
+        p === 'High' ? 'text-red-600' : p === 'Medium' ? 'text-amber-600' : 'text-brand-ink/40';
 
     return (
         <div className="space-y-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h2 className="text-3xl font-serif">Tasks <span className="italic text-brand-olive">& Operations</span></h2>
-                    <p className="text-brand-ink/50 mt-1">Tracked in Notion · Assigned to team.</p>
+                    <h2 className="text-3xl font-serif">Tasks <span className="italic text-brand-olive">&amp; Operations</span></h2>
+                    <p className="text-brand-ink/50 mt-1">Founder job list for the CIC.</p>
                 </div>
                 <button className="flex items-center gap-2 px-6 py-3 bg-brand-olive text-white rounded-full text-sm font-bold shadow-lg shadow-brand-olive/10">
                     <Plus size={18} /> Add Task
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Active Tasks */}
-                    <div className="bg-white rounded-[40px] border border-brand-olive/5 shadow-sm overflow-hidden p-8 md:p-10">
-                        <h3 className="text-xl font-serif mb-8 italic text-brand-olive">Open Tasks</h3>
-                        <div className="space-y-4">
-                            <AnimatePresence>
-                                {tasks.map((task) => (
-                                    <motion.div
-                                        key={task.id}
-                                        layout
-                                        className={`flex items-center gap-4 p-5 rounded-3xl border transition-all ${task.done ? 'bg-brand-cream/20 opacity-50 border-transparent scale-[0.98]' : 'bg-white border-brand-olive/5 hover:border-brand-olive/20 shadow-sm'
-                                            }`}
-                                    >
-                                        <button
-                                            onClick={() => toggleTask(task.id)}
-                                            className="flex-shrink-0 text-brand-olive/30 hover:text-brand-olive transition-colors"
+            {error && (
+                <div className="flex items-center gap-3 px-6 py-4 rounded-3xl bg-amber-50 text-sm text-brand-ink/70">
+                    <AlertCircle size={18} className="text-amber-600 flex-shrink-0" /> {error}
+                </div>
+            )}
+
+            <div className="bg-white rounded-[40px] border border-brand-olive/5 shadow-sm overflow-hidden">
+                {loading ? (
+                    <div className="p-8 space-y-4">
+                        {[1, 2, 3].map(i => <div key={i} className="h-16 bg-brand-cream/60 rounded-3xl animate-pulse" />)}
+                    </div>
+                ) : jobs.length === 0 ? (
+                    <EmptyState
+                        icon={ClipboardList}
+                        title="No tasks recorded yet"
+                        description="Jobs added to the founder task list will appear here."
+                        note="Use “Add Task” to create the first one."
+                    />
+                ) : (
+                    <div className="p-8 md:p-10 space-y-8">
+                        <div>
+                            <h3 className="text-xl font-serif mb-6 italic text-brand-olive">
+                                Open Tasks {open.length > 0 && <span className="not-italic text-brand-ink/30 text-sm">({open.length})</span>}
+                            </h3>
+                            {open.length === 0 ? (
+                                <p className="text-sm text-brand-ink/40">Nothing outstanding.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {open.map((job, idx) => (
+                                        <motion.div
+                                            key={job.id}
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: Math.min(idx, 8) * 0.04 }}
+                                            className="flex items-center gap-4 p-5 rounded-3xl bg-brand-cream/10 border border-brand-olive/5"
                                         >
-                                            {task.done ? <CheckCircle2 size={24} className="text-brand-olive" /> : <Circle size={24} />}
-                                        </button>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`text-base font-bold truncate ${task.done ? 'line-through text-brand-ink/40' : 'text-brand-ink'}`}>
-                                                {task.title}
-                                            </p>
-                                            <div className="flex items-center gap-3 mt-1.5 overflow-hidden">
-                                                <span className="text-[10px] font-bold text-brand-ink/30 uppercase tracking-tighter whitespace-nowrap">{task.assigned} · {task.dept}</span>
-                                                <div className="h-2 w-px bg-brand-olive/10" />
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${task.priority === 'HIGH' ? 'bg-red-50 text-red-600' : task.priority === 'MED' ? 'bg-amber-50 text-amber-600' : 'bg-brand-cream text-brand-olive/60'
-                                                    }`}>
-                                                    {task.priority}
-                                                </span>
-                                            </div>
+                                            <button
+                                                onClick={() => complete(job.id)}
+                                                aria-label={`Mark "${job.task}" complete`}
+                                                className="text-brand-olive/30 hover:text-brand-olive transition-colors flex-shrink-0"
+                                            >
+                                                <Circle size={20} />
+                                            </button>
+                                            <p className="flex-1 text-sm font-bold text-brand-ink min-w-0">{job.task}</p>
+                                            <span className={`text-[10px] font-bold uppercase tracking-widest flex-shrink-0 ${priorityClass(job.priority)}`}>
+                                                {job.priority}
+                                            </span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {done.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-serif mb-6 italic text-brand-olive/50">Completed</h3>
+                                <div className="space-y-3">
+                                    {done.map(job => (
+                                        <div key={job.id} className="flex items-center gap-4 p-5 rounded-3xl bg-brand-cream/5 opacity-60">
+                                            <CheckCircle2 size={20} className="text-green-600 flex-shrink-0" />
+                                            <p className="flex-1 text-sm text-brand-ink/60 line-through min-w-0">{job.task}</p>
                                         </div>
-                                        <button className="p-2 text-brand-ink/20 hover:text-brand-olive"><MoreVertical size={18} /></button>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-                    </div>
-
-                    {/* Recently Completed */}
-                    <div className="bg-brand-cream/10 rounded-[40px] border border-brand-olive/5 p-8 md:p-10">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-brand-ink/30 mb-6">Completed Recently</h3>
-                        <div className="space-y-3">
-                            {completedTasks.map((task) => (
-                                <div key={task.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white/50 border border-brand-olive/5 opacity-60 grayscale">
-                                    <CheckCircle2 size={20} className="text-brand-olive/40" />
-                                    <p className="text-sm font-bold text-brand-ink line-through">{task.title}</p>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        )}
                     </div>
-                </div>
-
-                {/* Stats Sidebar */}
-                <div className="space-y-8">
-                    <div className="bg-brand-olive text-brand-cream p-8 rounded-[40px] shadow-lg">
-                        <h4 className="text-lg font-serif mb-6 italic">Operations Stats</h4>
-                        <div className="grid grid-cols-2 gap-6">
-                            {[
-                                { label: "Completion Rate", value: "84%" },
-                                { label: "Overdue", value: "2" },
-                                { label: "Active Team", value: "6" },
-                                { label: "Avg. Duration", value: "2.4d" },
-                            ].map(stat => (
-                                <div key={stat.label}>
-                                    <p className="text-2xl font-serif">{stat.value}</p>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1">{stat.label}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-8 rounded-[40px] border border-brand-olive/10 shadow-sm">
-                        <h4 className="text-lg font-serif mb-6 italic text-brand-olive">Weekly Outlook</h4>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-brand-ink/60">Urgent Repairs</span>
-                                <span className="text-xs font-bold text-red-600">3 due</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-brand-cream rounded-full overflow-hidden">
-                                <div className="h-full bg-red-400 w-2/3" />
-                            </div>
-                            <div className="flex items-center justify-between mt-6">
-                                <span className="text-sm text-brand-ink/60">Admin Reviews</span>
-                                <span className="text-xs font-bold text-brand-olive">5 due</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-brand-cream rounded-full overflow-hidden">
-                                <div className="h-full bg-brand-olive w-1/3" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );

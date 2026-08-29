@@ -6,6 +6,7 @@ import {
   Calendar, Mic2, Waves, ExternalLink
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { EmptyState } from '../components/EmptyState';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,55 +22,16 @@ interface RadioEvent {
   link?: string;
 }
 
-// ─── Fallback data (shown until Supabase table is seeded) ────────────────────
-
-const FALLBACK_EVENTS: RadioEvent[] = [
-  {
-    id: '1', title: 'Farnham Artisan Market', type: 'Market',
-    date: '2026-04-05T10:00:00', venue: 'Farnham Town Centre',
-    description: 'Monthly gathering of local makers, bakers, and food producers. Live music from 12pm.',
-    featured_artist: 'The Hop Garden Trio',
-  },
-  {
-    id: '2', title: 'Surrey Folk Night', type: 'Gig',
-    date: '2026-04-11T19:30:00', venue: 'The Wheatsheaf, Farnham',
-    description: 'An evening of folk and acoustic music celebrating the seasons. Supporting local artists.',
-    featured_artist: 'Clara Moss & Band',
-  },
-  {
-    id: '3', title: 'Spring Harvest Pop-Up', type: 'Pop-Up',
-    date: '2026-04-19T11:00:00', venue: 'The Farmers Table Hub',
-    description: 'Seasonal produce direct from growers. Wild garlic, asparagus, early strawberries.',
-  },
-  {
-    id: '4', title: 'Beekeepers Open Day', type: 'Event',
-    date: '2026-04-26T10:00:00', venue: 'Frensham Ponds',
-    description: 'Meet local beekeepers, see hives up close, and taste this season\'s first honey.',
-    featured_artist: 'Surrey Beekeepers Association',
-  },
-];
-
-const FALLBACK_ARTISTS = [
-  { name: 'The Hop Garden Trio', genre: 'Folk / Acoustic', gig: 'Farnham Artisan Market — 5 Apr' },
-  { name: 'Clara Moss & Band', genre: 'Singer-Songwriter', gig: 'Surrey Folk Night — 11 Apr' },
-  { name: 'Old Railway Sessions', genre: 'Blues / Country', gig: 'TBC May 2026' },
-  { name: 'Meadow String Quartet', genre: 'Classical / Folk', gig: 'Harvest Festival — Jun 2026' },
-];
-
-const FALLBACK_CHEFS = [
-  {
-    name: 'The Herb & Board', type: 'Farm-to-table restaurant', location: 'Farnham',
-    bio: 'Seasonal menus built around Surrey produce. Head chef Sarah Turner sources 90% of ingredients within 30 miles.',
-  },
-  {
-    name: 'Wrecclesham Kitchen', type: 'Neighbourhood bistro', location: 'Wrecclesham',
-    bio: 'Family-run bistro specialising in slow-cooked Hampshire lamb and locally foraged vegetables.',
-  },
-  {
-    name: 'The Granary Café', type: 'Daytime café', location: 'Alton',
-    bio: 'All-day brunch using eggs from local farms, sourdough baked on-site, and seasonal specials on the board daily.',
-  },
-];
+// ─── No fallback data ────────────────────────────────────────────────────────
+//
+// This page previously shipped FALLBACK_EVENTS, FALLBACK_ARTISTS and
+// FALLBACK_CHEFS: invented bands, venues, restaurants and named chefs that
+// rendered whenever the database returned nothing. On a public page a
+// visitor had no way to tell them from real listings, and the venues and
+// businesses named do not exist.
+//
+// Sections now render an explicit "coming soon" state instead. Real content
+// arrives only from the database.
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -105,8 +67,9 @@ export const CommunityRadio: React.FC = () => {
         .order('date', { ascending: true })
         .limit(8);
 
-      if (error || !data || data.length === 0) {
-        setEvents(FALLBACK_EVENTS);
+      // No invented fallback: an empty or failed read shows the empty state.
+      if (error || !data) {
+        setEvents([]);
       } else {
         setEvents(data);
       }
@@ -125,17 +88,21 @@ export const CommunityRadio: React.FC = () => {
             <span className="text-xs font-bold uppercase tracking-widest text-brand-olive bg-brand-olive/10 px-4 py-2 rounded-full">
               Community Radio
             </span>
+            {/* The station is not broadcasting yet. A pulsing green "On Air"
+                badge told every visitor otherwise, and contradicted the
+                Live Stream section further down the same page. */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-brand-olive/10 shadow-sm">
-              <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)] animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-brand-ink/60">On Air</span>
+              <div className="w-2 h-2 rounded-full bg-brand-olive/30" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-brand-ink/60">In Development</span>
             </div>
           </div>
           <h1 className="text-5xl md:text-7xl font-serif mb-6">
             What's <span className="italic text-brand-olive">On</span>
           </h1>
           <p className="text-xl text-brand-ink/60 max-w-2xl mb-10">
-            Gigs, markets, pop-ups, and events from across the Farmers Table community.
-            Local talent, local food, local life.
+            Gigs, markets, pop-ups and events from across the Farmers Table community.
+            The station is being built now — programmes, presenters and local music
+            will appear here as it develops.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
@@ -168,6 +135,15 @@ export const CommunityRadio: React.FC = () => {
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="h-40 bg-brand-cream/60 rounded-[28px] animate-pulse" />
               ))}
+            </div>
+          ) : events.length === 0 ? (
+            <div className="bg-brand-cream rounded-[28px] border border-brand-olive/5">
+              <EmptyState
+                icon={Calendar}
+                title="No events scheduled yet"
+                description="Markets, gigs, pop-ups and community events will be listed here as they are confirmed."
+                note="Running something local? Join the community and tell us about it."
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -209,63 +185,40 @@ export const CommunityRadio: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Featured Artists ──────────────────────────────────────────────── */}
+      {/* ── Local Music ───────────────────────────────────────────────────── */}
       <section className="py-16 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-10">
             <Music size={20} className="text-brand-olive" />
-            <h2 className="text-3xl font-serif">Featured Artists</h2>
+            <h2 className="text-3xl font-serif">Local Music</h2>
             <div className="h-px flex-1 bg-brand-olive/10" />
           </div>
-          <div className="flex overflow-x-auto gap-5 pb-4 -mx-4 px-4 snap-x no-scrollbar">
-            {FALLBACK_ARTISTS.map((artist, i) => (
-              <motion.div
-                key={artist.name}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.07 }}
-                className="w-56 flex-shrink-0 snap-start bg-white rounded-[28px] p-6 border border-brand-olive/5 shadow-sm"
-              >
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-olive/20 to-brand-olive/5 flex items-center justify-center mb-4">
-                  <Mic2 size={20} className="text-brand-olive" />
-                </div>
-                <h3 className="font-serif text-lg mb-1 leading-snug">{artist.name}</h3>
-                <p className="text-xs font-bold text-brand-olive/60 mb-3">{artist.genre}</p>
-                <p className="text-xs text-brand-ink/40 leading-relaxed">{artist.gig}</p>
-              </motion.div>
-            ))}
+          <div className="bg-white rounded-[32px] border border-brand-olive/5 shadow-sm">
+            <EmptyState
+              icon={Mic2}
+              title="Artist features coming soon"
+              description="We are building relationships with musicians and performers across Surrey and Hampshire. Featured artists and session recordings will appear here as the station develops."
+              comingSoon
+            />
           </div>
         </div>
       </section>
 
-      {/* ── Featured Restaurants & Chefs ──────────────────────────────────── */}
+      {/* ── Food & Drink ──────────────────────────────────────────────────── */}
       <section className="py-16 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-10">
             <Utensils size={20} className="text-brand-olive" />
-            <h2 className="text-3xl font-serif">Featured Restaurants & Chefs</h2>
+            <h2 className="text-3xl font-serif">Food &amp; Drink</h2>
             <div className="h-px flex-1 bg-brand-olive/10" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {FALLBACK_CHEFS.map((chef, i) => (
-              <motion.div
-                key={chef.name}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="bg-brand-cream rounded-[28px] p-6 border border-brand-olive/5"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-brand-olive/10 flex items-center justify-center mb-4">
-                  <Utensils size={18} className="text-brand-olive" />
-                </div>
-                <h3 className="font-serif text-xl mb-1">{chef.name}</h3>
-                <p className="text-xs font-bold uppercase tracking-widest text-brand-olive/60 mb-1">{chef.type}</p>
-                <p className="text-xs text-brand-ink/40 mb-3 flex items-center gap-1">
-                  <MapPin size={10} /> {chef.location}
-                </p>
-                <p className="text-sm text-brand-ink/60 leading-relaxed">{chef.bio}</p>
-              </motion.div>
-            ))}
+          <div className="bg-brand-cream rounded-[32px] border border-brand-olive/5">
+            <EmptyState
+              icon={Utensils}
+              title="Kitchens and producers coming soon"
+              description="Profiles of the kitchens, cafés and producers working with the Farmers Table community will be published here once they have been confirmed with each business."
+              comingSoon
+            />
           </div>
         </div>
       </section>

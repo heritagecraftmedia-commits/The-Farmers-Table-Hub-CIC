@@ -359,8 +359,8 @@ group by 1 having count(*) > 1;          -- expect 145 names, 2 each
 Until this is done, `20260828`'s unique index will keep declining to build on
 live.
 
-**9.2 Invented content in five component files.** Outside the brief's scope
-(it named `hubService.ts`), so **not changed** — but it reaches real users:
+**9.2 Invented content in component files — RESOLVED, see section 11.**
+Approved and actioned in a follow-up pass. Original finding:
 
 | File | Content | Severity |
 |---|---|---|
@@ -376,9 +376,52 @@ leaves visible gaps on live pages, so it is Scott's call, not mine.
 **9.3 `feat/farmers-table-discovery`** carries an unmerged
 `20260822_create_discovery_pipeline.sql`. Unrelated to this task; not included.
 
-**9.4 Editing applied migrations.** `20260317_radio_events.sql` and
-`20260317_seed_directory_listings.sql` were edited in place. If Supabase CLI
-migration checksums are in use, this may need `supabase migration repair`.
+**9.4 Editing applied migrations — full detail.**
+
+Two migration files that have already been applied to live were edited in
+place. Nothing has been repaired, re-pushed or re-run; this section is the
+record needed to decide what, if anything, to do.
+
+| File | Version | Status on live | What was changed | Why |
+|---|---|---|---|---|
+| `20260317_radio_events.sql` | `20260317` | Applied | Removed the trailing `INSERT` that seeded the invented "Farnham Artisan Market" / "The Hop Garden Trio" event. Table definition and policies untouched. | So new environments never create the fictional row |
+| `20260317_seed_directory_listings.sql` | `20260317` | Applied | Body replaced with `select 1;` (no-op), matching the existing pattern used by `20260317_create_directory_listings_table.sql` | It was the second of two files seeding the same 145 producers, which is what produced 290 rows |
+
+Three files are new and have never been applied anywhere
+(`20260315_base_schema_tables.sql`, `20260316_extensions_auth_profiles.sql`,
+`20260318_core_tables_events_radio_shows.sql`,
+`20260830_remove_demo_radio_event.sql`).
+`20260829_radio_v3_station.sql` is the renumbered V3: the original
+`20260827_radio_v3_station.sql` only ever existed on the unmerged radio
+branch, so no environment has recorded either version. **No repair is needed
+for the renumber.**
+
+**Is `supabase migration repair` required before deployment? Most likely not,
+and it should not be run pre-emptively.**
+
+The Supabase CLI tracks applied migrations by *version* in
+`supabase_migrations.schema_migrations`, and `db push` applies versions the
+remote does not yet have. It does not re-verify the body of a version already
+recorded. So the practical consequences of the two edits are:
+
+* Neither edit will error on `db push`.
+* Neither edit will *do* anything on an environment that already ran version
+  `20260317` — the edited content simply never executes there.
+
+That is precisely why the demo row needed its own forward migration
+(`20260830_remove_demo_radio_event.sql`) rather than relying on the edit, and
+why live still holds the 145 duplicate producer rows described in 9.1.
+
+Verify before deploying, rather than assuming:
+
+```sql
+-- what the live project thinks it has applied
+select version, name from supabase_migrations.schema_migrations order by version;
+```
+
+`repair` becomes relevant only if that query shows a version mismatch, or if
+the CLI reports one on push. **Do not run it without checking first**, and not
+without approval — it rewrites migration history.
 
 ---
 
@@ -416,3 +459,65 @@ Scroll fix, same harness: scrolled to 1200, navigated — before: stayed at 1200
 after: 0, with the back button still restoring to 2325.
 
 `npx tsc --noEmit` is clean, and was clean on `main` before the change.
+
+
+---
+
+## 11. Invented content removal (approved follow-up)
+
+Section 9.2 was approved. The audit was widened across the whole of `src/`,
+which found four more fabricated sources than the original five.
+
+### 11.1 What was removed and what replaced it
+
+| File | Fabricated content removed | Replacement |
+|---|---|---|
+| `src/pages/CommunityRadio.tsx` **(public)** | `FALLBACK_EVENTS` (4 invented events), `FALLBACK_ARTISTS` (4 invented bands), `FALLBACK_CHEFS` (3 invented restaurants incl. a named head chef). Also a pulsing green **"On Air"** badge on a station that is not broadcasting | Real `radio_events` query kept; empty state when it returns nothing. Artists and Food &amp; Drink sections become "coming soon" panels. Badge now reads "In Development" |
+| `src/components/central/CentralFinance.tsx` | 4 headline figures (£3,420 income, £640 outstanding …), 4 named client invoices with payment statuses, a 3-line income breakdown, "£14,842.50 Total CIC Assets" | Empty state. Xero link kept (real external product) |
+| `src/components/central/CentralAdvertisers.tsx` | 5 named advertisers with packages, tiers, renewal dates and Paid/Overdue statuses; a false **"HubSpot Synced"** badge | Empty state; "New Advertiser" disabled until wired |
+| `src/components/dashboard/TeamMemberDrawer.tsx` | `MOCK_PAYROLL` (3 months at £14.50/hr, **downloadable as CSV named after the real employee**), `MOCK_ROTA`, `MOCK_HOLIDAYS` (incl. an approvable "Family holiday"), "160 hrs", "18 days left" | Overview shows only real staff-record fields; rota/holiday/payroll tabs show empty states; CSV export removed. "Remove from Team" (real) kept |
+| `src/components/central/CentralPeople.tsx` | 6 invented colleagues + a "Today's Shift" panel | **Wired to the real `hubService.getStaff()`**, with empty state |
+| `src/components/central/CentralTasks.tsx` | 7 invented tasks assigned to invented people; false "Tracked in Notion" | **Wired to the real `hubService.getFounderJobs()`**; completing a task now persists |
+| `src/components/central/CentralSchedules.tsx` | Week rota grid for 5 invented people | Empty state (no rota table exists) |
+| `src/components/central/CentralStock.tsx` | Invented stock counts and café stock lines | Empty state (no stock table exists) |
+| `src/components/central/CentralRecords.tsx` | 5 Notion notebooks with "Synced/Live" statuses; HubSpot counts (47 contacts, 8 deals, 12 leads); a "Force Full Sync" button calling nothing | Empty state. Internal Drafting Spaces (real routes) kept unchanged |
+| `src/data/radioSchedule.ts` | Two invented venue names in unbooked planning slots ("The Village Arms", "The Granary") | Renamed to "Venue To Be Confirmed" |
+
+New shared component: `src/components/EmptyState.tsx` — one icon + heading +
+explanation + optional "Coming Soon" pill, used by every screen above so the
+site reads as deliberately unfinished rather than broken.
+
+### 11.2 Deliberately NOT changed
+
+* **`src/data/radioSchedule.ts` master clock.** A staff-only planning
+  template (`/command`, `/radio/control` — both role-gated) whose entries are
+  already labelled `placeholder: true`, "confirmation required" and "Audio is
+  not supplied by this test build". Legitimately-labelled planning material,
+  not content presented as real. Only the two named venues were changed.
+* **Pricing across `Home`, `Directory`, `Join`, `Subscriptions`,
+  `MakersShop`.** £0 / £5 / £15 membership tiers are real business offers.
+* **Radio operational tooling** (`RadioMonthPlanner`, `RadioRunSheet`,
+  `RadioBuildRecipes`, `RadioOperationalChecklist`). Procedures and
+  checklists, not fabricated records.
+* **`hubService.ts` dev mocks.** Still contain invented sponsors, but are
+  `import.meta.env.DEV`-gated and tree-shaken out of production — confirmed
+  absent from `dist/`. This was the approach agreed in the previous pass.
+* **`src/pages/SubmitStory.tsx`** — `placeholder="e.g. Sarah Willow"`. A form
+  input hint, explicitly prefixed "e.g.", not presented as data. Flagged
+  rather than changed. Same for `AddTeamMemberModal` and `RadioScheduleModal`.
+
+### 11.3 Still open — needs a decision
+
+**`src/pages/Cafe.tsx` — NOT changed, cannot be verified.** The public café
+page states **"Always Open, Always Local"** and lists three priced dishes as
+"Current Specials": Wild Mushroom Toast £8.50, Midnight Beef Stew £12.00,
+Artisan Coffee £3.20, one crediting "Old Mill sourdough".
+
+This is an opening-hours claim and a priced menu — exactly the kind of thing a
+visitor would act on. It was left alone because, unlike everything above, it
+cannot be determined from the repository whether the café exists, is open, and
+serves these dishes at these prices. If it is real, deleting it would destroy
+genuine content; if it is not, it is the most consequential fabrication left
+in the application, because someone could travel to it.
+
+**This one needs an answer rather than a judgement call.**
