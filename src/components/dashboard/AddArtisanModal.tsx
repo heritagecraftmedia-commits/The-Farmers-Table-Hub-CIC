@@ -38,7 +38,7 @@ export const AddArtisanModal: React.FC<Props> = ({ onClose, onSave }) => {
                         <div className="relative">
                             <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/30" />
                             <input required value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })}
-                                className={inputCls} placeholder="Farnham Ironworks" />
+                                className={inputCls} placeholder="e.g. Business name" />
                         </div>
                     </div>
 

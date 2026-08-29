@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
     { name: 'Maker Stories', path: '/maker-stories' },
     { name: 'Marketplace', path: '/marketplace' },
     { name: 'Makers Hub', path: '/makers-hub' },
-    { name: '24-Hour Café', path: '/cafe' },
+    { name: 'Café', path: '/cafe' },
     { name: 'Community Radio', path: '/radio' },
     { name: 'Volunteer', path: '/volunteer' },
     { name: 'Resources', path: '/resources' },

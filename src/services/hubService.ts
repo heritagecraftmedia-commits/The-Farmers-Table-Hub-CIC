@@ -566,39 +566,41 @@ export const hubService = {
   },
 
   // --- External API Integrations (Skeletons) ---
-  getXeroInvoices: async () => {
-    const key = import.meta.env.VITE_XERO_CLIENT_ID;
-    if (!key || key === 'placeholder') {
-      return [
-        { id: '1', contact: 'Thompson & Morgan', amount: 150.00, status: 'PAID', date: '2026-02-20' },
-        { id: '2', contact: 'Lakeland', amount: 45.50, status: 'PENDING', date: '2026-02-25' }
-      ];
-    }
-    // Real fetch logic would go here
+  //
+  // None of these three services is connected. Each previously returned
+  // invented records whenever its API key was missing:
+  //
+  //   getXeroInvoices     two invoices — "Thompson & Morgan" £150.00 PAID and
+  //                       "Lakeland" £45.50 PENDING. Both are real UK
+  //                       companies; the invoices are not. Fabricated
+  //                       financial records naming real businesses are the
+  //                       worst case of all, because they look verifiable.
+  //   getHubSpotContacts  two invented contacts with email addresses.
+  //   getNotionPages      two invented page titles.
+  //
+  // The guard was `!key || key === 'placeholder'`, which is true in a
+  // production build with no keys configured — so this was not dev-only
+  // fallback data, unlike the DEV-gated mocks above. Nothing calls these
+  // functions today, but they would have returned fiction to the first
+  // screen that did.
+  //
+  // Each now returns an empty list until real fetch logic exists. That
+  // matches what CentralOverview already tells the founder: Xero, HubSpot
+  // and Notion are not wired up.
+
+  getXeroInvoices: async (): Promise<{ id: string; contact: string; amount: number; status: string; date: string }[]> => {
+    // TODO: implement the Xero fetch. Until then, report nothing rather
+    // than something plausible.
     return [];
   },
 
-  getHubSpotContacts: async () => {
-    const key = import.meta.env.VITE_HUBSPOT_KEY;
-    if (!key || key === 'placeholder') {
-      return [
-        { id: '1', name: 'Sarah Willow', email: 'sarah@willowcraft.com', type: 'Maker' },
-        { id: '2', name: 'John Tools', email: 'john@forgedtools.co.uk', type: 'Supplier' }
-      ];
-    }
-    // Real fetch logic would go here
+  getHubSpotContacts: async (): Promise<{ id: string; name: string; email: string; type: string }[]> => {
+    // TODO: implement the HubSpot fetch.
     return [];
   },
 
-  getNotionPages: async () => {
-    const key = import.meta.env.VITE_NOTION_KEY;
-    if (!key || key === 'placeholder') {
-      return [
-        { id: '1', title: 'Marketing Strategy 2026', url: 'https://notion.so/1' },
-        { id: '2', title: 'Maker Onboarding Flow', url: 'https://notion.so/2' }
-      ];
-    }
-    // Real fetch logic would go here
+  getNotionPages: async (): Promise<{ id: string; title: string; url: string }[]> => {
+    // TODO: implement the Notion fetch.
     return [];
   },
 

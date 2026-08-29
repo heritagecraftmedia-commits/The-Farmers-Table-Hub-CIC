@@ -65,11 +65,14 @@
   min-width: 0;
 }
 
-/* (3) Any row of items must be able to become two rows. The site's nav is
-   built from divs rather than a list, and its row is a fixed h-20, so the
-   wrap rule has to cover both: flex-wrap has no effect on a non-flex box,
-   and the height has to be free to grow once a row becomes two. */
-.fog-mode-active :where(nav, header, footer) :where(ul, ol, div) {
+/* (3) Any row of items must be able to become two rows — anywhere, not just
+   in the chrome. A single button-styled link in a page-level flex row is
+   enough to push the whole page sideways once its text grows (this was
+   /makers-hub at 768px). flex-wrap has no effect on a non-flex box, so
+   applying it broadly is safe; on a horizontally-scrolling strip it just
+   reflows into rows, which is the better outcome at large text sizes. */
+.fog-mode-active :where(div, section, article, main, aside, nav, header,
+                        footer, ul, ol, form) {
   flex-wrap: wrap;
 }
 
