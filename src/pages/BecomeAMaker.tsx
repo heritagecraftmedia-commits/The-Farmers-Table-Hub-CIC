@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Send, CheckCircle, ArrowLeft, Info, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';

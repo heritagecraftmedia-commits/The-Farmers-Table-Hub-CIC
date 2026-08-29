@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Crown, Star, CheckCircle2, ArrowRight, ShieldCheck, Heart, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { stripeService } from '../services/stripeService';
 
 export const Subscriptions: React.FC = () => {
+    const [checkoutError, setCheckoutError] = useState('');
     const tiers = [
         {
             name: 'Supporter',
@@ -52,6 +53,12 @@ export const Subscriptions: React.FC = () => {
                 </div>
 
                 {/* Tiers Grid */}
+                {checkoutError && (
+                    <div className="max-w-2xl mx-auto mb-10 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-sm text-center">
+                        {checkoutError}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-20">
                     {tiers.map((tier) => (
                         <motion.div
@@ -91,7 +98,10 @@ export const Subscriptions: React.FC = () => {
                             </ul>
 
                             <button
-                                onClick={() => stripeService.redirectToCheckout(tier.id as 'supporter' | 'featured')}
+                                onClick={async () => {
+                                    const { error } = await stripeService.redirectToCheckout(tier.id as 'supporter' | 'featured');
+                                    if (error) setCheckoutError(error);
+                                }}
                                 className={`w-full py-5 rounded-full font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-2 ${tier.highlight
                                         ? 'bg-white text-brand-olive hover:bg-brand-cream'
                                         : 'bg-brand-olive text-white hover:bg-brand-olive/90'

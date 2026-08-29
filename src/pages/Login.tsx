@@ -1,28 +1,43 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth, demoModeAvailable } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { LogIn, User, ShieldCheck, Store, Mail, Lock, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 
-const isSupabaseConfigured = () => {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  return url && url !== 'https://placeholder.supabase.co' && url.includes('supabase.co');
-};
-
 export const Login: React.FC = () => {
-  const { login, loginAsRole } = useAuth();
+  const { login, loginAsRole, requestPasswordReset } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
-  const supabaseReady = isSupabaseConfigured();
+  // Show the demo role picker only where it actually works — dev builds with
+  // no Supabase configured. In production the real form is always shown, so a
+  // deploy with missing env vars fails visibly instead of offering a
+  // credential-free "Founder Access" button.
+  const showDemoLogin = demoModeAvailable();
+
+  // Nothing in the app previously called resetPasswordForEmail, so
+  // ResetPassword.tsx was unreachable: there was no way to obtain a recovery
+  // link. This is the missing first half of that flow.
+  const handleForgotPassword = async () => {
+    setError('');
+    setNotice('');
+    if (!email) { setError('Enter your email address first, then choose "Forgot password?".'); return; }
+    setLoading(true);
+    const { error: resetError } = await requestPasswordReset(email);
+    setLoading(false);
+    if (resetError) { setError(resetError); return; }
+    setNotice('If that email has an account, a reset link is on its way. Check your inbox.');
+  };
 
   const handleRealLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
     const { error: authError } = await login(email, password);
     setLoading(false);
@@ -48,7 +63,7 @@ export const Login: React.FC = () => {
           </div>
           <h1 className="text-3xl font-serif mb-2">Welcome Back</h1>
 
-          {supabaseReady ? (
+          {!showDemoLogin ? (
             // Real Supabase email/password login
             <>
               <p className="text-brand-ink/60 mb-10">Sign in to your account</p>
@@ -80,13 +95,28 @@ export const Login: React.FC = () => {
                     <AlertCircle size={16} /> {error}
                   </div>
                 )}
+                {notice && (
+                  <div className="p-3 bg-green-50 rounded-xl text-green-700 text-sm">
+                    {notice}
+                  </div>
+                )}
                 <button
                   type="submit" disabled={loading}
                   className="w-full py-5 bg-brand-olive text-white rounded-full font-bold hover:bg-brand-olive/90 transition-all disabled:opacity-50 mt-4"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
+                <button
+                  type="button" onClick={handleForgotPassword} disabled={loading}
+                  className="w-full text-sm text-brand-olive hover:underline disabled:opacity-50"
+                >
+                  Forgot password?
+                </button>
               </form>
+              <p className="text-sm text-brand-ink/50 mt-6">
+                New here?{' '}
+                <Link to="/signup" className="text-brand-olive font-bold hover:underline">Create an account</Link>
+              </p>
             </>
           ) : (
             // Demo mode when Supabase not yet configured

@@ -1,36 +1,16 @@
--- Step 1 of 2: Create directory_listings table structure
--- Run this first, confirm it succeeds, then run the seed file.
+-- SUPERSEDED — intentionally left as a no-op.
+--
+-- This file and 20260317_create_directory_listings.sql both created
+-- directory_listings and differed only in their seed rows. Running both was
+-- harmless (CREATE TABLE IF NOT EXISTS / ON CONFLICT DO NOTHING) but it left
+-- two competing definitions of the same table in the repo, and no way to tell
+-- which one a given environment had actually applied.
+--
+-- 20260317_create_directory_listings.sql is the one to use: it carries the full
+-- producer seed. The table's authoritative RLS now lives in
+-- 20260826_rls_admin_hardening.sql section 11.
+--
+-- Left in place rather than deleted so environments that recorded this
+-- filename in their migration history do not see it disappear.
 
-CREATE TABLE IF NOT EXISTS directory_listings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  category TEXT,
-  location TEXT,
-  contact_email TEXT,
-  website TEXT,
-  phone TEXT,
-  status TEXT DEFAULT 'active',
-  tier TEXT DEFAULT 'free',
-  description TEXT,
-  outreach_status TEXT DEFAULT 'not_contacted',
-  outreach_date TIMESTAMP,
-  response TEXT,
-  claimed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE directory_listings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Public can view active listings"
-ON directory_listings FOR SELECT
-USING (status = 'active');
-
-CREATE POLICY "Founder can do everything"
-ON directory_listings FOR ALL
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid()
-    AND profiles.role = 'founder'
-  )
-);
+select 1;

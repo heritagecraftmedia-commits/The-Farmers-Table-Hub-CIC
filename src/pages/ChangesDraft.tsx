@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Edit3, Copy, Check, Info } from 'lucide-react';
+
+const STORAGE_KEY = 'tft.changes-draft';
 
 export const ChangesDraft: React.FC = () => {
     const [text, setText] = useState('// Heritage Makers & Affiliate Hub Plan\n// Paste or draft your changes here...\n\n' +
@@ -9,6 +11,28 @@ export const ChangesDraft: React.FC = () => {
         '3. Connect World of Wool for Textiles\n' +
         '4. Add "No Stock Held" disclaimers everywhere');
     const [copied, setCopied] = useState(false);
+    const [restored, setRestored] = useState(false);
+
+    // The page told the reader "changes made here are saved in your current
+    // session". They were plain useState and vanished on refresh — someone
+    // drafting a long note would lose it. Persisted to this browser now, which
+    // is what the copy already promised.
+    useEffect(() => {
+        try {
+            const saved = window.localStorage.getItem(STORAGE_KEY);
+            if (saved !== null) { setText(saved); setRestored(true); }
+        } catch {
+            // Private browsing or blocked site data — fall back to in-memory.
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!restored && text === '') return;
+        const id = window.setTimeout(() => {
+            try { window.localStorage.setItem(STORAGE_KEY, text); } catch { /* ignore */ }
+        }, 400);
+        return () => window.clearTimeout(id);
+    }, [text, restored]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(text);
@@ -27,7 +51,7 @@ export const ChangesDraft: React.FC = () => {
                     <h1 className="text-4xl md:text-5xl font-serif mb-4">Changes <span className="italic text-brand-olive">Draft</span></h1>
                     <p className="text-lg text-brand-ink/60">
                         Use this clean space to paste your text, draft project updates, or outline structural changes.
-                        This page is for your own drafting and will not be displayed to the public.
+                        This page is staff-only and is never shown to the public.
                     </p>
                 </div>
 
@@ -53,7 +77,9 @@ export const ChangesDraft: React.FC = () => {
                 <div className="mt-8 flex gap-4 p-6 bg-brand-olive/5 rounded-3xl border border-brand-olive/10">
                     <Info className="text-brand-olive shrink-0" size={20} />
                     <p className="text-sm text-brand-ink/60 leading-relaxed">
-                        <strong>Note:</strong> Changes made here are saved in your current session. Make sure to copy your text if you need to save it permanently or apply it to specific page files.
+                        <strong>Note:</strong> This draft is saved in this browser only — it is not
+                        stored on the server and will not follow you to another device or browser.
+                        Copy anything you need to keep.
                     </p>
                 </div>
 

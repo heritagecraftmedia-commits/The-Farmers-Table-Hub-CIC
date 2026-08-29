@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { makerListings } from '../data/makerListings';
-import { Search, Instagram, Crown, Star, ArrowRight, Palette } from 'lucide-react';
+import { Search, Instagram, Crown, Star, ArrowRight, Palette, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { MakerListing, HubEvent } from '../types';
+import { DirectoryListing, MakerListing, HubEvent } from '../types';
 import { hubService } from '../services/hubService';
 
 const CRAFT_CATEGORIES = ['All', 'Ceramics', 'Jewellery', 'Paintings', 'Illustration', 'Textiles', 'Design', 'Other'] as const;
@@ -42,36 +41,75 @@ const makerColor = (name: string) => {
     return colors[Math.abs(hash) % colors.length];
 };
 
+/** Card shape this page renders. Adapted from the directory record. */
+type ShopMaker = Pick<MakerListing, 'id' | 'name' | 'businessName' | 'craft' | 'instagram' | 'instagramUrl' | 'tier'>;
+
+const toShopMaker = (l: DirectoryListing): ShopMaker => {
+    const handle = l.socialLinks?.instagram ?? '';
+    return {
+        id: l.id,
+        name: l.vendorName,
+        businessName: '',
+        craft: l.craftCategory || 'Maker',
+        instagram: handle,
+        instagramUrl: handle ? `https://instagram.com/${handle.replace(/^@/, '')}` : '',
+        tier: l.listingTier,
+    };
+};
+
 export const MakersShop: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCraft, setSelectedCraft] = useState<string>('All');
+    const [makers, setMakers] = useState<ShopMaker[]>([]);
     const [events, setEvents] = useState<HubEvent[]>([]);
     const [links, setLinks] = useState<{ eventId: string, makerId: string, makerName?: string }[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
 
     React.useEffect(() => {
+        let active = true;
         const load = async () => {
-            const [allEvents, allLinks] = await Promise.all([
+            // Was reading the static src/data/makerListings.ts file, so nothing a
+            // maker changed and nothing the founder approved ever showed up here.
+            // Public route, so this must read the curated public view, not the
+            // admin-only directory_listings table.
+            const [allListings, allEvents, allLinks] = await Promise.all([
+                hubService.getPublicListings(),
                 hubService.getEvents(),
                 hubService.getEventMakerLinks()
             ]);
+            if (!active) return;
+            setMakers(allListings.filter((l: DirectoryListing) => l.published).map(toShopMaker));
             setEvents(allEvents.filter(e => e.approved));
             setLinks(allLinks);
+            setLoading(false);
         };
-        load();
+        // getPublicListings throws rather than falling back to invented makers.
+        // Say so: the empty state below reads "No makers found matching your
+        // search", which would blame the visitor's search for a failed query.
+        load().catch(() => {
+            if (!active) return;
+            setLoadError('The makers directory could not be loaded just now. Please try again shortly.');
+            setLoading(false);
+        });
+        return () => { active = false; };
     }, []);
 
-    const filtered = makerListings
+    const filtered = makers
         .filter(m => {
-            const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                m.craft.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                m.businessName.toLowerCase().includes(searchTerm.toLowerCase());
+            const q = searchTerm.toLowerCase();
+            const matchesSearch = m.name.toLowerCase().includes(q) ||
+                m.craft.toLowerCase().includes(q) ||
+                m.businessName.toLowerCase().includes(q);
             const matchesCraft = selectedCraft === 'All' || getCraftCategory(m.craft) === selectedCraft;
             return matchesSearch && matchesCraft;
         })
-        .sort((a, b) => {
-            const tierOrder = { featured: 0, supporter: 1, free: 2 };
-            return tierOrder[a.tier] - tierOrder[b.tier];
-        });
+        // Alphabetical, NOT by tier. This previously sorted
+        // featured -> supporter -> free, which put paying listings above free
+        // ones on every view — pay-to-rank, and directly against the project's
+        // stated commitment that free listings stay permanent and are never
+        // outranked. Paid tiers keep their badge and highlight, not a position.
+        .sort((a, b) => a.name.localeCompare(b.name));
 
     return (
         <div className="py-16 md:py-24 bg-brand-cream min-h-screen">
@@ -83,8 +121,9 @@ export const MakersShop: React.FC = () => {
                         Makers <span className="italic text-brand-olive">Shop</span>
                     </h1>
                     <p className="text-xl text-brand-ink/70 max-w-2xl">
-                        {makerListings.length} local artisans and makers — ceramicists, jewellers, illustrators, textile artists,
-                        and more. Discover handmade work from your community.
+                        {loading ? 'Loading' : makers.length} local artisans and makers — ceramicists, jewellers, illustrators,
+                        textile artists, and more. Discover handmade work from your community.
+                        Listed alphabetically — never ranked by what anyone pays.
                     </p>
                 </div>
 
@@ -113,7 +152,9 @@ export const MakersShop: React.FC = () => {
                     </div>
                 </div>
 
-                <p className="text-sm text-brand-ink/40 mb-6 font-bold">{filtered.length} makers found</p>
+                <p className="text-sm text-brand-ink/40 mb-6 font-bold">
+                    {loading ? 'Loading makers…' : `${filtered.length} makers found`}
+                </p>
 
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -195,7 +236,13 @@ export const MakersShop: React.FC = () => {
                     })}
                 </div>
 
-                {filtered.length === 0 && (
+                {loadError && (
+                    <div className="flex items-center justify-center gap-2 text-center py-24 text-brand-ink/70">
+                        <AlertCircle size={18} /> {loadError}
+                    </div>
+                )}
+
+                {!loadError && filtered.length === 0 && (
                     <div className="text-center py-24">
                         <p className="text-2xl text-brand-ink/40 font-serif italic">No makers found matching your search.</p>
                     </div>

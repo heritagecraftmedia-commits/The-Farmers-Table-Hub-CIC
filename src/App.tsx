@@ -1,14 +1,157 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { FogProvider } from './context/FogContext';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { FeedbackBookPrompt } from './components/FeedbackBookPrompt';
-import { Home } from './pages/Home'; import { Directory } from './pages/Directory'; import { Radio } from './pages/Radio'; import { RadioControl } from './pages/RadioControl';
-import { RadioLibraryManager } from './components/central/RadioLibraryManager';
-import { About } from './pages/About'; import { Join } from './pages/Join'; import { Resources } from './pages/Resources'; import { Marketplace } from './pages/Marketplace'; import { MakersHub } from './pages/MakersHub'; import { Cafe } from './pages/Cafe'; import { Volunteer } from './pages/Volunteer'; import { Members } from './pages/Members'; import { Feedback } from './pages/Feedback'; import { Login } from './pages/Login'; import { Dashboard } from './pages/Dashboard'; import { WhatsOn } from './pages/WhatsOn'; import { MakerStories } from './pages/MakerStories'; import { ClaimListing } from './pages/ClaimListing'; import { SubmitStory } from './pages/SubmitStory'; import { MakersShop } from './pages/MakersShop'; import { Privacy } from './pages/Privacy'; import { Terms } from './pages/Terms'; import { Accessibility } from './pages/Accessibility'; import { CommandCenter } from './pages/CommandCenter'; import { Subscriptions } from './pages/Subscriptions'; import { ChangesDraft } from './pages/ChangesDraft'; import { MakersDirectory } from './pages/MakersDirectory'; import { SupportMakers } from './pages/SupportMakers'; import { BecomeAMaker } from './pages/BecomeAMaker'; import { Notes } from './pages/Notes'; import { ProjectGuide } from './pages/guides/ProjectGuide'; import { DraftSpace } from './pages/DraftSpace'; import WhatsOnAgent from './pages/WhatsOnAgent'; import { ResetPassword } from './pages/ResetPassword'; import { NotFound } from './pages/NotFound'; import { Apply } from './pages/Apply'; import { MembersArea } from './pages/MembersArea'; import { CommunityRadio } from './pages/CommunityRadio'; import { Community } from './pages/Community'; import { AnimatePresence, motion } from 'motion/react';
-const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => { const location = useLocation(); return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>{children}</motion.div></AnimatePresence>; };
-export default function App() { return <AuthProvider><FogProvider><Router><div className="flex flex-col min-h-screen"><Navbar/><main className="flex-grow"><Routes>
-<Route path="/" element={<PageWrapper><Home/></PageWrapper>}/><Route path="/directory" element={<PageWrapper><Directory/></PageWrapper>}/><Route path="/radio" element={<PageWrapper><Radio/></PageWrapper>}/><Route path="/radio/control" element={<PageWrapper><RadioControl/></PageWrapper>}/><Route path="/radio/library" element={<PageWrapper><RadioLibraryManager/></PageWrapper>}/><Route path="/marketplace" element={<PageWrapper><Marketplace/></PageWrapper>}/><Route path="/makers-hub" element={<PageWrapper><MakersHub/></PageWrapper>}/><Route path="/cafe" element={<PageWrapper><Cafe/></PageWrapper>}/><Route path="/volunteer" element={<PageWrapper><Volunteer/></PageWrapper>}/><Route path="/members" element={<PageWrapper><Members/></PageWrapper>}/><Route path="/feedback" element={<PageWrapper><Feedback/></PageWrapper>}/><Route path="/about" element={<PageWrapper><About/></PageWrapper>}/><Route path="/join" element={<PageWrapper><Join/></PageWrapper>}/><Route path="/resources" element={<PageWrapper><Resources/></PageWrapper>}/><Route path="/whats-on" element={<PageWrapper><WhatsOn/></PageWrapper>}/><Route path="/maker-stories" element={<PageWrapper><MakerStories/></PageWrapper>}/><Route path="/login" element={<PageWrapper><Login/></PageWrapper>}/><Route path="/dashboard" element={<PageWrapper><Dashboard/></PageWrapper>}/><Route path="/claim/:id" element={<PageWrapper><ClaimListing/></PageWrapper>}/><Route path="/submit-story" element={<PageWrapper><SubmitStory/></PageWrapper>}/><Route path="/makers-shop" element={<PageWrapper><MakersShop/></PageWrapper>}/><Route path="/privacy" element={<PageWrapper><Privacy/></PageWrapper>}/><Route path="/terms" element={<PageWrapper><Terms/></PageWrapper>}/><Route path="/accessibility" element={<PageWrapper><Accessibility/></PageWrapper>}/><Route path="/command" element={<PageWrapper><CommandCenter/></PageWrapper>}/><Route path="/subscriptions" element={<Subscriptions/>}/><Route path="/changes" element={<ChangesDraft/>}/><Route path="/makers" element={<PageWrapper><MakersDirectory/></PageWrapper>}/><Route path="/support-the-makers" element={<PageWrapper><SupportMakers/></PageWrapper>}/><Route path="/become-a-maker" element={<PageWrapper><BecomeAMaker/></PageWrapper>}/><Route path="/notes" element={<PageWrapper><Notes/></PageWrapper>}/><Route path="/guides/:guideId" element={<PageWrapper><ProjectGuide/></PageWrapper>}/><Route path="/draft" element={<PageWrapper><DraftSpace/></PageWrapper>}/><Route path="/whats-on-agent" element={<WhatsOnAgent/>}/><Route path="/reset-password" element={<ResetPassword/>}/><Route path="/community" element={<PageWrapper><Community/></PageWrapper>}/><Route path="/apply" element={<PageWrapper><Apply/></PageWrapper>}/><Route path="/members-area" element={<PageWrapper><MembersArea/></PageWrapper>}/><Route path="/community-radio" element={<PageWrapper><CommunityRadio/></PageWrapper>}/><Route path="*" element={<PageWrapper><NotFound/></PageWrapper>}/>
-</Routes></main><Footer/><FeedbackBookPrompt/></div></Router></FogProvider></AuthProvider>; }
+import { RequireRole } from './components/RequireRole';
+
+// Eager: the landing page and the 404. Everything a first-time visitor is most
+// likely to hit should not wait on a second network round trip.
+import { Home } from './pages/Home';
+import { NotFound } from './pages/NotFound';
+
+// Everything else is split out. The whole site previously shipped as one
+// ~1.3 MB chunk, so a visitor reading the About page also downloaded the
+// founder dashboard, the Command Centre and every radio admin screen. This is
+// a public community site where most traffic is mobile.
+const Directory = lazy(() => import('./pages/Directory').then(m => ({ default: m.Directory })));
+const Radio = lazy(() => import('./pages/Radio').then(m => ({ default: m.Radio })));
+const RadioControl = lazy(() => import('./pages/RadioControl').then(m => ({ default: m.RadioControl })));
+const RadioLibraryManager = lazy(() => import('./components/central/RadioLibraryManager').then(m => ({ default: m.RadioLibraryManager })));
+const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
+const Join = lazy(() => import('./pages/Join').then(m => ({ default: m.Join })));
+const Resources = lazy(() => import('./pages/Resources').then(m => ({ default: m.Resources })));
+const Marketplace = lazy(() => import('./pages/Marketplace').then(m => ({ default: m.Marketplace })));
+const MakersHub = lazy(() => import('./pages/MakersHub').then(m => ({ default: m.MakersHub })));
+const Cafe = lazy(() => import('./pages/Cafe').then(m => ({ default: m.Cafe })));
+const Volunteer = lazy(() => import('./pages/Volunteer').then(m => ({ default: m.Volunteer })));
+const Members = lazy(() => import('./pages/Members').then(m => ({ default: m.Members })));
+const Feedback = lazy(() => import('./pages/Feedback').then(m => ({ default: m.Feedback })));
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Signup = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const WhatsOn = lazy(() => import('./pages/WhatsOn').then(m => ({ default: m.WhatsOn })));
+const MakerStories = lazy(() => import('./pages/MakerStories').then(m => ({ default: m.MakerStories })));
+const ClaimListing = lazy(() => import('./pages/ClaimListing').then(m => ({ default: m.ClaimListing })));
+const SubmitStory = lazy(() => import('./pages/SubmitStory').then(m => ({ default: m.SubmitStory })));
+const MakersShop = lazy(() => import('./pages/MakersShop').then(m => ({ default: m.MakersShop })));
+const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
+const Accessibility = lazy(() => import('./pages/Accessibility').then(m => ({ default: m.Accessibility })));
+const CommandCenter = lazy(() => import('./pages/CommandCenter').then(m => ({ default: m.CommandCenter })));
+const Subscriptions = lazy(() => import('./pages/Subscriptions').then(m => ({ default: m.Subscriptions })));
+const ChangesDraft = lazy(() => import('./pages/ChangesDraft').then(m => ({ default: m.ChangesDraft })));
+const MakersDirectory = lazy(() => import('./pages/MakersDirectory').then(m => ({ default: m.MakersDirectory })));
+const SupportMakers = lazy(() => import('./pages/SupportMakers').then(m => ({ default: m.SupportMakers })));
+const BecomeAMaker = lazy(() => import('./pages/BecomeAMaker').then(m => ({ default: m.BecomeAMaker })));
+const Notes = lazy(() => import('./pages/Notes').then(m => ({ default: m.Notes })));
+const ProjectGuide = lazy(() => import('./pages/guides/ProjectGuide').then(m => ({ default: m.ProjectGuide })));
+const DraftSpace = lazy(() => import('./pages/DraftSpace').then(m => ({ default: m.DraftSpace })));
+const WhatsOnAgent = lazy(() => import('./pages/WhatsOnAgent'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const Apply = lazy(() => import('./pages/Apply').then(m => ({ default: m.Apply })));
+const MembersArea = lazy(() => import('./pages/MembersArea').then(m => ({ default: m.MembersArea })));
+const CommunityRadio = lazy(() => import('./pages/CommunityRadio').then(m => ({ default: m.CommunityRadio })));
+const Community = lazy(() => import('./pages/Community').then(m => ({ default: m.Community })));
+
+const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// Shown while a route's chunk downloads. Sized to the viewport so the footer
+// does not jump up the page mid-navigation.
+const RouteFallback: React.FC = () => (
+  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Loading page">
+    <div className="w-8 h-8 border-2 border-brand-olive/30 border-t-brand-olive rounded-full animate-spin" />
+  </div>
+);
+
+const STAFF = ['founder', 'staff'] as const;
+const RADIO_STAFF = ['founder', 'radio_manager', 'staff', 'presenter'] as const;
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <FogProvider>
+        <Router>
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <main className="flex-grow">
+              <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                  {/* Public */}
+                  <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
+                  <Route path="/directory" element={<PageWrapper><Directory /></PageWrapper>} />
+                  <Route path="/radio" element={<PageWrapper><Radio /></PageWrapper>} />
+                  <Route path="/marketplace" element={<PageWrapper><Marketplace /></PageWrapper>} />
+                  <Route path="/makers-hub" element={<PageWrapper><MakersHub /></PageWrapper>} />
+                  <Route path="/cafe" element={<PageWrapper><Cafe /></PageWrapper>} />
+                  <Route path="/volunteer" element={<PageWrapper><Volunteer /></PageWrapper>} />
+                  <Route path="/members" element={<PageWrapper><Members /></PageWrapper>} />
+                  <Route path="/feedback" element={<PageWrapper><Feedback /></PageWrapper>} />
+                  <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
+                  <Route path="/join" element={<PageWrapper><Join /></PageWrapper>} />
+                  <Route path="/resources" element={<PageWrapper><Resources /></PageWrapper>} />
+                  <Route path="/whats-on" element={<PageWrapper><WhatsOn /></PageWrapper>} />
+                  <Route path="/maker-stories" element={<PageWrapper><MakerStories /></PageWrapper>} />
+                  <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
+                  <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
+                  <Route path="/claim/:id" element={<PageWrapper><ClaimListing /></PageWrapper>} />
+                  <Route path="/submit-story" element={<PageWrapper><SubmitStory /></PageWrapper>} />
+                  <Route path="/makers-shop" element={<PageWrapper><MakersShop /></PageWrapper>} />
+                  <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
+                  <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
+                  <Route path="/accessibility" element={<PageWrapper><Accessibility /></PageWrapper>} />
+                  <Route path="/subscriptions" element={<Subscriptions />} />
+                  <Route path="/makers" element={<PageWrapper><MakersDirectory /></PageWrapper>} />
+                  <Route path="/support-the-makers" element={<PageWrapper><SupportMakers /></PageWrapper>} />
+                  <Route path="/become-a-maker" element={<PageWrapper><BecomeAMaker /></PageWrapper>} />
+                  <Route path="/guides/:guideId" element={<PageWrapper><ProjectGuide /></PageWrapper>} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/community" element={<PageWrapper><Community /></PageWrapper>} />
+                  <Route path="/apply" element={<PageWrapper><Apply /></PageWrapper>} />
+                  <Route path="/members-area" element={<PageWrapper><MembersArea /></PageWrapper>} />
+                  <Route path="/community-radio" element={<PageWrapper><CommunityRadio /></PageWrapper>} />
+
+                  {/* Staff and founder. Dashboard, CommandCenter and RadioControl
+                      also guard internally; RequireRole stops the chunk loading
+                      and the failing queries firing in the first place. */}
+                  <Route path="/dashboard" element={<RequireRole roles={[...STAFF]}><PageWrapper><Dashboard /></PageWrapper></RequireRole>} />
+                  <Route path="/command" element={<RequireRole roles={[...STAFF]}><PageWrapper><CommandCenter /></PageWrapper></RequireRole>} />
+                  <Route path="/notes" element={<RequireRole roles={[...STAFF]}><PageWrapper><Notes /></PageWrapper></RequireRole>} />
+                  <Route path="/draft" element={<RequireRole roles={[...STAFF]}><PageWrapper><DraftSpace /></PageWrapper></RequireRole>} />
+                  <Route path="/changes" element={<RequireRole roles={[...STAFF]}><ChangesDraft /></RequireRole>} />
+                  <Route path="/whats-on-agent" element={<RequireRole roles={[...STAFF]}><WhatsOnAgent /></RequireRole>} />
+
+                  {/* Radio staff */}
+                  <Route path="/radio/control" element={<RequireRole roles={[...RADIO_STAFF]}><PageWrapper><RadioControl /></PageWrapper></RequireRole>} />
+                  <Route path="/radio/library" element={<RequireRole roles={[...RADIO_STAFF]}><PageWrapper><RadioLibraryManager /></PageWrapper></RequireRole>} />
+
+                  <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
+                </Routes>
+              </Suspense>
+            </main>
+            <Footer />
+            <FeedbackBookPrompt />
+          </div>
+        </Router>
+      </FogProvider>
+    </AuthProvider>
+  );
+}

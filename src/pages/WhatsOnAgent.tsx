@@ -1,57 +1,13 @@
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
 
-const SYSTEM_PROMPT = `You are an AI agent team working for a UK community radio station and CIC called TFT-Radio (The Farmers Table Hub).
-
-Your goal is to collect, verify, and summarise local live music, arts, and cultural events in and around Farnham, Surrey on a weekly basis.
-
-The output must be clear, calm, non-technical, and suitable for people with cognitive fatigue or memory issues.
-
-You operate as four agents working together:
-
-AGENT 1 – VENUE SCOUT
-Find local venues in Farnham and nearby villages (pubs, bars, community halls, arts centres, cafes). Look for live music nights, open mic nights, folk/acoustic sessions, DJ nights.
-
-AGENT 2 – ARTIST & PERFORMER SCOUT
-Identify local artists, bands, DJs, and performers connected to Farnham / West Surrey. Focus on regular gigging artists, community musicians, folk, indie, acoustic, jazz, local DJs.
-
-AGENT 3 – EVENT VERIFIER
-Cross-check events to ensure they are current or upcoming, dates are clear, and locations are correct. Flag events as: "Weekly regular", "One-off event", or "Monthly night".
-
-AGENT 4 – EDITOR (ACCESSIBILITY & RADIO-FRIENDLY)
-Rewrite everything in plain English. No hype language. No emojis. Short sentences. Friendly but calm tone. Suitable for website "What's On" section, radio mentions, and weekly update posts.
-
-IMPORTANT RULES:
-- Do NOT invent events. If unsure, clearly say "unconfirmed".
-- Focus on local community scale, not major touring acts.
-- Prioritise Farnham, then nearby Surrey villages.
-- Prefer Thursday to Sunday events.
-- Include next 7 to 10 days only.
-
-OUTPUT FORMAT — use exactly this structure:
-
-What's On This Week – Farnham Area
-
-Live Music and Events
-[List venues, day, type of event, one-line description]
-
-Local Artists to Look Out For
-[List artist name, genre, where playing if known]
-
-Regular Nights
-[List venue, weekly/monthly, type of night]
-
-Notes
-[Any changes, new venues discovered, events needing confirmation]`;
-
-const USER_PROMPT = `You are running the weekly What's On update for TFT-Radio, Farnham, Surrey.
-
-Today's date is: ${new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
-
-Using your knowledge of Farnham, Surrey and the surrounding area (including Alton, Guildford, Godalming, Haslemere, and nearby villages), produce the weekly What's On update now.
-
-If you do not have confirmed real-time data, clearly label items as "check to confirm" rather than inventing details. Focus on venues and nights that are known to run regularly in this area.
-
-Produce the full weekly update in the format specified. Plain English only. No emojis. Short sentences.`;
+// The prompts and the Anthropic call now live server-side in
+// supabase/functions/whats-on-agent. They used to be here, which meant
+// VITE_ANTHROPIC_API_KEY was inlined into the public JS bundle at build time
+// and readable by anyone who loaded the site.
+//
+// The agent still only ever returns draft text for a human to review. It does
+// not write to `events` and it does not publish anything.
 
 export default function WhatsOnAgent() {
   const [output, setOutput] = useState("");
@@ -65,39 +21,22 @@ export default function WhatsOnAgent() {
     setError("");
     setCopied(false);
 
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      setError("No API key configured. Add VITE_ANTHROPIC_API_KEY to your .env file.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-allow-browser": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: USER_PROMPT }],
-        }),
+      const { data, error: fnError } = await supabase.functions.invoke("whats-on-agent", {
+        body: {},
       });
 
-      const data = await response.json();
-
-      if (data.error) {
-        setError("Something went wrong: " + data.error.message);
+      if (fnError) {
+        setError("Could not reach the What's On agent. Please try again.");
+      } else if (data?.error) {
+        setError(data.error);
       } else {
-        const text = data.content?.map((b: { text?: string }) => b.text || "").join("\n") || "";
-        setOutput(text);
+        setOutput(data?.text ?? "");
+        if (data?.truncated) {
+          setError("The update was cut short. Run it again if anything looks missing.");
+        }
       }
-    } catch (err) {
+    } catch {
       setError("Could not connect to the AI. Please try again.");
     }
 

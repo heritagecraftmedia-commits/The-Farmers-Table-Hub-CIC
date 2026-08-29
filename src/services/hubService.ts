@@ -83,9 +83,14 @@ const getListingCategory = (typeOrCraft: string): DirectoryListing['displayCateg
   return 'Crafters'; // Default for makers/artisans
 };
 
+// foodVendors and makerListings both number their ids from 1, and 29 ids
+// collide across the two files. Merging them raw produced duplicate keys in any
+// list that rendered them, which breaks React's reconciliation (wrong row
+// updated or removed). Namespacing on merge keeps each source's ids stable
+// while making the combined set unique.
 const realListings: DirectoryListing[] = [
   ...foodVendors.map(v => ({
-    id: v.id,
+    id: `vendor-${v.id}`,
     vendorName: titleCase(v.name),
     craftCategory: v.type,
     displayCategory: getListingCategory(v.type),
@@ -98,10 +103,12 @@ const realListings: DirectoryListing[] = [
     listingTier: v.tier as any,
     approved: true,
     published: true,
+    outreachApproved: false,
+    outreachOptedOut: false,
     claimedAt: new Date().toISOString()
   })),
   ...makerListings.map(m => ({
-    id: m.id,
+    id: `maker-${m.id}`,
     vendorName: m.businessName || m.name,
     craftCategory: m.craft,
     displayCategory: getListingCategory(m.craft),
@@ -114,6 +121,8 @@ const realListings: DirectoryListing[] = [
     listingTier: m.tier as any,
     approved: true,
     published: true,
+    outreachApproved: false,
+    outreachOptedOut: false,
     claimedAt: new Date().toISOString()
   }))
 ];
@@ -193,7 +202,28 @@ let mockPendingListings: PendingListing[] = [
   },
 ];
 
-let mockSystemSettings = {
+// Mirrors the system_controls table. Keys here are camelCase for the UI; the
+// table stores snake_case, mapped by SYSTEM_CONTROL_KEYS below.
+export interface SystemSettings {
+  discoveryAgentEnabled: boolean;
+  qualificationAgentEnabled: boolean;
+  enrichmentAgentEnabled: boolean;
+  outreachAgentEnabled: boolean;
+  maintenanceMode: boolean;
+}
+
+const SYSTEM_CONTROL_KEYS: Record<keyof SystemSettings, string> = {
+  discoveryAgentEnabled: 'discovery_enabled',
+  qualificationAgentEnabled: 'qualification_enabled',
+  enrichmentAgentEnabled: 'enrichment_enabled',
+  outreachAgentEnabled: 'outreach_enabled',
+  maintenanceMode: 'maintenance_mode',
+};
+
+// Defaults match the seed rows in supabase-schema.sql. Used when Supabase is
+// not configured, and as the fail-safe when a row is missing: the two agents
+// that touch real people (enrichment, outreach) default to OFF.
+let mockSystemSettings: SystemSettings = {
   discoveryAgentEnabled: true, qualificationAgentEnabled: true,
   enrichmentAgentEnabled: false, outreachAgentEnabled: false, maintenanceMode: false
 };
@@ -349,6 +379,51 @@ export const hubService = {
     await supabase.from('directory_listings').update({ affiliate_links: links }).eq('id', listingId);
   },
 
+  // Public directory reader. Reads the curated `public_directory_listings`
+  // view, which exposes only the columns a visitor is meant to see: no
+  // contact_email or phone except for paid tiers, and none of the outreach /
+  // moderation fields. getListings() below stays for admin screens, where the
+  // caller is an authenticated admin and RLS allows the base table.
+  //
+  // Every public route that shows directory data must come through here.
+  // directory_listings itself is admin-only from 20260828 onwards, so an
+  // anonymous visitor calling getListings() gets "permission denied".
+  //
+  // On failure this throws rather than substituting mockListings. Those are
+  // invented businesses; serving them from the live site would present fiction
+  // as a real trader directory. Callers show an error or an empty state
+  // instead. Mock data survives only for local development without Supabase,
+  // matching demoModeAvailable() in AuthContext.
+  getPublicListings: async (): Promise<any[]> => {
+    if (!isConfigured()) return import.meta.env.DEV ? mockListings : [];
+    const { data, error } = await supabase
+      .from('public_directory_listings')
+      .select('id,name,category,location,description,website,tier,status,created_at,contact_email,phone')
+      .order('name');
+    if (error) { console.error('getPublicListings:', error); throw error; }
+    return data.map((r: any) => ({
+      id: r.id,
+      vendorName: r.name,
+      craftCategory: r.category,
+      displayCategory: getListingCategory(r.category ?? ''),
+      location: r.location,
+      website: r.website ?? '',
+      bio: r.description ?? '',
+      email: r.contact_email ?? '',
+      phone: r.phone ?? '',
+      socialLinks: {},
+      affiliateLinks: [],
+      listingTier: r.tier ?? 'free',
+      approved: r.status === 'active',
+      published: r.status === 'active',
+      claimedAt: r.created_at,
+      outreachStatus: 'not_contacted',
+      outreachDate: null,
+      response: null,
+      claimed: false,
+    }));
+  },
+
   getListings: async (): Promise<any[]> => {
     if (!isConfigured()) return mockListings;
     const { data, error } = await supabase.from('directory_listings').select('*').order('name');
@@ -371,6 +446,9 @@ export const hubService = {
       claimedAt: r.created_at,
       outreachStatus: r.outreach_status ?? 'not_contacted',
       outreachDate: r.outreach_date,
+      outreachApproved: r.outreach_approved ?? false,
+      outreachApprovedAt: r.outreach_approved_at,
+      outreachOptedOut: r.outreach_opted_out ?? false,
       response: r.response,
       claimed: r.claimed ?? false,
     }));
@@ -487,10 +565,54 @@ export const hubService = {
     return [];
   },
 
-  getSystemSettings: () => mockSystemSettings,
-  updateSystemSettings: (settings: Partial<typeof mockSystemSettings>) => {
-    mockSystemSettings = { ...mockSystemSettings, ...settings };
-    return mockSystemSettings;
+  /**
+   * Read the agent kill switches from system_controls.
+   *
+   * These previously read and wrote an in-memory object that nothing else ever
+   * consulted, so the founder's toggles — including Maintenance Mode — changed
+   * nothing at all. A kill switch that silently does nothing is worse than no
+   * kill switch, because it is trusted.
+   */
+  getSystemSettings: async (): Promise<SystemSettings> => {
+    if (!isConfigured()) return mockSystemSettings;
+    const { data, error } = await supabase.from('system_controls').select('key, value');
+    if (error || !data) {
+      console.error('getSystemSettings:', error?.message);
+      return mockSystemSettings;
+    }
+    const byKey = new Map(data.map((r: any) => [r.key, Boolean(r.value)]));
+    const resolved = { ...mockSystemSettings };
+    (Object.keys(SYSTEM_CONTROL_KEYS) as (keyof SystemSettings)[]).forEach(k => {
+      const v = byKey.get(SYSTEM_CONTROL_KEYS[k]);
+      // A missing row keeps the fail-safe default rather than assuming enabled.
+      if (typeof v === 'boolean') resolved[k] = v;
+    });
+    return resolved;
+  },
+
+  updateSystemSettings: async (settings: Partial<SystemSettings>): Promise<SystemSettings> => {
+    if (!isConfigured()) {
+      mockSystemSettings = { ...mockSystemSettings, ...settings };
+      return mockSystemSettings;
+    }
+    const rows = (Object.entries(settings) as [keyof SystemSettings, boolean][])
+      .filter(([, v]) => typeof v === 'boolean')
+      .map(([k, v]) => ({ key: SYSTEM_CONTROL_KEYS[k], value: v, updated_at: new Date().toISOString() }));
+
+    if (rows.length) {
+      // RLS restricts system_controls to admins, so a non-admin write fails
+      // here rather than appearing to succeed.
+      const { error } = await supabase.from('system_controls').upsert(rows, { onConflict: 'key' });
+      if (error) throw new Error(`Could not update system controls: ${error.message}`);
+    }
+    return hubService.getSystemSettings();
+  },
+
+  /** True when the named agent is permitted to run right now. */
+  isAgentEnabled: async (agent: keyof SystemSettings): Promise<boolean> => {
+    const settings = await hubService.getSystemSettings();
+    if (settings.maintenanceMode) return false;
+    return Boolean(settings[agent]);
   },
 
   // --- Pending Listings (AI Discovery Approval Queue) ---
@@ -715,5 +837,38 @@ export const hubService = {
   approveSocialPost: async (id: string): Promise<void> => {
     if (!isConfigured()) { mockSocialPosts.forEach(p => { if (p.id === id) p.status = 'approved'; }); return; }
     await supabase.from('social_posts').update({ status: 'approved' }).eq('id', id);
+  },
+
+  // ── Outreach approval (human-in-the-loop gate) ───────────────────────────
+  // directory-outreach refuses to email a listing unless outreach_approved is
+  // true, so approving is a deliberate, recorded act by a named admin rather
+  // than a side effect of pressing "send".
+
+  setOutreachApproval: async (listingId: string, approved: boolean): Promise<{ error: string | null }> => {
+    if (!isConfigured()) return { error: 'Supabase is not configured.' };
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('directory_listings')
+      .update({
+        outreach_approved: approved,
+        outreach_approved_by: approved ? user?.id ?? null : null,
+        outreach_approved_at: approved ? new Date().toISOString() : null,
+      })
+      .eq('id', listingId);
+    return { error: error ? error.message : null };
+  },
+
+  setOutreachOptOut: async (listingId: string, optedOut: boolean): Promise<{ error: string | null }> => {
+    if (!isConfigured()) return { error: 'Supabase is not configured.' };
+    const { error } = await supabase
+      .from('directory_listings')
+      .update({
+        outreach_opted_out: optedOut,
+        // Opting out also withdraws any approval, so a later bulk action
+        // cannot pick the row back up.
+        ...(optedOut ? { outreach_approved: false, outreach_approved_by: null, outreach_approved_at: null } : {}),
+      })
+      .eq('id', listingId);
+    return { error: error ? error.message : null };
   },
 };

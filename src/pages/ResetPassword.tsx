@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -11,12 +11,26 @@ export const ResetPassword: React.FC = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
+    // Supabase turns the recovery link's fragment into a session. Without this
+    // check, opening /reset-password directly showed a working-looking form
+    // that failed on submit with a raw API error.
+    const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY' || session) setHasRecoverySession(true);
+        });
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setHasRecoverySession(prev => prev ?? Boolean(session));
+        });
+        return () => subscription.unsubscribe();
+    }, []);
 
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         if (password !== confirm) { setError('Passwords do not match.'); return; }
-        if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+        if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
         setLoading(true);
         const { error: updateError } = await supabase.auth.updateUser({ password });
         setLoading(false);
@@ -38,7 +52,19 @@ export const ResetPassword: React.FC = () => {
                     </div>
                     <h1 className="text-3xl font-serif mb-2">Reset Password</h1>
 
-                    {done ? (
+                    {hasRecoverySession === false ? (
+                        <div className="flex flex-col items-center gap-4 py-6">
+                            <AlertCircle size={40} className="text-amber-500" />
+                            <p className="text-sm text-brand-ink/60">
+                                This reset link is missing or has expired. Go to sign in and choose
+                                "Forgot password?" to get a new one.
+                            </p>
+                            <button onClick={() => navigate('/login')}
+                                className="px-6 py-3 bg-brand-olive text-white rounded-full font-bold text-sm">
+                                Back to sign in
+                            </button>
+                        </div>
+                    ) : done ? (
                         <div className="flex flex-col items-center gap-4 py-6">
                             <CheckCircle size={40} className="text-green-500" />
                             <p className="text-sm text-brand-ink/60">Password updated. Redirecting to sign in...</p>

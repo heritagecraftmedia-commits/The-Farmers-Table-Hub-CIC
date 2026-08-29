@@ -23,12 +23,24 @@ export interface MakerListing {
   tier: ListingTier;
 }
 
-export type UserRole = 'founder' | 'staff' | 'customer' | null;
+// Roles come from the profiles table (see
+// supabase/migrations/20260826_rls_admin_hardening.sql). They are never read
+// from user_metadata, which the client can write.
+export type UserRole =
+  | 'founder'
+  | 'radio_manager'
+  | 'staff'
+  | 'presenter'
+  | 'customer'
+  | 'member'
+  | null;
 
 export interface User {
   id: string;
   name: string;
   role: UserRole;
+  /** Mirrors profiles.is_admin. Authoritative check is still RLS, server-side. */
+  isAdmin: boolean;
 }
 
 export interface RawLead {
@@ -121,6 +133,11 @@ export interface DirectoryListing {
   affiliateLinks?: { label: string; url: string }[];
   outreachStatus?: 'not_contacted' | 'contacted' | 'responded' | 'opted_out';
   outreachDate?: string;
+  /** Set by an admin in the dashboard. directory-outreach refuses to email without it. */
+  outreachApproved: boolean;
+  outreachApprovedAt?: string;
+  /** Business asked not to be contacted. Withdraws any approval. */
+  outreachOptedOut: boolean;
   response?: string;
   claimed?: boolean;
 }
