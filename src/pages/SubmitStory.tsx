@@ -86,7 +86,7 @@ export const SubmitStory: React.FC = () => {
                             <input
                                 type="text" value={makerName} onChange={e => setMakerName(e.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border border-brand-olive/10 focus:ring-2 focus:ring-brand-olive/20"
-                                placeholder="e.g. Sarah Willow"
+                                placeholder="e.g. Your Name"
                             />
                         </div>
                         <div>

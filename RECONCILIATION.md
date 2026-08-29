@@ -506,18 +506,75 @@ site reads as deliberately unfinished rather than broken.
   input hint, explicitly prefixed "e.g.", not presented as data. Flagged
   rather than changed. Same for `AddTeamMemberModal` and `RadioScheduleModal`.
 
-### 11.3 Still open — needs a decision
+### 11.3 Café page — resolved
 
-**`src/pages/Cafe.tsx` — NOT changed, cannot be verified.** The public café
-page states **"Always Open, Always Local"** and lists three priced dishes as
-"Current Specials": Wild Mushroom Toast £8.50, Midnight Beef Stew £12.00,
-Artisan Coffee £3.20, one crediting "Old Mill sourdough".
+Approved: the café claims were confirmed as not presentable as real, and the
+page was rewritten.
 
-This is an opening-hours claim and a priced menu — exactly the kind of thing a
-visitor would act on. It was left alone because, unlike everything above, it
-cannot be determined from the repository whether the café exists, is open, and
-serves these dishes at these prices. If it is real, deleting it would destroy
-genuine content; if it is not, it is the most consequential fabrication left
-in the application, because someone could travel to it.
+Removed from `src/pages/Cafe.tsx`: "Always Open, Always Local"; the tagline
+"serving local produce around the clock in the heart of Farnham"; the
+"24-Hour Café" title (an operating-hours claim in itself); Day Menu / Night
+Menu badges; three priced dishes under "Current Specials" (Wild Mushroom
+Toast £8.50, Midnight Beef Stew £12.00, Artisan Coffee £3.20) and the
+"Old Mill sourdough" supplier credit; and a dead "View Full Menu" button.
 
-**This one needs an answer rather than a judgement call.**
+Also removed: a random `picsum.photos` stock photograph captioned "Cafe
+Interior", which implied the premises exist and look like that.
+
+Replaced with an "In Development" badge, a "Farmers Table Café — Coming Soon"
+panel, and a "What we are planning" section. The three concept cards (Work
+Space, Community Table, Night Sanctuary) are kept but rewritten in the future
+tense, so they describe intent rather than services on offer. No hours,
+prices, dishes, suppliers or staff appear anywhere on the page.
+
+The nav and footer links were retitled from "24-Hour Café" to "Café" for the
+same reason.
+
+### 11.4 Integration skeletons — a second, ungated source
+
+Found during the final sweep, and materially different from the DEV-gated
+mocks: three helpers in `hubService.ts` returned invented records whenever
+their API key was absent —
+
+* `getXeroInvoices` — two invoices, **"Thompson & Morgan" £150.00 PAID** and
+  **"Lakeland" £45.50 PENDING**. Both are real UK companies. Fabricated
+  financial records naming real businesses are the worst variety, because
+  they look verifiable.
+* `getHubSpotContacts` — two invented contacts with email addresses.
+* `getNotionPages` — two invented page titles.
+
+The guard was `!key || key === 'placeholder'`, which is **true in a production
+build with no keys configured**. These were therefore not dev-only fallbacks.
+Nothing calls them today, but they would have fed fiction to the first screen
+that did. All three now return an empty list.
+
+### 11.5 Form placeholders
+
+Fictional identities used as input examples were replaced with neutral ones
+across eight fields: `e.g. Sarah Willow` and `Jane Smith` → `e.g. Your Name`;
+`thalia@farmerstable.org` → `e.g. your@email.com`; `Morning Maker Melodies` →
+`e.g. Programme name`; `Scott` → `e.g. Presenter name`; `Farnham Ironworks` →
+`e.g. Business name`; `Artisan Market Day` → `e.g. Event name`;
+`Market Square` → `e.g. Venue name`.
+
+### 11.6 A further Fog Mode overflow
+
+Extending route coverage to 14 pages found `/makers-hub` overflowing 66px at
+768px — a single button-styled link in a page-level flex row. The wrap rule
+only covered `nav`/`header`/`footer`, so it has been generalised to any flex
+container in Fog Mode. All 14 routes are now clean at 320/375/414/768/1024.
+
+### 11.7 Deliberately kept after review
+
+* **`src/pages/ChangesDraft.tsx`** — the staff-only drafting scratchpad seeds
+  its textarea with the founder's own planning notes, which name
+  Thompson & Morgan, Lakeland and World of Wool as affiliate partners *to
+  approach* ("Map…", "Link…", "Connect…"). These are aspirations in a private,
+  role-gated note, not claimed relationships, and they are the user's own
+  content. Left alone. Note that this is why those two company names still
+  appear in `dist/` — in the `/changes` chunk, not on any public page.
+* **`discordService.getChannels()`** — a static list of the real Discord
+  server's channels, documented as configuration to update when channels
+  change. Not fabricated records.
+* **`Community.tsx`** — reads live Discord widget data and shows an explicit
+  "Server not yet connected" message otherwise. Already honest.

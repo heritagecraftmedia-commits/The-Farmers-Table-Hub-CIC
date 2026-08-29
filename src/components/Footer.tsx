@@ -21,7 +21,7 @@ export const Footer: React.FC = () => {
               <li><Link to="/directory" className="hover:text-white transition-colors">Food Directory</Link></li>
               <li><Link to="/marketplace" className="hover:text-white transition-colors">Marketplace</Link></li>
               <li><Link to="/makers-hub" className="hover:text-white transition-colors">Makers Hub</Link></li>
-              <li><Link to="/cafe" className="hover:text-white transition-colors">24-Hour Café</Link></li>
+              <li><Link to="/cafe" className="hover:text-white transition-colors">Café</Link></li>
               <li><Link to="/radio" className="hover:text-white transition-colors">Community Radio</Link></li>
             </ul>
           </div>
