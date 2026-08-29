@@ -7,6 +7,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { FeedbackBookPrompt } from './components/FeedbackBookPrompt';
 import { RequireRole } from './components/RequireRole';
+import { ScrollToTop } from './components/ScrollToTop';
 
 // Eager: the landing page and the 404. Everything a first-time visitor is most
 // likely to hit should not wait on a second network round trip.
@@ -90,6 +91,7 @@ export default function App() {
     <AuthProvider>
       <FogProvider>
         <Router>
+          <ScrollToTop />
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-grow">

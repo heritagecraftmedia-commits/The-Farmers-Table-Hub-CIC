@@ -6,8 +6,23 @@ const isConfigured = () => {
   return url && url !== 'https://placeholder.supabase.co' && url.includes('supabase.co');
 };
 
-// --- Fallback mock data (used when Supabase not yet configured) ---
-const mockEvents: HubEvent[] = [
+// --- Fallback mock data (DEVELOPMENT ONLY) ---
+//
+// Everything in this block is invented placeholder content: the events,
+// staff, radio shows, maker stories, playlist, sponsors and ad schedules
+// are not real people, businesses or bookings. It exists so the UI can be
+// worked on before Supabase is configured.
+//
+// It must never render in a production build. Every read path below
+// returns it through devOnly(), which yields an empty list outside dev,
+// so a misconfigured or briefly failing production deployment shows an
+// empty state rather than fictional markets and fabricated sponsors.
+// This extends the pattern PR #4 already applied to mockListings.
+const devOnly = <T,>(data: T[]): T[] => (import.meta.env.DEV ? data : []);
+
+// --- Fallback mock data (see devOnly note above) ---
+const mockEvents: HubEvent[] = import.meta.env.DEV
+  ? [
   {
     id: '1', title: 'Farnham Artisan Market',
     description: 'A monthly gathering of the finest local makers and producers.',
@@ -48,24 +63,31 @@ const mockEvents: HubEvent[] = [
     websiteUrl: 'https://example.com/textile-fair', craftType: 'Textiles & Clothing',
     source: 'Manual', approved: true, createdAt: new Date().toISOString()
   }
-];
+]
+  : [];
 
-const mockStaff: StaffMember[] = [
+const mockStaff: StaffMember[] = import.meta.env.DEV
+  ? [
   { id: '1', name: 'Thalia', role: 'Operations PA', email: 'thalia@farmerstable.org', status: 'active', joinedAt: '2025-01-10' },
   { id: '2', name: 'James', role: 'Volunteer Coordinator', email: 'james@farmerstable.org', status: 'active', joinedAt: '2025-03-01' }
-];
+]
+  : [];
 
-const mockRadioShows: RadioShow[] = [
+const mockRadioShows: RadioShow[] = import.meta.env.DEV
+  ? [
   { id: '1', title: 'Morning Maker Melodies', host: 'Scott', schedule: 'Mon-Fri 08:00 - 10:00', status: 'live', lastBroadcast: '2026-02-24' },
   { id: '2', title: 'The Artisan Hour', host: 'Guest Artisans', schedule: 'Sat 14:00 - 15:00', status: 'planned' }
-];
+]
+  : [];
 
-const mockJobs: FounderJob[] = [
+const mockJobs: FounderJob[] = import.meta.env.DEV
+  ? [
   { id: '1', task: 'Review Step 7 Ethical Monetisation rules', priority: 'High', status: 'pending', dueDate: '2026-03-01' },
   { id: '2', task: 'Approve 5 new artisan draft listings', priority: 'Medium', status: 'pending' },
   { id: '3', task: 'Check radio logs for technical glitches', priority: 'Low', status: 'completed' },
   { id: '4', task: 'Complete Make.com Automation Setup (Refer to make_automation_guide.md)', priority: 'High', status: 'pending' }
-];
+]
+  : [];
 
 import { foodVendors } from '../data/foodVendors';
 import { makerListings } from '../data/makerListings';
@@ -129,7 +151,8 @@ const realListings: DirectoryListing[] = [
 
 let mockListings: DirectoryListing[] = [...realListings];
 
-const mockStories: MakerStory[] = [
+const mockStories: MakerStory[] = import.meta.env.DEV
+  ? [
   {
     id: '1', makerName: 'Thomas Ironworks', craft: 'Blacksmithing',
     image: 'https://images.unsplash.com/photo-1504917595217-d4dc5f649771?auto=format&fit=crop&w=800&q=80',
@@ -154,9 +177,11 @@ const mockStories: MakerStory[] = [
     q3: 'When the final coat of oil goes on a piece and the grain truly comes to life.',
     published: false
   }
-];
+]
+  : [];
 
-let mockPendingListings: PendingListing[] = [
+let mockPendingListings: PendingListing[] = import.meta.env.DEV
+  ? [
   {
     id: 'p1',
     businessName: 'Bramble & Birch Ceramics',
@@ -200,7 +225,8 @@ let mockPendingListings: PendingListing[] = [
     status: 'pending',
     aiConfidenceScore: 79,
   },
-];
+]
+  : [];
 
 // Mirrors the system_controls table. Keys here are camelCase for the UI; the
 // table stores snake_case, mapped by SYSTEM_CONTROL_KEYS below.
@@ -223,38 +249,49 @@ const SYSTEM_CONTROL_KEYS: Record<keyof SystemSettings, string> = {
 // Defaults match the seed rows in supabase-schema.sql. Used when Supabase is
 // not configured, and as the fail-safe when a row is missing: the two agents
 // that touch real people (enrichment, outreach) default to OFF.
+// NOT gated by devOnly() — deliberately. These are the default agent
+// feature-toggles, not invented content: no person, business or event is
+// described here, and getSystemSettings must return a SystemSettings
+// object rather than an empty list. Falling back to "discovery on,
+// outreach off" is the safe default when the settings row is unreadable.
 let mockSystemSettings: SystemSettings = {
   discoveryAgentEnabled: true, qualificationAgentEnabled: true,
   enrichmentAgentEnabled: false, outreachAgentEnabled: false, maintenanceMode: false
 };
 
 // --- Radio System mock data ---
-let mockPlaylist: PlaylistTrack[] = [
+let mockPlaylist: PlaylistTrack[] = import.meta.env.DEV
+  ? [
   { id: 'pl1', title: 'Sunrise Acoustic Set', artist: 'Various Artists', durationSeconds: 1800, category: 'music', fileUrl: '', orderIndex: 1, isActive: true, createdAt: new Date().toISOString() },
   { id: 'pl2', title: 'TFT Morning Jingle', artist: 'The Farmers Table', durationSeconds: 15, category: 'jingle', fileUrl: '', orderIndex: 2, isActive: true, createdAt: new Date().toISOString() },
   { id: 'pl3', title: 'Community Notice — Market Day', artist: 'Staff Read', durationSeconds: 60, category: 'community', fileUrl: '', orderIndex: 3, isActive: true, createdAt: new Date().toISOString() },
   { id: 'pl4', title: 'Emergency Playlist — Folk Classics', artist: 'Various', durationSeconds: 3600, category: 'emergency', fileUrl: '', orderIndex: 99, isActive: true, createdAt: new Date().toISOString() },
-];
+]
+  : [];
 
-let mockSponsors: SponsorRotation[] = [
+let mockSponsors: SponsorRotation[] = import.meta.env.DEV
+  ? [
   { id: 'sp1', name: 'Surrey Ironworks', productDesc: 'Hand-forged tools and decorative ironwork.', contactName: 'James Hill', contactEmail: 'james@surreyironworks.co.uk', package: '30s', readsPerShow: 2, adScript: 'Surrey Ironworks — beautiful hand-forged tools, made with care in the Surrey Hills. Visit surreyironworks.co.uk', renewalDate: '2026-06-01', status: 'active', createdAt: new Date().toISOString() },
   { id: 'sp2', name: 'Farnham Brewery', productDesc: 'Small-batch craft ales brewed locally.', contactName: 'Tom Granger', contactEmail: 'tom@farnhambrewery.co.uk', package: '30s', readsPerShow: 1, adScript: 'Farnham Brewery — award-winning craft ales, brewed right here in Farnham.', renewalDate: '2026-09-15', status: 'active', createdAt: new Date().toISOString() },
   { id: 'sp3', name: 'Rural Candle Co.', productDesc: 'Handmade soy candles with natural fragrances.', contactName: 'Lucy Park', contactEmail: 'lucy@ruralcandleco.com', package: '15s', readsPerShow: 2, adScript: 'Rural Candle Co — natural soy candles, hand-poured with love. Find us at the Farmers Table.', renewalDate: '2026-04-01', status: 'active', createdAt: new Date().toISOString() },
-];
+]
+  : [];
 
-let mockAdSchedules: AdSchedule[] = [
+let mockAdSchedules: AdSchedule[] = import.meta.env.DEV
+  ? [
   { id: 'as1', sponsorId: 'sp1', sponsorName: 'Surrey Ironworks', showDay: 'Daily', timeSlot: '11:15', durationSeconds: 30, status: 'scheduled', createdAt: new Date().toISOString() },
   { id: 'as2', sponsorId: 'sp2', sponsorName: 'Farnham Brewery', showDay: 'Mon-Fri', timeSlot: '12:45', durationSeconds: 30, status: 'scheduled', createdAt: new Date().toISOString() },
-];
+]
+  : [];
 
 let mockSocialPosts: SocialPost[] = [];
 
 // --- Real Supabase service ---
 export const hubService = {
   getEvents: async (): Promise<HubEvent[]> => {
-    if (!isConfigured()) return mockEvents;
+    if (!isConfigured()) return devOnly(mockEvents);
     const { data, error } = await supabase.from('events').select('*').order('start_date', { ascending: true });
-    if (error) { console.error('getEvents:', error); return mockEvents; }
+    if (error) { console.error('getEvents:', error); return devOnly(mockEvents); }
     return data.map((r: any) => ({ id: r.id, title: r.title, description: r.description, startDate: r.start_date, endDate: r.end_date, location: r.location, venue: r.venue, websiteUrl: r.website_url, craftType: r.craft_type, source: r.source, approved: r.approved, createdAt: r.created_at }));
   },
 
@@ -279,9 +316,9 @@ export const hubService = {
   },
 
   getStaff: async (): Promise<StaffMember[]> => {
-    if (!isConfigured()) return mockStaff;
+    if (!isConfigured()) return devOnly(mockStaff);
     const { data, error } = await supabase.from('staff').select('*').order('name');
-    if (error) { console.error('getStaff:', error); return mockStaff; }
+    if (error) { console.error('getStaff:', error); return devOnly(mockStaff); }
     return data.map((r: any) => ({ id: r.id, name: r.name, role: r.role, email: r.email, status: r.status, joinedAt: r.joined_at }));
   },
 
@@ -306,9 +343,9 @@ export const hubService = {
   },
 
   getRadioShows: async (): Promise<RadioShow[]> => {
-    if (!isConfigured()) return mockRadioShows;
+    if (!isConfigured()) return devOnly(mockRadioShows);
     const { data, error } = await supabase.from('radio_shows').select('*').order('title');
-    if (error) { console.error('getRadioShows:', error); return mockRadioShows; }
+    if (error) { console.error('getRadioShows:', error); return devOnly(mockRadioShows); }
     return data.map((r: any) => ({ id: r.id, title: r.title, host: r.host, schedule: r.schedule, status: r.status, lastBroadcast: r.last_broadcast }));
   },
 
@@ -318,9 +355,9 @@ export const hubService = {
   },
 
   getFounderJobs: async (): Promise<FounderJob[]> => {
-    if (!isConfigured()) return mockJobs;
+    if (!isConfigured()) return devOnly(mockJobs);
     const { data, error } = await supabase.from('founder_jobs').select('*').order('created_at', { ascending: false });
-    if (error) { console.error('getFounderJobs:', error); return mockJobs; }
+    if (error) { console.error('getFounderJobs:', error); return devOnly(mockJobs); }
     return data.map((r: any) => ({ id: r.id, task: r.task, priority: r.priority, status: r.status, dueDate: r.due_date }));
   },
 
@@ -340,9 +377,9 @@ export const hubService = {
   },
 
   getMakerStories: async (): Promise<MakerStory[]> => {
-    if (!isConfigured()) return mockStories;
+    if (!isConfigured()) return devOnly(mockStories);
     const { data, error } = await supabase.from('maker_stories').select('*').order('created_at', { ascending: false });
-    if (error) { console.error('getMakerStories:', error); return mockStories; }
+    if (error) { console.error('getMakerStories:', error); return devOnly(mockStories); }
     return data.map((r: any) => ({ id: r.id, makerName: r.maker_name, craft: r.craft, image: r.image, q1: r.q1, q2: r.q2, q3: r.q3, published: r.published }));
   },
 
@@ -395,7 +432,7 @@ export const hubService = {
   // instead. Mock data survives only for local development without Supabase,
   // matching demoModeAvailable() in AuthContext.
   getPublicListings: async (): Promise<any[]> => {
-    if (!isConfigured()) return import.meta.env.DEV ? mockListings : [];
+    if (!isConfigured()) return devOnly(mockListings);
     const { data, error } = await supabase
       .from('public_directory_listings')
       .select('id,name,category,location,description,website,tier,status,created_at,contact_email,phone')
@@ -425,9 +462,9 @@ export const hubService = {
   },
 
   getListings: async (): Promise<any[]> => {
-    if (!isConfigured()) return mockListings;
+    if (!isConfigured()) return devOnly(mockListings);
     const { data, error } = await supabase.from('directory_listings').select('*').order('name');
-    if (error) { console.error('getListings:', error); return mockListings; }
+    if (error) { console.error('getListings:', error); return devOnly(mockListings); }
     return data.map((r: any) => ({
       id: r.id,
       vendorName: r.name,
@@ -618,12 +655,12 @@ export const hubService = {
   // --- Pending Listings (AI Discovery Approval Queue) ---
 
   getPendingListings: async (): Promise<PendingListing[]> => {
-    if (!isConfigured()) return mockPendingListings;
+    if (!isConfigured()) return devOnly(mockPendingListings);
     const { data } = await supabase
       .from('pending_listings')
       .select('*')
       .order('discovered_at', { ascending: false });
-    if (!data) return mockPendingListings;
+    if (!data) return devOnly(mockPendingListings);
     return data.map(row => ({
       id: row.id,
       businessName: row.business_name,
@@ -707,9 +744,9 @@ export const hubService = {
 
   // Playlist
   getPlaylist: async (): Promise<PlaylistTrack[]> => {
-    if (!isConfigured()) return mockPlaylist;
+    if (!isConfigured()) return devOnly(mockPlaylist);
     const { data, error } = await supabase.from('playlists').select('*').order('order_index');
-    if (error) { console.error('getPlaylist:', error); return mockPlaylist; }
+    if (error) { console.error('getPlaylist:', error); return devOnly(mockPlaylist); }
     return data.map((r: any) => ({
       id: r.id, title: r.title, artist: r.artist,
       durationSeconds: r.duration_seconds, category: r.category,
@@ -743,9 +780,9 @@ export const hubService = {
 
   // Sponsors
   getSponsors: async (): Promise<SponsorRotation[]> => {
-    if (!isConfigured()) return mockSponsors;
+    if (!isConfigured()) return devOnly(mockSponsors);
     const { data, error } = await supabase.from('sponsor_rotations').select('*').order('name');
-    if (error) { console.error('getSponsors:', error); return mockSponsors; }
+    if (error) { console.error('getSponsors:', error); return devOnly(mockSponsors); }
     return data.map((r: any) => ({
       id: r.id, name: r.name, productDesc: r.product_desc, contactName: r.contact_name,
       contactEmail: r.contact_email, package: r.package, readsPerShow: r.reads_per_show,
@@ -774,12 +811,12 @@ export const hubService = {
 
   // Ad Schedules
   getAdSchedules: async (): Promise<AdSchedule[]> => {
-    if (!isConfigured()) return mockAdSchedules;
+    if (!isConfigured()) return devOnly(mockAdSchedules);
     const { data, error } = await supabase
       .from('ad_schedules')
       .select('*, sponsor_rotations(name)')
       .order('time_slot');
-    if (error) { console.error('getAdSchedules:', error); return mockAdSchedules; }
+    if (error) { console.error('getAdSchedules:', error); return devOnly(mockAdSchedules); }
     return data.map((r: any) => ({
       id: r.id, sponsorId: r.sponsor_id,
       sponsorName: r.sponsor_rotations?.name,
@@ -811,9 +848,9 @@ export const hubService = {
 
   // Social Posts
   getSocialPosts: async (): Promise<SocialPost[]> => {
-    if (!isConfigured()) return mockSocialPosts;
+    if (!isConfigured()) return devOnly(mockSocialPosts);
     const { data, error } = await supabase.from('social_posts').select('*').order('created_at', { ascending: false });
-    if (error) { console.error('getSocialPosts:', error); return mockSocialPosts; }
+    if (error) { console.error('getSocialPosts:', error); return devOnly(mockSocialPosts); }
     return data.map((r: any) => ({
       id: r.id, content: r.content, platform: r.platform, sourceType: r.source_type,
       sourceId: r.source_id, status: r.status, scheduledAt: r.scheduled_at,
