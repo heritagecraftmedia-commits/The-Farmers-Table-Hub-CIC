@@ -43,9 +43,15 @@ const MASTER_CLOCK: Omit<ScheduleEntry, 'id' | 'date' | 'day'>[] = [
   { start: '01:00', end: '05:20', title: 'BBC World Service / Authorised Partner Feed', description: 'Authorised partner-feed overnight slot. Audio is not supplied by this test build.', kind: 'partner', assetHint: 'AUTHORISED-PARTNER-FEED' },
 ];
 
+// Venue slots are unbooked planning placeholders (`placeholder: true`), used
+// by the staff-only month planner and run sheet. Two of them previously named
+// specific venues — "The Village Arms" and "The Granary" — which are not
+// booked and, as far as this project is concerned, not real. Naming a venue
+// in a planning grid is how an unbooked slot quietly becomes an assumed one.
+// The slots remain; the invented venues do not.
 const venueOverrides: Record<string, ScheduleEntry> = {
-  Tue: { id: 'override-tue', date: '', day: 'Tue', start: '14:15', end: '15:00', title: 'Live Music: The Village Arms Session', description: 'Acoustic folk and singer-songwriter session. Venue booking/confirmation required.', kind: 'venue', outsideBroadcast: true, assetHint: 'VENUE-VILLAGE-ARMS', placeholder: true },
-  Thu: { id: 'override-thu', date: '', day: 'Thu', start: '19:15', end: '20:00', title: 'Live Music: The Granary Live', description: 'Jazz, blues and roots. Venue booking/confirmation required.', kind: 'venue', outsideBroadcast: true, assetHint: 'VENUE-GRANARY', placeholder: true },
+  Tue: { id: 'override-tue', date: '', day: 'Tue', start: '14:15', end: '15:00', title: 'Live Music: Venue To Be Confirmed', description: 'Acoustic folk and singer-songwriter session. Venue not yet booked or confirmed.', kind: 'venue', outsideBroadcast: true, assetHint: 'VENUE-TO-CONFIRM', placeholder: true },
+  Thu: { id: 'override-thu', date: '', day: 'Thu', start: '19:15', end: '20:00', title: 'Live Music: Venue To Be Confirmed', description: 'Jazz, blues and roots. Venue not yet booked or confirmed.', kind: 'venue', outsideBroadcast: true, assetHint: 'VENUE-TO-CONFIRM', placeholder: true },
   Fri: { id: 'override-fri', date: '', day: 'Fri', start: '19:15', end: '21:00', title: 'Live Music: Friday Night Sessions', description: 'Mixed bill — local bands, open mic nights and touring acts. Booking/confirmation required.', kind: 'venue', outsideBroadcast: true, assetHint: 'VENUE-FRIDAY-SESSIONS', placeholder: true },
   Sat: { id: 'override-sat', date: '', day: 'Sat', start: '10:00', end: '12:00', title: "Live Music: FTH Farmers' Market Stage", description: 'Outdoor live music at the weekly market. Venue/event confirmation required.', kind: 'venue', outsideBroadcast: true, assetHint: 'EVENT-FARMERS-MARKET-STAGE', placeholder: true },
   Sun: { id: 'override-sun', date: '', day: 'Sun', start: '11:00', end: '12:00', title: 'Live Music: Sunday Acoustic Circle', description: 'Community acoustic session. Venue/event confirmation required.', kind: 'venue', outsideBroadcast: true, assetHint: 'VENUE-SUNDAY-ACOUSTIC', placeholder: true },
