@@ -32,13 +32,14 @@ CREATE POLICY "Founder can manage radio events"
     )
   );
 
--- Optional: seed a sample event to test the page
-INSERT INTO radio_events (title, type, date, venue, description, featured_artist)
-VALUES (
-  'Farnham Artisan Market',
-  'Market',
-  now() + interval '7 days',
-  'Farnham Town Centre',
-  'Monthly gathering of local makers, bakers, and food producers. Live music from 12pm.',
-  'The Hop Garden Trio'
-);
+-- REMOVED — demo seed row.
+--
+-- This file previously inserted a fictional event ('Farnham Artisan
+-- Market', featured artist 'The Hop Garden Trio') to test the
+-- /community-radio page. It is invented content and must never reach a
+-- production database. The INSERT is removed here so new environments
+-- never create it; 20260830_remove_demo_radio_event.sql deletes the row
+-- from environments that already applied this file.
+--
+-- The radio_events TABLE itself is real and still used by the
+-- /community-radio "This Week" section — only the seed row is gone.
