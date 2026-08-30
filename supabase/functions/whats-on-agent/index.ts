@@ -1,27 +1,36 @@
 /**
  * Supabase Edge Function: whats-on-agent
  *
- * Server-side home for the weekly "What's On" draft that /whats-on-agent
- * renders.
+ * REVIEWER ASSISTANT. It does not discover events.
  *
- * WHY THIS EXISTS
- * ---------------
- * src/pages/WhatsOnAgent.tsx used to call api.anthropic.com directly from the
- * browser, reading import.meta.env.VITE_ANTHROPIC_API_KEY. Every VITE_-prefixed
- * variable is inlined into the JS bundle at build time, and that bundle is
- * served publicly (the GitHub repo is public too). The page also sent
- * "anthropic-dangerous-allow-browser: true", which is the header you only need
- * when you are doing exactly this. Anyone loading the site could read the key
- * out of the bundle and spend the CIC's Anthropic credit.
+ * WHAT CHANGED AND WHY
+ * --------------------
+ * This function used to run a four-agent "venue scout / artist scout"
+ * prompt that asked the model to produce a weekly What's On listing
+ * "using your knowledge of Farnham, Surrey and the surrounding area".
+ * That is model recall, not discovery: the venues, artists and nights it
+ * returned were recalled or generated, not read from any source, and the
+ * output was formatted to look like a verified listing. Labelling some of
+ * it "check to confirm" did not make it evidence.
  *
- * The key now lives only here:
- *   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+ * Real discovery now happens in the pipeline:
  *
- * HUMAN-IN-THE-LOOP
- * -----------------
- * This returns draft text to a human and writes nothing. It must never insert
- * into `events` or publish anywhere. Approving and publishing stays a manual
- * step in the dashboard, as with the rest of the agent pipeline.
+ *   source -> normalise -> categorise -> score -> dedupe -> pending_events
+ *
+ * (see src/services/discovery/ and api/cron/discover-whats-on.ts). Every
+ * candidate there comes from a configured source and carries a real source
+ * URL. If no source is configured, nothing is staged.
+ *
+ * This function's remaining job is to help the human reviewing that queue:
+ * given a candidate that ALREADY EXISTS, it suggests a category, comments
+ * on relevance, and drafts a short plain-English summary. It is given the
+ * candidate's own text and may use nothing else.
+ *
+ * HARD BOUNDARIES
+ *   - It never writes to any table. It has no service-role write path.
+ *   - It never writes to `events` and cannot publish.
+ *   - It is not asked to find, recall or infer events, venues or artists.
+ *   - It returns a recommendation. A human approves in the dashboard.
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -42,61 +51,89 @@ const json = (body: unknown, status = 200) =>
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 
-const SYSTEM_PROMPT = `You are an AI agent team working for a UK community radio station and CIC called TFT-Radio (The Farmers Table Hub).
+/**
+ * Roles permitted to use reviewer assistance.
+ *
+ * The live role model is: founder, admin, radio_manager, contributor,
+ * member (see 20260828_tft_permissions_rls.sql). The obsolete 'staff' role
+ * this function used to check is not in that model, so the check was both
+ * wrong and misleading and had to be replaced.
+ *
+ * This mirrors public.is_radio_staff() - contributor and above - which is
+ * the same boundary the pending_events read policy uses. Approval itself is
+ * stricter (admin/founder only) and is enforced in the database by
+ * approve_pending_event(), not here.
+ */
+const REVIEW_ROLES = ['founder', 'admin', 'radio_manager', 'contributor'];
 
-Your goal is to collect, verify, and summarise local live music, arts, and cultural events in and around Farnham, Surrey on a weekly basis.
+const SYSTEM_PROMPT = `You assist a human reviewer at The Farmers Table Hub CIC, a UK community organisation, who is deciding whether a discovered event should be published on the public "What's On" board.
 
-The output must be clear, calm, non-technical, and suitable for people with cognitive fatigue or memory issues.
+You will be given ONE event candidate that was already discovered from a real source. Your job is to comment on it. It is not your job to find events.
 
-You operate as four agents working together:
+ABSOLUTE RULES
+- Use ONLY the candidate text supplied in the user message. You have no other information about this event, this venue, or this area.
+- Never add a fact that is not in the supplied text. No venues, dates, times, prices, organisers, performers, addresses or descriptions of your own.
+- If a field is missing, say it is missing. Do not fill it in and do not guess.
+- Never state or imply that you have verified anything. You cannot.
+- You are advising, not deciding. The reviewer publishes, not you.
 
-AGENT 1 – VENUE SCOUT
-Find local venues in Farnham and nearby villages (pubs, bars, community halls, arts centres, cafes). Look for live music nights, open mic nights, folk/acoustic sessions, DJ nights.
+CATEGORIES (choose exactly one):
+Wood & Furniture, Textiles & Clothing, Pottery & Ceramics, Metal & Tools, Heritage & Skills, Workshops & Talks, Food & Produce, Community, Other
 
-AGENT 2 – ARTIST & PERFORMER SCOUT
-Identify local artists, bands, DJs, and performers connected to Farnham / West Surrey. Focus on regular gigging artists, community musicians, folk, indie, acoustic, jazz, local DJs.
+Judge the category on what the event actually IS. Do not let a single keyword decide it: an event that mentions woodwork among several crafts is a general Community craft event, not a Wood & Furniture one.
 
-AGENT 3 – EVENT VERIFIER
-Cross-check events to ensure they are current or upcoming, dates are clear, and locations are correct. Flag events as: "Weekly regular", "One-off event", or "Monthly night".
+Write in plain English. Short sentences. No hype, no emojis. The reviewer may have cognitive fatigue, so be calm and clear.
 
-AGENT 4 – EDITOR (ACCESSIBILITY & RADIO-FRIENDLY)
-Rewrite everything in plain English. No hype language. No emojis. Short sentences. Friendly but calm tone. Suitable for website "What's On" section, radio mentions, and weekly update posts.
+OUTPUT FORMAT - use exactly this structure:
 
-IMPORTANT RULES:
-- Do NOT invent events. If unsure, clearly say "unconfirmed".
-- Focus on local community scale, not major touring acts.
-- Prioritise Farnham, then nearby Surrey villages.
-- Prefer Thursday to Sunday events.
-- Include next 7 to 10 days only.
+Suggested category
+[one category from the list, then one sentence on why, citing words from the candidate text]
 
-OUTPUT FORMAT — use exactly this structure:
+Relevance
+[Is this a good fit for a local craft, heritage and produce board? One short paragraph. Cite only the supplied text.]
 
-What's On This Week – Farnham Area
+Missing information
+[Bullet list of fields the reviewer should check or fill in before publishing. Write "Nothing obvious missing." if so.]
 
-Live Music and Events
-[List venues, day, type of event, one-line description]
+Suggested summary
+[A two-sentence plain-English description built ONLY from the supplied text, for the reviewer to edit. If there is too little text to summarise, write "Not enough detail supplied to summarise."]`;
 
-Local Artists to Look Out For
-[List artist name, genre, where playing if known]
+interface Candidate {
+  title?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  venue?: string;
+  location?: string;
+  organiser?: string;
+  sourceUrl?: string;
+  sourcePlatform?: string;
+  category?: string;
+  confidenceScore?: number;
+}
 
-Regular Nights
-[List venue, weekly/monthly, type of night]
+const field = (label: string, value: unknown): string =>
+  `${label}: ${value === null || value === undefined || value === '' ? '(not supplied)' : String(value)}`;
 
-Notes
-[Any changes, new venues discovered, events needing confirmation]`;
+const userPrompt = (c: Candidate) => `Here is the event candidate to comment on. This is the complete set of information available. Do not add anything to it.
 
-const userPrompt = () => `You are running the weekly What's On update for TFT-Radio, Farnham, Surrey.
+${field('Title', c.title)}
+${field('Description', c.description)}
+${field('Start date', c.startDate)}
+${field('End date', c.endDate)}
+${field('Venue', c.venue)}
+${field('Location', c.location)}
+${field('Organiser', c.organiser)}
+${field('Source platform', c.sourcePlatform)}
+${field('Source URL', c.sourceUrl)}
+${field('Category assigned by the pipeline', c.category)}
+${field('Relevance score assigned by the pipeline', c.confidenceScore)}
 
-Today's date is: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
-
-Using your knowledge of Farnham, Surrey and the surrounding area (including Alton, Guildford, Godalming, Haslemere, and nearby villages), produce the weekly What's On update now.
-
-If you do not have confirmed real-time data, clearly label items as "check to confirm" rather than inventing details. Focus on venues and nights that are known to run regularly in this area.
-
-Produce the full weekly update in the format specified. Plain English only. No emojis. Short sentences.`;
+Comment on this candidate in the required format.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -121,8 +158,36 @@ Deno.serve(async (req: Request) => {
       .eq('id', user.id)
       .maybeSingle();
 
-    const permitted = profile && (profile.is_admin || ['founder', 'staff'].includes(profile.role));
-    if (!permitted) return json({ error: 'Forbidden — staff access required' }, 403);
+    const permitted = profile && (profile.is_admin || REVIEW_ROLES.includes(profile.role));
+    if (!permitted) {
+      return json({ error: 'Forbidden - contributor access or above is required' }, 403);
+    }
+
+    // A candidate is required. With nothing to comment on there is no task:
+    // this function must not be usable as a "generate me some events" endpoint.
+    let candidate: Candidate | null = null;
+    try {
+      const body = await req.json();
+      candidate = body?.candidate ?? null;
+    } catch {
+      candidate = null;
+    }
+
+    if (!candidate || typeof candidate !== 'object') {
+      return json({
+        error: 'A candidate event is required. This endpoint comments on an existing '
+          + 'discovered candidate; it does not generate events.',
+      }, 400);
+    }
+    if (!candidate.title || String(candidate.title).trim() === '') {
+      return json({ error: 'The candidate must have a title.' }, 400);
+    }
+    if (!candidate.sourceUrl || String(candidate.sourceUrl).trim() === '') {
+      return json({
+        error: 'The candidate must carry its source URL. A candidate with no '
+          + 'evidence is not reviewable.',
+      }, 400);
+    }
 
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) {
@@ -133,9 +198,9 @@ Deno.serve(async (req: Request) => {
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-5',
-      max_tokens: 4000,
+      max_tokens: 1500,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt() }],
+      messages: [{ role: 'user', content: userPrompt(candidate) }],
     });
 
     if (response.stop_reason === 'refusal') {
@@ -147,8 +212,12 @@ Deno.serve(async (req: Request) => {
       .map((block) => block.text)
       .join('\n');
 
-    // Draft only. Nothing is written to the database and nothing is published.
-    return json({ text, truncated: response.stop_reason === 'max_tokens' });
+    // Advice only. Nothing is written to the database and nothing is published.
+    return json({
+      text,
+      advisoryOnly: true,
+      truncated: response.stop_reason === 'max_tokens',
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('whats-on-agent:', msg);

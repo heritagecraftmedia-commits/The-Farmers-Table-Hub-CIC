@@ -1,8 +1,33 @@
 import { FoodVendor } from '../types';
 
+/**
+ * Public directory producers - NAMES AND PLACES ONLY.
+ *
+ * CONTACT DETAILS HAVE BEEN REMOVED FROM THIS FILE AND MUST NOT BE PUT BACK.
+ *
+ * This module is imported by src/services/hubService.ts, which means every
+ * byte of it is compiled into the public JavaScript bundle and can be read
+ * by anyone who opens the site. It previously carried 26 real producer
+ * email addresses and 24 real phone numbers - mostly personal gmail,
+ * hotmail and btinternet accounts belonging to third parties.
+ *
+ * That undid the protection added server-side: 20260828_tft_permissions_rls
+ * restricts `directory_listings` to admins and exposes the public site to
+ * the `public_directory_listings` view precisely so that contact data does
+ * not reach the browser. A static copy in the bundle went around it.
+ *
+ * The real contact details still exist, in the database, where RLS governs
+ * who can read them. Any feature that needs them must read them from there
+ * as an authorised user - never from this file.
+ *
+ * `email` and `phone` are kept as empty strings only to satisfy the
+ * FoodVendor type. This data is a development fallback for the directory
+ * listing UI; production reads directory_listings.
+ */
+
 export const foodVendors: FoodVendor[] = [
-  { id: "1", name: "Manor Farm Surrey", type: "Meat Products", email: "info@manorfarmsurrey.com", location: "Wotton, Surrey", postcode: "RH5 6QF", website: "manorfarmsurrey.com", rating: 5, phone: "", tier: 'free' as const },
-  { id: "3", name: "Brightleigh Farm", type: "Meat Products", email: "penny@brightleighfarm.co.uk", location: "RH1 5PY", postcode: "RH1 5PY", website: "brightleighfarm.co.uk", rating: 4, phone: "07775924141", tier: 'free' as const },
+  { id: "1", name: "Manor Farm Surrey", type: "Meat Products", email: "", location: "Wotton, Surrey", postcode: "RH5 6QF", website: "manorfarmsurrey.com", rating: 5, phone: "", tier: 'free' as const },
+  { id: "3", name: "Brightleigh Farm", type: "Meat Products", email: "", location: "RH1 5PY", postcode: "RH1 5PY", website: "brightleighfarm.co.uk", rating: 4, phone: "", tier: 'free' as const },
   { id: "4", name: "Halliloovalley Longhorns Warren Barn Farm Slines Oak Rd", type: "Meat Products", email: "", location: "CR3 7HN", postcode: "CR3 7HN", website: "", rating: 3, phone: "", tier: 'free' as const },
   { id: "5", name: "Lucies Lambs", type: "Meat Products", email: "", location: "TN13 1TP", postcode: "TN13 1TP", website: "", rating: 2, phone: "", tier: 'free' as const },
   { id: "6", name: "Seal Community Farm Zamba Way Seal Sevenoaks Kent", type: "Meat Products", email: "", location: "TN15 0DJ", postcode: "TN15 0DJ", website: "", rating: 1, phone: "", tier: 'free' as const },
@@ -18,16 +43,16 @@ export const foodVendors: FoodVendor[] = [
   { id: "16", name: "saddlescombe Farm", type: "Meat Products", email: "", location: "BN45 7DB", postcode: "BN45 7DB", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "17", name: "Calcot Farm produce", type: "Meat Products", email: "", location: "BN44 3AA", postcode: "BN44 3AA", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "18", name: "Danefold farms", type: "Meat Products", email: "", location: "RH13 8NA", postcode: "RH13 8NA", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "19", name: "Knepp wild range meat", type: "Meat Products", email: "wildrange@knepp.co.uk", location: "West Grinstead, West Sussex", postcode: "RH13 8LJ", website: "kneppwildrangemeat.co.uk", rating: 0, phone: "01403 741235", tier: 'free' as const },
+  { id: "19", name: "Knepp wild range meat", type: "Meat Products", email: "", location: "West Grinstead, West Sussex", postcode: "RH13 8LJ", website: "kneppwildrangemeat.co.uk", rating: 0, phone: "", tier: 'free' as const },
   { id: "20", name: "Westerlands", type: "Meat Products", email: "", location: "GU28 0QJ", postcode: "GU28 0QJ", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "21", name: "Holme Farm venison", type: "Meat Products", email: "lizzy@holmefarmvenison.co.uk", location: "PO9 6DT", postcode: "PO9 6DT", website: "holmefarmvenison.co.uk", rating: 0, phone: "07722319250", tier: 'free' as const },
+  { id: "21", name: "Holme Farm venison", type: "Meat Products", email: "", location: "PO9 6DT", postcode: "PO9 6DT", website: "holmefarmvenison.co.uk", rating: 0, phone: "", tier: 'free' as const },
   { id: "22", name: "Isle of Wight deer farm", type: "Meat Products", email: "", location: "PO30 1YS", postcode: "PO30 1YS", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "23", name: "Cheverton Farm", type: "Meat Products", email: "", location: "PO30 3JE", postcode: "PO30 3JE", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "24", name: "Brightstone belted galloways", type: "Meat Products", email: "", location: "GU34 3ET", postcode: "GU34 3ET", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "25", name: "Street Croft Farm", type: "Meat Products", email: "info@streetcroftfarm.co.uk", location: "RG25 2PQ", postcode: "RG25 2PQ", website: "", rating: 0, phone: "07775596388", tier: 'free' as const },
+  { id: "25", name: "Street Croft Farm", type: "Meat Products", email: "", location: "RG25 2PQ", postcode: "RG25 2PQ", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "26", name: "the Woodland Pig Company", type: "Meat Products", email: "", location: "RG27 8BU", postcode: "RG27 8BU", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "27", name: "Newlyns Farm Shop", type: "Meat Products", email: "", location: "RG29 1HA", postcode: "RG29 1HA", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "28", name: "field to feast", type: "Meat Products", email: "hatty.thurley@gmail.com", location: "RG7 1LL", postcode: "RG7 1LL", website: "", rating: 0, phone: "", tier: 'free' as const },
+  { id: "28", name: "field to feast", type: "Meat Products", email: "", location: "RG7 1LL", postcode: "RG7 1LL", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "29", name: "Beenham Park produce", type: "Meat Products", email: "", location: "RG7 5LT", postcode: "RG7 5LT", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "30", name: "test Valley Devons", type: "Meat Products", email: "", location: "SO20 6AL", postcode: "SO20 6AL", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "31", name: "springbottom Farm", type: "Meat Products", email: "", location: "SP4 7BY", postcode: "SP4 7BY", website: "", rating: 0, phone: "", tier: 'free' as const },
@@ -48,7 +73,7 @@ export const foodVendors: FoodVendor[] = [
   { id: "46", name: "Flocks and fields", type: "Meat Products", email: "", location: "MK18 3PG", postcode: "MK18 3PG", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "47", name: "oving Dexter beef", type: "Meat Products", email: "", location: "HP 22 4HL", postcode: "HP 22 4HL", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "48", name: "PE Mead and Sons Farm Shop", type: "Meat Products", email: "", location: "HP23 4NT", postcode: "HP23 4NT", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "49", name: "bullbeggars beef and lamb", type: "Meat Products", email: "uptonregan@gmail.com", location: "AL3 8DH", postcode: "AL3 8DH", website: "", rating: 0, phone: "07973 714 039", tier: 'free' as const },
+  { id: "49", name: "bullbeggars beef and lamb", type: "Meat Products", email: "", location: "AL3 8DH", postcode: "AL3 8DH", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "50", name: "pepperstock herefords", type: "Meat Products", email: "", location: "LU1 4LH", postcode: "LU1 4LH", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "51", name: "kingcott Farm", type: "Milk and Dairy", email: "", location: "tn120er", postcode: "tn120er", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "52", name: "Park Farm Brasted", type: "Milk and Dairy", email: "", location: "tn16 1LL", postcode: "tn16 1LL", website: "", rating: 0, phone: "", tier: 'free' as const },
@@ -64,7 +89,7 @@ export const foodVendors: FoodVendor[] = [
   { id: "62", name: "utterly fresh raw milk UK", type: "Milk and Dairy", email: "", location: "MK18 3LF", postcode: "MK18 3LF", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "63", name: "barn owl Farm Shop", type: "Milk and Dairy", email: "", location: "nn13 5SD", postcode: "nn13 5SD", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "64", name: "the milk churn", type: "Milk and Dairy", email: "", location: "ox27 0ey", postcode: "ox27 0ey", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "65", name: "addinggrove dairy", type: "Milk and Dairy", email: "lisa@bjrural.com", location: "HP 18 9sf", postcode: "HP 18 9sf", website: "", rating: 0, phone: "07801 229708", tier: 'free' as const },
+  { id: "65", name: "addinggrove dairy", type: "Milk and Dairy", email: "", location: "HP 18 9sf", postcode: "HP 18 9sf", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "66", name: "hitcham dairy ice cream", type: "Milk and Dairy", email: "", location: "SL1 7ad", postcode: "SL1 7ad", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "67", name: "lacey's Family Farm", type: "Milk and Dairy", email: "", location: "hp14 3LP", postcode: "hp14 3LP", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "68", name: "nettlebed Creamery", type: "Milk and Dairy", email: "", location: "RG9 5DA", postcode: "RG9 5DA", website: "", rating: 0, phone: "", tier: 'free' as const },
@@ -90,8 +115,8 @@ export const foodVendors: FoodVendor[] = [
   { id: "88", name: "northney dairy", type: "Milk and Dairy", email: "", location: "po11 0se", postcode: "po11 0se", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "89", name: "Briddlesford dairy", type: "Milk and Dairy", email: "", location: "PO33 4RY", postcode: "PO33 4RY", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "90", name: "Meon Valley milk", type: "Milk and Dairy", email: "", location: "SO32 2JW", postcode: "SO32 2JW", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "91", name: "Daisy Meadow dairy", type: "Milk and Dairy", email: "hello@daisymeadowdairy.co.uk", location: "SO30 2AA", postcode: "SO30 2AA", website: "Daisy Meadow dairy.co.uk", rating: 0, phone: "07732 011 437", tier: 'free' as const },
-  { id: "92", name: "Hiltonbury jerseys", type: "Milk and Dairy", email: "", location: "so21 2AY", postcode: "so21 2AY", website: "", rating: 0, phone: "0797 793 3470", tier: 'free' as const },
+  { id: "91", name: "Daisy Meadow dairy", type: "Milk and Dairy", email: "", location: "SO30 2AA", postcode: "SO30 2AA", website: "Daisy Meadow dairy.co.uk", rating: 0, phone: "", tier: 'free' as const },
+  { id: "92", name: "Hiltonbury jerseys", type: "Milk and Dairy", email: "", location: "so21 2AY", postcode: "so21 2AY", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "93", name: "Michelmersh Manor Farm", type: "Milk and Dairy", email: "", location: "SO51 0nt", postcode: "SO51 0nt", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "94", name: "Dandy's Ford dairy", type: "Milk and Dairy", email: "", location: "SO51 0gl", postcode: "SO51 0gl", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "95", name: "Hgglers Farm micro dairy", type: "Milk and Dairy", email: "", location: "po17 5PQ", postcode: "po17 5PQ", website: "", rating: 0, phone: "", tier: 'free' as const },
@@ -99,11 +124,11 @@ export const foodVendors: FoodVendor[] = [
   { id: "97", name: "Allen Valley milk", type: "Milk and Dairy", email: "", location: "BH21 4ED", postcode: "BH21 4ED", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "98", name: "church Farm dairy", type: "Milk and Dairy", email: "", location: "sp7 9AS", postcode: "sp7 9AS", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "99", name: "Milly moo's", type: "Milk and Dairy", email: "", location: "ba120ns", postcode: "ba120ns", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "100", name: "Hampshire Market Garden CIC", type: "Fruit and Vegetables", email: "hello@hampshiremarketgarden.co.uk", location: "SP5 1LE", postcode: "SP5 1LE", website: "", rating: 0, phone: "07591 378-149", tier: 'free' as const },
+  { id: "100", name: "Hampshire Market Garden CIC", type: "Fruit and Vegetables", email: "", location: "SP5 1LE", postcode: "SP5 1LE", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "101", name: "lusso leaf", type: "Fruit and Vegetables", email: "", location: "so20 6HS", postcode: "so20 6HS", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "102", name: "Heckfield home Farm", type: "Fruit and Vegetables", email: "", location: "RG27 0LA", postcode: "RG27 0LA", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "103", name: "Eden greens Urban Farm", type: "Fruit and Vegetables", email: "", location: "gu220bw", postcode: "gu220bw", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "104", name: "pittfield veg", type: "Fruit and Vegetables", email: "Sophie@pittfieldveg.co.uk", location: "BN6 9LR", postcode: "BN6 9LR", website: "", rating: 0, phone: "07835 011505", tier: 'free' as const },
+  { id: "104", name: "pittfield veg", type: "Fruit and Vegetables", email: "", location: "BN6 9LR", postcode: "BN6 9LR", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "105", name: "the modern kitchen garden", type: "Fruit and Vegetables", email: "", location: "PO33 4BP", postcode: "PO33 4BP", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "106", name: "Sandy Lane Farm", type: "Fruit and Vegetables", email: "", location: "OX9 2LA", postcode: "OX9 2LA", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "107", name: "Rectory Farm Oxford", type: "Fruit and Vegetables", email: "", location: "OX33 1HF", postcode: "OX33 1HF", website: "", rating: 0, phone: "", tier: 'free' as const },
@@ -113,37 +138,37 @@ export const foodVendors: FoodVendor[] = [
   { id: "111", name: "Neil's Farm", type: "Fruit and Vegetables", email: "", location: "BA12 7pw", postcode: "BA12 7pw", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "112", name: "moonacre Farm", type: "Fruit and Vegetables", email: "", location: "BA11 3RP", postcode: "BA11 3RP", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "113", name: "Leigh Court Farm", type: "Fruit and Vegetables", email: "", location: "BS8 3RA", postcode: "BS8 3RA", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "114", name: "forbidden fruit and veg", type: "Fruit and Vegetables", email: "tracy@tracyworcester.org.uk", location: "gl9 1DJ", postcode: "gl9 1DJ", website: "", rating: 0, phone: "07890 971 721", tier: 'free' as const },
+  { id: "114", name: "forbidden fruit and veg", type: "Fruit and Vegetables", email: "", location: "gl9 1DJ", postcode: "gl9 1DJ", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "115", name: "Elmore Fruit Farm", type: "Fruit and Vegetables", email: "", location: "GL2 3sg", postcode: "GL2 3sg", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "116", name: "little Marcle organic produce", type: "Fruit and Vegetables", email: "joshua@lmop.farm", location: "hr8 2JN", postcode: "hr8 2JN", website: "", rating: 0, phone: "07771982-792", tier: 'free' as const },
+  { id: "116", name: "little Marcle organic produce", type: "Fruit and Vegetables", email: "", location: "hr8 2JN", postcode: "hr8 2JN", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "117", name: "lower ladysden Farm", type: "Fruit and Vegetables", email: "", location: "tn17 1JX", postcode: "tn17 1JX", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "118", name: "the potato shop", type: "Fruit and Vegetables", email: "", location: "tn30 7lr", postcode: "tn30 7lr", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "119", name: "Perry Court Farm", type: "Fruit and Vegetables", email: "", location: "TN 254es", postcode: "TN 254es", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "120", name: "lower cock Ash Organics", type: "Fruit and Vegetables", email: "", location: "tn25 6DY", postcode: "tn25 6DY", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "121", name: "East Kent growers", type: "Fruit and Vegetables", email: "michelle.eastkentgrowers@gmail.com", location: "CT3 1ES", postcode: "CT3 1ES", website: "", rating: 0, phone: "01227 532-082", tier: 'free' as const },
+  { id: "121", name: "East Kent growers", type: "Fruit and Vegetables", email: "", location: "CT3 1ES", postcode: "CT3 1ES", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "122", name: "ripple farm Organics", type: "Fruit and Vegetables", email: "", location: "ct4 7EB", postcode: "ct4 7EB", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "123", name: "the wonky parsnip", type: "Fruit and Vegetables", email: "", location: "ct4 7lg", postcode: "ct4 7lg", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "124", name: "Sarah greens organic", type: "Fruit and Vegetables", email: "", location: "cm0 7SP", postcode: "cm0 7SP", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "125", name: "wild Farm", type: "Fruit and Vegetables", email: "amber@wildfarm.uk", location: "WD7 9hj", postcode: "WD7 9hj", website: "", rating: 0, phone: "0750 0885315", tier: 'free' as const },
+  { id: "125", name: "wild Farm", type: "Fruit and Vegetables", email: "", location: "WD7 9hj", postcode: "WD7 9hj", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "126", name: "Stort Valley Organics", type: "Fruit and Vegetables", email: "", location: "SG12 8JZ", postcode: "SG12 8JZ", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "127", name: "Tewin Greens", type: "Fruit and Vegetables", email: "", location: "al6 0JB", postcode: "al6 0JB", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "128", name: "Augernik fruit farm", type: "Fruit and Vegetables", email: "", location: "dy14 0HH", postcode: "dy14 0HH", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "129", name: "fruitfields", type: "Fruit and Vegetables", email: "", location: "bn45 8nz", postcode: "bn45 8nz", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "130", name: "the Apple Farm snitterfield", type: "Fruit and Vegetables", email: "", location: "CV37 0QA", postcode: "CV37 0QA", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "131", name: "Five Acre community Farm", type: "Fruit and Vegetables", email: "info@fiveacrefarm.org.uk", location: "CV8 3LG", postcode: "CV8 3LG", website: "", rating: 0, phone: "O2 477 360 361", tier: 'free' as const },
-  { id: "132", name: "Poplars Farm Shop", type: "Fruit and Vegetables", email: "richard@poplarsfarm.co.uk", location: "CV11 6JG", postcode: "CV11 6JG", website: "", rating: 0, phone: "07980 686902", tier: 'free' as const },
-  { id: "133", name: "Village farm shop in diseworth", type: "Fruit and Vegetables", email: "matthewdaikin@btinternet.com", location: "de74 2tt", postcode: "de74 2tt", website: "", rating: 0, phone: "07810 510 538", tier: 'free' as const },
+  { id: "131", name: "Five Acre community Farm", type: "Fruit and Vegetables", email: "", location: "CV8 3LG", postcode: "CV8 3LG", website: "", rating: 0, phone: "", tier: 'free' as const },
+  { id: "132", name: "Poplars Farm Shop", type: "Fruit and Vegetables", email: "", location: "CV11 6JG", postcode: "CV11 6JG", website: "", rating: 0, phone: "", tier: 'free' as const },
+  { id: "133", name: "Village farm shop in diseworth", type: "Fruit and Vegetables", email: "", location: "de74 2tt", postcode: "de74 2tt", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "134", name: "the farm shed", type: "Fruit and Vegetables", email: "", location: "nn6 9sh", postcode: "nn6 9sh", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "135", name: "alpino garden Farm", type: "Fruit and Vegetables", email: "alpinogardenfarm@outlook.com", location: "PE28 0PE", postcode: "PE28 0PE", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "136", name: "wa pearce& Sons pearce potatos", type: "Fruit and Vegetables", email: "wppearceandsons@hotmail.com", location: "PE6 8RW", postcode: "PE6 8RW", website: "", rating: 0, phone: "07957987058", tier: 'free' as const },
+  { id: "135", name: "alpino garden Farm", type: "Fruit and Vegetables", email: "", location: "PE28 0PE", postcode: "PE28 0PE", website: "", rating: 0, phone: "", tier: 'free' as const },
+  { id: "136", name: "wa pearce& Sons pearce potatos", type: "Fruit and Vegetables", email: "", location: "PE6 8RW", postcode: "PE6 8RW", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "137", name: "Bank Farm", type: "Fruit and Vegetables", email: "", location: "pe26 2rf", postcode: "pe26 2rf", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "138", name: "d voutt farming", type: "Fruit and Vegetables", email: "danielvoutt@yahoo.co.uk", location: "PE14 9tb", postcode: "PE14 9tb", website: "", rating: 0, phone: "07900 818 810", tier: 'free' as const },
-  { id: "139", name: "petite peonys", type: "Fruit and Vegetables", email: "Wilock.farm@gmail.com", location: "PE13 4ub", postcode: "PE13 4ub", website: "", rating: 0, phone: "07714 409-8943", tier: 'free' as const },
+  { id: "138", name: "d voutt farming", type: "Fruit and Vegetables", email: "", location: "PE14 9tb", postcode: "PE14 9tb", website: "", rating: 0, phone: "", tier: 'free' as const },
+  { id: "139", name: "petite peonys", type: "Fruit and Vegetables", email: "", location: "PE13 4ub", postcode: "PE13 4ub", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "140", name: "Bedlam farms", type: "Fruit and Vegetables", email: "", location: "PE15 0dp", postcode: "PE15 0dp", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "141", name: "clean greens Market Garden", type: "Fruit and Vegetables", email: "cleangreensorganic@outlook.com", location: "pe380eg", postcode: "pe380eg", website: "", rating: 0, phone: "077520-32808", tier: 'free' as const },
-  { id: "142", name: "Waterland Organics", type: "Fruit and Vegetables", email: "contact@waterlandorganics.com", location: "cb25 9HF", postcode: "cb25 9HF", website: "", rating: 0, phone: "07867 744-870", tier: 'free' as const },
+  { id: "141", name: "clean greens Market Garden", type: "Fruit and Vegetables", email: "", location: "pe380eg", postcode: "pe380eg", website: "", rating: 0, phone: "", tier: 'free' as const },
+  { id: "142", name: "Waterland Organics", type: "Fruit and Vegetables", email: "", location: "cb25 9HF", postcode: "cb25 9HF", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "143", name: "flourish produce", type: "Fruit and Vegetables", email: "", location: "cb21 6BS", postcode: "cb21 6BS", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "144", name: "sunshine and green", type: "Fruit and Vegetables", email: "info@sunshineandgreen.co.uk", location: "CO10 8BS", postcode: "CO10 8BS", website: "", rating: 0, phone: "078255 16735", tier: 'free' as const },
+  { id: "144", name: "sunshine and green", type: "Fruit and Vegetables", email: "", location: "CO10 8BS", postcode: "CO10 8BS", website: "", rating: 0, phone: "", tier: 'free' as const },
   { id: "145", name: "Little Haugh Farm", type: "Fruit and Vegetables", email: "", location: "ip31 3LH", postcode: "ip31 3LH", website: "", rating: 0, phone: "", tier: 'free' as const },
-  { id: "146", name: "duckpit Valley turkeys", type: "Eggs and Poultry", email: "hello@duckpitvalley.co.uk", location: "ct4 5qb", postcode: "ct4 5qb", website: "", rating: 0, phone: "0122 7700062", tier: 'free' as const }
+  { id: "146", name: "duckpit Valley turkeys", type: "Eggs and Poultry", email: "", location: "ct4 5qb", postcode: "ct4 5qb", website: "", rating: 0, phone: "", tier: 'free' as const }
 ];
