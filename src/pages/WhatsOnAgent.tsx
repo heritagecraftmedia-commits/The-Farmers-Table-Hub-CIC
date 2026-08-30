@@ -1,21 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { pendingEventsService, PendingEvent } from "../services/pendingEventsService";
 
-// The prompts and the Anthropic call now live server-side in
-// supabase/functions/whats-on-agent. They used to be here, which meant
-// VITE_ANTHROPIC_API_KEY was inlined into the public JS bundle at build time
-// and readable by anyone who loaded the site.
-//
-// The agent still only ever returns draft text for a human to review. It does
-// not write to `events` and it does not publish anything.
+/**
+ * Reviewer assistance for the What's On queue.
+ *
+ * This page used to run a "four-agent team" that produced a weekly listing
+ * of venues, artists and nights from the model's own recollection of the
+ * Farnham area. Nothing it returned came from a source, and it was
+ * presented as a ready-to-publish update. That has been removed.
+ *
+ * Discovery now runs weekly against a configured source and stages
+ * candidates in `pending_events` (see src/services/discovery/). This page
+ * asks the assistant to comment on ONE of those real candidates, to help
+ * the reviewer decide. The assistant recommends. The human approves, in
+ * the dashboard. Nothing here writes to `events`.
+ */
 
 export default function WhatsOnAgent() {
+  const [candidates, setCandidates] = useState<PendingEvent[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingQueue, setLoadingQueue] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
 
-  async function runAgentTeam() {
+  useEffect(() => {
+    (async () => {
+      const list = await pendingEventsService.list(["pending", "needs_verification"]);
+      setCandidates(list);
+      if (list.length > 0) setSelectedId(list[0].id);
+      setLoadingQueue(false);
+    })();
+  }, []);
+
+  const selected = candidates.find(c => c.id === selectedId) ?? null;
+
+  async function askAssistant() {
+    if (!selected) return;
     setLoading(true);
     setOutput("");
     setError("");
@@ -23,21 +47,36 @@ export default function WhatsOnAgent() {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("whats-on-agent", {
-        body: {},
+        // The candidate is required. The function will not generate events.
+        body: {
+          candidate: {
+            title: selected.title,
+            description: selected.description,
+            startDate: selected.startDate,
+            endDate: selected.endDate,
+            venue: selected.venue,
+            location: selected.location,
+            organiser: selected.organiser,
+            sourceUrl: selected.sourceUrl,
+            sourcePlatform: selected.sourcePlatform,
+            category: selected.category,
+            confidenceScore: selected.confidenceScore,
+          },
+        },
       });
 
       if (fnError) {
-        setError("Could not reach the What's On agent. Please try again.");
+        setError("Could not reach the assistant. Please try again.");
       } else if (data?.error) {
         setError(data.error);
       } else {
         setOutput(data?.text ?? "");
         if (data?.truncated) {
-          setError("The update was cut short. Run it again if anything looks missing.");
+          setError("The reply was cut short. Run it again if anything looks missing.");
         }
       }
     } catch {
-      setError("Could not connect to the AI. Please try again.");
+      setError("Could not connect to the assistant. Please try again.");
     }
 
     setLoading(false);
@@ -50,239 +89,107 @@ export default function WhatsOnAgent() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-      fontFamily: "'Georgia', serif",
-      padding: "0",
-      margin: "0",
-    }}>
-      {/* Header */}
-      <div style={{
-        background: "rgba(255,255,255,0.04)",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
-        padding: "24px 32px",
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-      }}>
-        <div style={{
-          width: "44px", height: "44px",
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #e63946, #c1121f)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "20px", flexShrink: 0,
-          boxShadow: "0 0 16px rgba(230,57,70,0.4)",
-        }}>📻</div>
-        <div>
-          <div style={{ color: "#fff", fontSize: "20px", fontWeight: "bold", letterSpacing: "0.02em" }}>
-            TFT-Radio
-          </div>
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-            What's On — AI Agent Team
-          </div>
-        </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
-          {["Venue Scout", "Artist Scout", "Verifier", "Editor"].map((role, i) => (
-            <div key={i} style={{
-              background: loading ? "rgba(230,57,70,0.2)" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${loading ? "rgba(230,57,70,0.4)" : "rgba(255,255,255,0.1)"}`,
-              borderRadius: "20px",
-              padding: "4px 12px",
-              fontSize: "11px",
-              color: loading ? "#e63946" : "rgba(255,255,255,0.5)",
-              transition: "all 0.3s",
-              animationDelay: `${i * 0.15}s`,
-            }}>
-              {role}
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="min-h-screen bg-brand-cream/40 py-12 px-4">
+      <div className="max-w-3xl mx-auto space-y-6">
 
-      {/* Main content */}
-      <div style={{ maxWidth: "820px", margin: "0 auto", padding: "40px 24px" }}>
-
-        {/* Intro card */}
-        <div style={{
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: "16px",
-          padding: "28px",
-          marginBottom: "28px",
-        }}>
-          <h1 style={{
-            color: "#fff",
-            fontSize: "26px",
-            margin: "0 0 10px 0",
-            fontWeight: "normal",
-            letterSpacing: "-0.01em",
-          }}>
-            Weekly What's On — Farnham Area
-          </h1>
-          <p style={{
-            color: "rgba(255,255,255,0.55)",
-            fontSize: "15px",
-            margin: "0",
-            lineHeight: "1.6",
-          }}>
-            Press the button below. Your four-agent team will search, verify, and write your weekly events update.
-            Output is ready to paste into your website, radio notes, or social posts.
+        <header>
+          <h1 className="text-3xl font-serif text-brand-ink mb-2">What's On — reviewer assistance</h1>
+          <p className="text-brand-ink/60 text-sm leading-relaxed">
+            Pick a candidate from the discovery queue and the assistant will suggest a category,
+            comment on how well it fits, and draft a plain-English summary — using only that
+            candidate's own text. It cannot find events, and it cannot publish. Approving and
+            publishing happens in the{" "}
+            <Link to="/dashboard" className="font-bold text-brand-olive hover:underline">dashboard</Link>.
           </p>
-        </div>
+        </header>
 
-        {/* Run button */}
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <button
-            onClick={runAgentTeam}
-            disabled={loading}
-            style={{
-              background: loading
-                ? "rgba(230,57,70,0.3)"
-                : "linear-gradient(135deg, #e63946, #c1121f)",
-              border: "none",
-              borderRadius: "12px",
-              color: "#fff",
-              fontSize: "17px",
-              fontFamily: "'Georgia', serif",
-              fontWeight: "bold",
-              padding: "18px 48px",
-              cursor: loading ? "not-allowed" : "pointer",
-              letterSpacing: "0.02em",
-              boxShadow: loading ? "none" : "0 4px 24px rgba(230,57,70,0.4)",
-              transition: "all 0.2s",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            {loading ? (
-              <>
-                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-                Agents working...
-              </>
-            ) : (
-              <>Run Agent Team — Get This Week's Events</>
-            )}
-          </button>
+        {loadingQueue && <p className="text-sm text-brand-ink/50">Loading the queue…</p>}
 
-          {loading && (
-            <p style={{
-              color: "rgba(255,255,255,0.4)",
-              fontSize: "13px",
-              marginTop: "14px",
-              letterSpacing: "0.03em",
-            }}>
-              Venue Scout → Artist Scout → Verifier → Editor
+        {!loadingQueue && candidates.length === 0 && (
+          <div className="bg-white rounded-2xl border border-brand-olive/10 p-8 text-center">
+            <p className="font-bold text-brand-ink mb-1">Nothing waiting for review</p>
+            <p className="text-sm text-brand-ink/55 leading-relaxed">
+              The weekly discovery run stages candidates every Tuesday. If no source has been
+              configured yet, the run exits without staging anything — it will not invent events
+              to fill the gap.
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Error */}
+        {candidates.length > 0 && (
+          <div className="bg-white rounded-2xl border border-brand-olive/10 p-6 space-y-4">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-ink/50">
+                Candidate to review
+              </span>
+              <select
+                className="mt-2 w-full p-3 rounded-xl border border-brand-olive/20 text-sm bg-white"
+                value={selectedId}
+                onChange={e => { setSelectedId(e.target.value); setOutput(""); setError(""); }}
+              >
+                {candidates.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.title} — {new Date(c.startDate).toLocaleDateString("en-GB")}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {selected && (
+              <div className="bg-brand-cream/50 rounded-xl p-4 text-xs space-y-1 text-brand-ink/70">
+                <p><strong>Venue:</strong> {selected.venue ?? "(not supplied)"}</p>
+                <p><strong>Location:</strong> {selected.location ?? "(not supplied)"}</p>
+                <p><strong>Pipeline category:</strong> {selected.category}</p>
+                <p><strong>Pipeline score:</strong> {selected.confidenceScore ?? "—"}/100</p>
+                <p>
+                  <strong>Source:</strong>{" "}
+                  <a href={selected.sourceUrl} target="_blank" rel="noopener noreferrer"
+                     className="font-bold text-brand-olive hover:underline">
+                    {selected.sourcePlatform}
+                  </a>
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={askAssistant}
+              disabled={loading || !selected}
+              className="w-full px-6 py-3 rounded-full bg-brand-olive text-white font-bold text-sm disabled:opacity-50"
+            >
+              {loading ? "Asking the assistant…" : "Ask the assistant about this candidate"}
+            </button>
+          </div>
+        )}
+
         {error && (
-          <div style={{
-            background: "rgba(230,57,70,0.1)",
-            border: "1px solid rgba(230,57,70,0.3)",
-            borderRadius: "12px",
-            padding: "20px",
-            color: "#ff8a8a",
-            marginBottom: "24px",
-            fontSize: "14px",
-          }}>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800">
             {error}
           </div>
         )}
 
-        {/* Output */}
         {output && (
-          <div style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "16px",
-            overflow: "hidden",
-          }}>
-            {/* Output header */}
-            <div style={{
-              background: "rgba(255,255,255,0.04)",
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-              padding: "16px 24px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}>
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                This Week's Update — Ready to Copy
+          <div className="bg-white rounded-2xl border border-brand-olive/10 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-brand-olive/10">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-ink/50">
+                Recommendation — not a decision
               </span>
               <button
                 onClick={copyOutput}
-                style={{
-                  background: copied ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)",
-                  border: `1px solid ${copied ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.15)"}`,
-                  borderRadius: "8px",
-                  color: copied ? "#4ade80" : "rgba(255,255,255,0.7)",
-                  fontSize: "13px",
-                  padding: "8px 16px",
-                  cursor: "pointer",
-                  fontFamily: "'Georgia', serif",
-                  transition: "all 0.2s",
-                }}
+                className="px-3 py-1.5 rounded-lg border border-brand-olive/20 text-xs font-bold text-brand-ink/70 hover:bg-brand-cream"
               >
-                {copied ? "Copied ✓" : "Copy All"}
+                {copied ? "Copied" : "Copy"}
               </button>
             </div>
-
-            {/* Output text */}
-            <div style={{
-              padding: "28px",
-              color: "rgba(255,255,255,0.85)",
-              fontSize: "15px",
-              lineHeight: "1.75",
-              whiteSpace: "pre-wrap",
-              fontFamily: "'Georgia', serif",
-            }}>
+            <div className="p-6 text-sm leading-relaxed text-brand-ink/85 whitespace-pre-wrap">
               {output}
             </div>
-
-            {/* Footer actions */}
-            <div style={{
-              borderTop: "1px solid rgba(255,255,255,0.08)",
-              padding: "16px 24px",
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}>
-              {["Website", "Radio Notes", "Social Post"].map(label => (
-                <div key={label} style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "8px 16px",
-                  color: "rgba(255,255,255,0.4)",
-                  fontSize: "12px",
-                  letterSpacing: "0.04em",
-                }}>
-                  → Paste into {label}
-                </div>
-              ))}
+            <div className="px-5 py-3 border-t border-brand-olive/10 text-xs text-brand-ink/50">
+              The assistant only sees this candidate's own text. Check anything it says against
+              the source listing before you publish.
             </div>
           </div>
         )}
-
-        {/* Footer */}
-        <div style={{
-          textAlign: "center",
-          marginTop: "48px",
-          color: "rgba(255,255,255,0.2)",
-          fontSize: "12px",
-          letterSpacing: "0.04em",
-        }}>
-          THE FARMERS TABLE HUB CIC — FARNHAM, SURREY
-        </div>
       </div>
-
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }

@@ -5,12 +5,29 @@ import { radioService, RadioMedia, RadioPlaylist } from '../../services/radioSer
 type QueueItem = RadioMedia & { queueId: string };
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${Math.round(seconds % 60).toString().padStart(2, '0')}`;
 
+/**
+ * Slot format templates for the playlist builder.
+ *
+ * These are NOT programmes. They are generic running orders - how often a
+ * jingle, a community slot or an advert falls within an hour - used to
+ * build a starting playlist from audio already in the library.
+ *
+ * They previously carried invented programme names ("Morning Harvest",
+ * "Farm to Fork", "Community Voices", "Overnight Mix") which read as the
+ * station's actual schedule and appeared in the staff UI as though they
+ * were real commissioned shows. They were not: no such programmes exist.
+ * The labels below describe the time of day and the shape of the running
+ * order instead, so nothing here can be mistaken for real programming.
+ *
+ * Real programme names live in `radio_shows` and are entered by staff.
+ */
 const PROGRAMMES = [
-  { id: 'morning', name: 'Morning Harvest', description: 'Bright, welcoming and local. Music first, with regular station IDs, local information and a small number of adverts.', minutes: 60, pattern: ['music', 'music', 'jingle', 'music', 'community', 'music', 'advert', 'music'] },
-  { id: 'daytime', name: 'Farm to Fork', description: 'Relaxed daytime listening with food, community and local business content.', minutes: 60, pattern: ['music', 'music', 'community', 'music', 'jingle', 'music', 'advert', 'music'] },
-  { id: 'evening', name: 'Community Voices', description: 'More energetic evening listening with local features and carefully spaced adverts.', minutes: 60, pattern: ['music', 'music', 'jingle', 'music', 'feature', 'music', 'advert', 'music'] },
-  { id: 'overnight', name: 'Overnight Mix', description: 'Long uninterrupted music periods with occasional station identification and community information.', minutes: 120, pattern: ['music', 'music', 'music', 'jingle', 'music', 'music', 'community', 'music', 'music', 'music'] },
+  { id: 'morning', name: 'Morning format', description: 'Music-led with regular station IDs, community information and a small number of adverts.', minutes: 60, pattern: ['music', 'music', 'jingle', 'music', 'community', 'music', 'advert', 'music'] },
+  { id: 'daytime', name: 'Daytime format', description: 'Relaxed daytime running order with room for community and local business content.', minutes: 60, pattern: ['music', 'music', 'community', 'music', 'jingle', 'music', 'advert', 'music'] },
+  { id: 'evening', name: 'Evening format', description: 'A busier running order with a feature slot and carefully spaced adverts.', minutes: 60, pattern: ['music', 'music', 'jingle', 'music', 'feature', 'music', 'advert', 'music'] },
+  { id: 'overnight', name: 'Overnight format', description: 'Long uninterrupted music runs with occasional station identification and community information.', minutes: 120, pattern: ['music', 'music', 'music', 'jingle', 'music', 'music', 'community', 'music', 'music', 'music'] },
 ];
+
 
 export const RadioStudioDashboard: React.FC = () => {
   const [media, setMedia] = useState<RadioMedia[]>([]);
@@ -72,7 +89,7 @@ export const RadioStudioDashboard: React.FC = () => {
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5"><div><div className="flex items-center gap-2 text-brand-olive text-xs font-bold uppercase tracking-widest"><Radio size={15} /> Studio Dashboard</div><h2 className="text-3xl md:text-4xl font-serif mt-2">Build today's radio slot</h2><p className="text-brand-ink/50 mt-2">Prepare the content here. Live365 remains the broadcast service and BUTT is used for live presenting.</p></div><div className="flex items-center gap-2 bg-white border border-brand-olive/10 rounded-2xl px-4 py-3"><Clock3 size={17} className="text-brand-olive" /><label className="text-xs font-bold">Slot</label><select value={slotMinutes} onChange={e => setSlotMinutes(Number(e.target.value))} className="bg-transparent font-bold outline-none">{[30, 60, 90, 120].map(n => <option key={n} value={n}>{n} minutes</option>)}</select></div></div>
     {status && <div className="rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 px-5 py-4 text-sm">{status}</div>}
 
-    <section className="bg-brand-cream rounded-[32px] border border-brand-olive/10 p-6 md:p-8"><div className="flex items-start gap-3"><WandSparkles className="text-brand-olive mt-1" /><div><h3 className="text-2xl font-serif">Start with a programme recipe</h3><p className="text-sm text-brand-ink/55 mt-1">You do not need to remember the order. Choose the type of show and the system builds a starting point from the audio already in the library.</p></div></div><div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">{PROGRAMMES.map(programme => <button key={programme.id} onClick={() => buildProgramme(programme)} className="text-left rounded-2xl bg-white p-5 border border-brand-olive/5 hover:border-brand-olive/20 transition"><div className="font-bold">{programme.name}</div><p className="text-xs text-brand-ink/50 mt-2 leading-relaxed">{programme.description}</p><div className="mt-4 text-xs font-bold text-brand-olive">Build {programme.minutes}-minute starter</div></button>)}</div></section>
+    <section className="bg-brand-cream rounded-[32px] border border-brand-olive/10 p-6 md:p-8"><div className="flex items-start gap-3"><WandSparkles className="text-brand-olive mt-1" /><div><h3 className="text-2xl font-serif">Start with a slot format</h3><p className="text-sm text-brand-ink/55 mt-1">You do not need to remember the order. Choose the shape of the hour and the system builds a starting point from the audio already in the library. These are running-order templates, not programmes.</p></div></div><div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">{PROGRAMMES.map(programme => <button key={programme.id} onClick={() => buildProgramme(programme)} className="text-left rounded-2xl bg-white p-5 border border-brand-olive/5 hover:border-brand-olive/20 transition"><div className="font-bold">{programme.name}</div><p className="text-xs text-brand-ink/50 mt-2 leading-relaxed">{programme.description}</p><div className="mt-4 text-xs font-bold text-brand-olive">Build {programme.minutes}-minute starter</div></button>)}</div></section>
 
     <section className="bg-white rounded-[32px] border border-brand-olive/5 p-6 md:p-8"><div className="flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h3 className="text-2xl font-serif">Quick variety check</h3><p className="text-sm text-brand-ink/50">A good programme should not sound like the same thing repeated.</p></div><div className="flex flex-wrap gap-2">{Object.entries(categoryCounts).map(([name, count]) => <span key={name} className="px-3 py-1.5 rounded-full bg-brand-cream text-xs font-bold capitalize">{name}: {count}</span>)}</div></div></section>
 
