@@ -6,6 +6,9 @@ import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { FeedbackBookPrompt } from './components/FeedbackBookPrompt';
+import { RadioPlayerProvider } from './context/RadioPlayerContext';
+import { MiniPlayer } from './components/radio/MiniPlayer';
+import { RADIO_STAFF_ROLES } from './auth/radioAccess';
 import { RequireRole } from './components/RequireRole';
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -84,7 +87,24 @@ const RouteFallback: React.FC = () => (
 );
 
 const STAFF = ['founder', 'staff'] as const;
-const RADIO_STAFF = ['founder', 'radio_manager', 'staff', 'presenter'] as const;
+const RadioHome = lazy(() => import('./pages/radio/RadioHome').then(m => ({ default: m.RadioHome })));
+const RadioSchedule = lazy(() => import('./pages/radio/RadioSchedule').then(m => ({ default: m.RadioSchedule })));
+const RadioShows = lazy(() => import('./pages/radio/RadioShows').then(m => ({ default: m.RadioShows })));
+const RadioProgrammeDetail = lazy(() => import('./pages/radio/RadioShows').then(m => ({ default: m.RadioProgrammeDetail })));
+const RadioPresenters = lazy(() => import('./pages/radio/RadioPresenters').then(m => ({ default: m.RadioPresenters })));
+const RadioPresenterDetail = lazy(() => import('./pages/radio/RadioPresenters').then(m => ({ default: m.RadioPresenterDetail })));
+const RadioListenAgain = lazy(() => import('./pages/radio/RadioListenAgain').then(m => ({ default: m.RadioListenAgain })));
+const RadioGetInvolved = lazy(() => import('./pages/radio/RadioGetInvolved').then(m => ({ default: m.RadioGetInvolved })));
+const RadioSearch = lazy(() => import('./pages/radio/RadioSearch').then(m => ({ default: m.RadioSearch })));
+const RadioAdvertise = lazy(() => import('./pages/radio/RadioAdvertise').then(m => ({ default: m.RadioAdvertise })));
+
+// Radio access has ONE definition, in src/auth/radioAccess.ts, mirroring the
+// database's is_radio_staff(). The list that used to sit here --
+// ['founder','radio_manager','staff','presenter'] -- was stale: 20260828
+// migrated every 'staff'/'presenter' profile to 'contributor' and its check
+// constraint no longer permits either, so the list admitted nobody it named
+// beyond founder and radio_manager, and omitted 'admin' and 'contributor'.
+const RADIO_STAFF = RADIO_STAFF_ROLES;
 
 export default function App() {
   return (
@@ -92,6 +112,7 @@ export default function App() {
       <FogProvider>
         <Router>
           <ScrollToTop />
+          <RadioPlayerProvider>
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-grow">
@@ -100,7 +121,20 @@ export default function App() {
                   {/* Public */}
                   <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
                   <Route path="/directory" element={<PageWrapper><Directory /></PageWrapper>} />
-                  <Route path="/radio" element={<PageWrapper><Radio /></PageWrapper>} />
+                  {/* Radio -- listener facing. RadioHome (V3: stationService,
+                      schedule engine, player) owns /radio. The earlier V1 page
+                      is preserved at /radio/overview rather than deleted. */}
+                  <Route path="/radio" element={<PageWrapper><RadioHome /></PageWrapper>} />
+                  <Route path="/radio/overview" element={<PageWrapper><Radio /></PageWrapper>} />
+                  <Route path="/radio/schedule" element={<PageWrapper><RadioSchedule /></PageWrapper>} />
+                  <Route path="/radio/shows" element={<PageWrapper><RadioShows /></PageWrapper>} />
+                  <Route path="/radio/shows/:slug" element={<PageWrapper><RadioProgrammeDetail /></PageWrapper>} />
+                  <Route path="/radio/presenters" element={<PageWrapper><RadioPresenters /></PageWrapper>} />
+                  <Route path="/radio/presenters/:slug" element={<PageWrapper><RadioPresenterDetail /></PageWrapper>} />
+                  <Route path="/radio/listen-again" element={<PageWrapper><RadioListenAgain /></PageWrapper>} />
+                  <Route path="/radio/get-involved" element={<PageWrapper><RadioGetInvolved /></PageWrapper>} />
+                  <Route path="/radio/search" element={<PageWrapper><RadioSearch /></PageWrapper>} />
+                  <Route path="/radio/advertise" element={<PageWrapper><RadioAdvertise /></PageWrapper>} />
                   <Route path="/marketplace" element={<PageWrapper><Marketplace /></PageWrapper>} />
                   <Route path="/makers-hub" element={<PageWrapper><MakersHub /></PageWrapper>} />
                   <Route path="/cafe" element={<PageWrapper><Cafe /></PageWrapper>} />
@@ -142,8 +176,8 @@ export default function App() {
                   <Route path="/whats-on-agent" element={<RequireRole roles={[...STAFF]}><WhatsOnAgent /></RequireRole>} />
 
                   {/* Radio staff */}
-                  <Route path="/radio/control" element={<RequireRole roles={[...RADIO_STAFF]}><PageWrapper><RadioControl /></PageWrapper></RequireRole>} />
-                  <Route path="/radio/library" element={<RequireRole roles={[...RADIO_STAFF]}><PageWrapper><RadioLibraryManager /></PageWrapper></RequireRole>} />
+                  <Route path="/radio/control" element={<RequireRole roles={RADIO_STAFF}><PageWrapper><RadioControl /></PageWrapper></RequireRole>} />
+                  <Route path="/radio/library" element={<RequireRole roles={RADIO_STAFF}><PageWrapper><RadioLibraryManager /></PageWrapper></RequireRole>} />
 
                   <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
                 </Routes>
@@ -151,7 +185,9 @@ export default function App() {
             </main>
             <Footer />
             <FeedbackBookPrompt />
+            <MiniPlayer />
           </div>
+          </RadioPlayerProvider>
         </Router>
       </FogProvider>
     </AuthProvider>
