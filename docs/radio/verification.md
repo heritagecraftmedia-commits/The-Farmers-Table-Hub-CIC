@@ -145,11 +145,22 @@ wired to invented data sources — see acceptance.md.
 
 | Suite | Assertions | Result |
 | --- | --- | --- |
-| `run-radio-tests.sh` (migration + RLS) | 7 steps + full RLS matrix | pass |
-| `02_api_flow_test.sh` | 29 | pass |
-| `03_advertising_flow_test.sh` | 21 | pass |
-| `04_copresenter_flow_test.sh` | 11 | pass |
-| `npm run test:radio` | 21 | pass |
+| `run-radio-tests.sh` (migration + RLS) | 7 steps + full RLS matrix | pass — *historical* |
+| `02_api_flow_test.sh` | 29 | pass — *historical* |
+| `03_advertising_flow_test.sh` | 21 | pass — *historical* |
+| `04_copresenter_flow_test.sh` | 11 | pass — *historical* |
+| `npm test` (was `npm run test:radio`) | 21 | pass — re-run on the integration branch |
+
+> **Reading this table.** The four rows marked *historical* were run on
+> `claude/farmers-table-radio-build-a65saw` against the superseded 20260827
+> migration. Those SQL/shell harnesses are **not carried on the integration
+> branch**: they seed `auth.users.raw_user_meta_data`, so they exercise a role
+> model the database no longer has. They are kept here as a record of what was
+> verified at the time, not as something you can run today. Rewriting them
+> against `profiles` is outstanding work.
+>
+> The schedule-engine row is current: those 21 tests were ported to Vitest and
+> pass on the integration branch via `npm test`.
 | Browser: public routes, a11y, keyboard, favicon | 30 | pass |
 | Browser: admin CRUD, mobile | 20 | pass |
 | Browser: failure states, DB offline | 27 | pass |

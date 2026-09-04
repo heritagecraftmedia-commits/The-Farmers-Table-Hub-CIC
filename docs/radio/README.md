@@ -11,32 +11,63 @@ BUTT sends live outside-broadcast audio.
 
 ## 1. Getting it running
 
-### Apply the database migration
+### The database is already migrated — do not re-apply anything
 
-The station schema is `supabase/migrations/20260827_radio_v3_station.sql`. It
-extends the existing radio V1/V2 schema and is safe to re-run.
+**There is nothing to apply.** The station schema is live on the Farmers Table
+Supabase project. Do not run a radio migration by hand.
 
-Order, if starting from an empty project:
+This branch's `supabase/` directory is byte-identical to `main` on purpose.
 
-1. `supabase-schema.sql`
-2. `supabase/migrations/20260317_radio_events.sql`
-3. `supabase/migrations/20260825_radio_v1.sql`
-4. `supabase/migrations/20260825_radio_v2_alignment.sql`
-5. `supabase/migrations/20260827_radio_v3_station.sql`
+> **Superseded.** This section used to instruct you to apply
+> `supabase/migrations/20260827_radio_v3_station.sql`. **Do not.** That file is
+> not in this branch and must not be restored. It was replaced by
+> `20260829_radio_v3_station.sql` on the reconcile branch, which is what the
+> live database actually ran (as `radio_v3_station`, sequenced after
+> `tft_permissions_rls`).
+>
+> The difference is not cosmetic. The 20260827 version defined radio staff
+> against `auth.users.raw_user_meta_data->>'role'` — a second role model
+> competing with the `profiles`-based one. The 20260829 version deletes that
+> and delegates to `public.is_radio_staff()`. Re-applying 20260827 would
+> reintroduce a self-escalatable authorisation path.
 
-Paste into Supabase Dashboard → SQL Editor → Run, or apply with the Supabase
-CLI.
+### Verifying the live schema
 
-### Prove it before applying it
+Read-only inspection only — never write:
 
-```bash
-./supabase/tests/run-radio-tests.sh
+```sql
+-- what has actually been applied
+select version, name from supabase_migrations.schema_migrations order by version;
+
+-- radio staff is decided in exactly one place
+select prosrc from pg_proc where proname = 'is_radio_staff';
 ```
 
-Applies the whole chain to a throwaway local PostgreSQL, checks the migration
-is idempotent, and exercises Row Level Security as an anonymous visitor, a
-signed-in listener and a founder. Every line marked `expect` in the output
-must match.
+The older `supabase/tests/*.sql` and `run-radio-tests.sh` harness is **not**
+carried in this branch: it seeds `auth.users.raw_user_meta_data` and so tests a
+role model that no longer exists. It needs rewriting against `profiles` before
+it is trustworthy again.
+
+### Running the application tests
+
+```bash
+npm test          # Vitest, single run
+npm run test:watch
+```
+
+Currently 21 tests covering the schedule engine.
+
+**Why Vitest, and why it was added.** `main` had no test runner at all, so one
+had to be chosen rather than assumed. Three options were measured:
+
+| Option | New deps | Result |
+|---|---|---|
+| `node --experimental-strip-types --test` | **0** | ❌ Fails — ESM requires explicit `.ts` extensions, but this project imports extensionlessly throughout and relies on Vite to resolve. Would mean rewriting import specifiers against project convention. |
+| `tsx --test` (what the radio branch used) | 1 (52 transitive) | Works, but is a second toolchain alongside Vite, sharing none of its dependency tree. |
+| **Vitest** | **1 (33 transitive here)** | ✅ Chosen. Reuses the existing `vite.config.ts` resolver, so extensionless imports work unchanged; shares Vite's already-installed dependencies; and matches what `claude/farmers-table-reconcile-ohnrav` independently chose, so the two branches converge instead of diverging. |
+
+No existing script was removed. The radio branch's `test:radio` script was not
+carried across, so there is one test framework, not two.
 
 ### Give someone staff access
 
@@ -139,7 +170,7 @@ schedule, so it only fills gaps.
 An `end_time` at or before the `start_time` means the programme runs past
 midnight, and it is still reported as the current programme after 00:00.
 
-Covered by `npm run test:radio`.
+Covered by `npm test`.
 
 ---
 

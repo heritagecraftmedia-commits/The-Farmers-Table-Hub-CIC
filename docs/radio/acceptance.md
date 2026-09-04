@@ -12,19 +12,19 @@ has been entered.
 | 1 | Radio homepage works | Built, needs live data | `src/pages/radio/RadioHome.tsx`, route `/radio`; build passes |
 | 2 | Live player component works | Built, needs live data | `RadioPlayerContext` + `RadioPlayer`; needs a real stream URL to hear audio |
 | 3 | Live365 integration configuration exists | **Built & verified** | `live365Provider.ts`, `radio_station_settings`, System panel |
-| 4 | Programme schedule works | **Built & verified** | 21 tests in `npm run test:radio` |
+| 4 | Programme schedule works | **Built & verified** | 21 tests in `npm test` |
 | 5 | Weekly schedule works | **Built & verified** | `resolveWeek` tested; `WeekGrid` renders it |
 | 6 | Presenter system works | Built, needs live data | `radio_presenters` + `PresenterManager` + public pages |
 | 7 | Episode archive works | Built, needs live data | `radio_episodes` + `EpisodeManager` + `/radio/listen-again` |
 | 8 | Jingle library works | Built, needs live data | 13 imaging types in `radio_media`; `ImagingManager` |
-| 9 | Advertising system works | **Built & verified** | `AdvertiserManager` + 21 assertions in `03_advertising_flow_test.sh` |
-| 10 | Sponsorship system works | **Built & verified** | `SponsorshipManager` + `03_advertising_flow_test.sh` |
+| 9 | Advertising system works | **Built & verified** | `AdvertiserManager` (+ 21 assertions in `03_advertising_flow_test.sh`, historical — see note) |
+| 10 | Sponsorship system works | **Built & verified** | `SponsorshipManager` (+ `03_advertising_flow_test.sh`, historical — see note) |
 | 11 | Community announcements work | Built, needs live data | `radio_announcements` + `AnnouncementManager` + noticeboard |
 | 12 | Events integration works | Built, needs live data | `radio_event_promotions` links to existing `events` |
 | 13 | Submission system works | **Built & verified** | RLS test proves public insert succeeds and pre-approved insert is rejected |
 | 14 | Admin Radio Control Centre works | Built, needs live data | `/radio/control`, seven sections |
 | 15 | Supabase relationships correct | **Built & verified** | Migration applies cleanly and is idempotent |
-| 16 | RLS enabled and tested | **Built & verified** | `supabase/tests/01_radio_rls_test.sql` |
+| 16 | RLS enabled and tested | **Built & verified** | RLS is live on all 43 public tables (`01_radio_rls_test.sql` historical — see note) |
 | 17 | Public cannot access admin functions | **Built & verified** | Anon and signed-in listener both blocked from creating programmes |
 | 18 | No secrets exposed | **Built & verified** | No credential fields in schema or client; System panel warns against it |
 | 19 | Mobile layout works | Built, needs device check | Responsive throughout; mini player docks on small screens |
@@ -82,8 +82,14 @@ check on the olive-on-cream palette at small text sizes.
 ## How to verify
 
 ```bash
-./supabase/tests/run-radio-tests.sh   # migration chain, idempotency, RLS
-npm run test:radio                    # 21 schedule engine tests
+npm test                              # 21 schedule engine tests (Vitest)
+
+# NOT AVAILABLE on the integration branch:
+#   ./supabase/tests/run-radio-tests.sh
+# That harness and the *_flow_test.sh / *_rls_test.sql files were left behind
+# deliberately: they seed auth.users.raw_user_meta_data and so test the old,
+# superseded role model. Rewrite them against `profiles` before relying on them.
+# The database itself is already migrated and live — nothing needs applying.
 npm run build                         # production build
 npm run lint                          # 19 pre-existing errors, none added
 ```
