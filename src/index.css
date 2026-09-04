@@ -21,24 +21,95 @@
   }
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   Fog Mode (accessibility text enlargement)
+
+   Previously this set fixed rem sizes and, critically,
+
+     .fog-mode-active button,
+     .fog-mode-active a { padding: 1.5rem 2.5rem; font-size: 1.5rem; }
+
+   5rem of horizontal padding was applied to EVERY anchor on the site,
+   including inline links inside sentences and each item in the nav row.
+   Combined with heading sizes fixed at 3rem regardless of viewport, a
+   narrow screen could not fit a nav row or a heading, so the page grew
+   wider than the viewport and the whole site scrolled sideways.
+
+   The fix is structural rather than per-element:
+     1. Type scales with the viewport via clamp() instead of fixed rem.
+     2. Flex and grid children get min-width: 0. Their default of
+        min-width: auto refuses to shrink below content width, which is
+        the usual reason enlarged text pushes a row past the screen edge.
+     3. Rows are allowed to wrap once they no longer fit on one line.
+     4. Enlarged tap targets go to actual controls, not to inline links
+        in prose, and they may shrink and wrap.
+     5. Long words, URLs, media and tables are contained.
+   ──────────────────────────────────────────────────────────────────────── */
+
 .fog-mode-active {
-  font-size: 1.25rem;
+  font-size: clamp(1.05rem, 0.97rem + 0.4vw, 1.25rem);
+  overflow-wrap: break-word;
 }
 
-.fog-mode-active h1 {
-  font-size: 3rem;
+.fog-mode-active h1 { font-size: clamp(1.9rem, 1.25rem + 3.2vw, 3rem); }
+.fog-mode-active h2 { font-size: clamp(1.6rem, 1.1rem + 2.4vw, 2.5rem); }
+.fog-mode-active h3 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.9rem); }
+
+.fog-mode-active p { line-height: 1.8; }
+
+/* (2) Flex/grid items default to min-width:auto and will not shrink below
+   their content. This is what turns "text got bigger" into "the page is
+   now wider than the screen". */
+.fog-mode-active :where(div, section, article, header, footer, nav, aside,
+                        main, ul, ol, li, form, label) {
+  min-width: 0;
 }
 
-.fog-mode-active h2 {
-  font-size: 2.5rem;
+/* (3) Any row of items must be able to become two rows — anywhere, not just
+   in the chrome. A single button-styled link in a page-level flex row is
+   enough to push the whole page sideways once its text grows (this was
+   /makers-hub at 768px). flex-wrap has no effect on a non-flex box, so
+   applying it broadly is safe; on a horizontally-scrolling strip it just
+   reflows into rows, which is the better outcome at large text sizes. */
+.fog-mode-active :where(div, section, article, main, aside, nav, header,
+                        footer, ul, ol, form) {
+  flex-wrap: wrap;
 }
 
-.fog-mode-active p {
-  line-height: 1.8;
+.fog-mode-active :where(header, nav) :where(div) {
+  height: auto;
+  min-height: 0;
 }
 
-.fog-mode-active button, 
+/* (4) Real controls get the larger target, sized and padded responsively
+   so they still fit a 320px screen. */
+.fog-mode-active :where(button, [role="button"], input[type="submit"],
+                        input[type="button"], .btn) {
+  padding: clamp(0.75rem, 0.5rem + 1vw, 1.25rem) clamp(1rem, 0.6rem + 2vw, 2rem);
+  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.35rem);
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* Inline links stay in the flow of the sentence — padding here would break
+   the line box and was a direct cause of the overflow. They are enlarged by
+   inheriting the body size, and underlined so they remain obvious. */
 .fog-mode-active a {
-  padding: 1.5rem 2.5rem;
-  font-size: 1.5rem;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  max-width: 100%;
+}
+
+/* (5) Nothing may exceed its container. Tables and pre scroll internally
+   rather than widening the page. */
+.fog-mode-active :where(img, svg, video, canvas, iframe) {
+  max-width: 100%;
+  height: auto;
+}
+
+.fog-mode-active :where(table, pre) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
 }

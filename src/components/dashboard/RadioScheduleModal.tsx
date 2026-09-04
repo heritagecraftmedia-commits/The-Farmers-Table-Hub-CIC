@@ -34,14 +34,14 @@ export const RadioScheduleModal: React.FC<Props> = ({ show, onClose, onSave }) =
                         <label className="block text-sm font-bold text-brand-ink/60 mb-2">Show Title *</label>
                         <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
                             className="w-full px-4 py-3 bg-brand-cream/50 rounded-2xl border border-brand-olive/10 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 text-sm"
-                            placeholder="Morning Maker Melodies" />
+                            placeholder="e.g. Programme name" />
                     </div>
 
                     <div>
                         <label className="block text-sm font-bold text-brand-ink/60 mb-2">Host</label>
                         <input value={form.host} onChange={e => setForm({ ...form, host: e.target.value })}
                             className="w-full px-4 py-3 bg-brand-cream/50 rounded-2xl border border-brand-olive/10 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 text-sm"
-                            placeholder="Scott" />
+                            placeholder="e.g. Presenter name" />
                     </div>
 
                     <div>

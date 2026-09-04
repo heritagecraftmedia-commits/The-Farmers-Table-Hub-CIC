@@ -4,11 +4,16 @@ import { Edit3, Copy, Check, Info } from 'lucide-react';
 const STORAGE_KEY = 'tft.changes-draft';
 
 export const ChangesDraft: React.FC = () => {
+    // Default seed text. The three affiliate lines previously named real
+    // companies (a seed merchant, a kitchenware retailer and a wool
+    // supplier). The planning intent is unchanged, but the names are
+    // generic so no real company is embedded in the shipped bundle for a
+    // partnership that has not been agreed.
     const [text, setText] = useState('// Heritage Makers & Affiliate Hub Plan\n// Paste or draft your changes here...\n\n' +
         'Current Priorities:\n' +
-        '1. Map Thompson & Morgan (Affiliate) for Herb Kits\n' +
-        '2. Link Lakeland for Preserving Tools\n' +
-        '3. Connect World of Wool for Textiles\n' +
+        '1. Map potential affiliate partner for herb kits\n' +
+        '2. Link potential affiliate partner for preserving tools\n' +
+        '3. Connect potential affiliate partner for textiles\n' +
         '4. Add "No Stock Held" disclaimers everywhere');
     const [copied, setCopied] = useState(false);
     const [restored, setRestored] = useState(false);

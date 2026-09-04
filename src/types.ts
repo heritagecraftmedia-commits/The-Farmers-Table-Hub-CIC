@@ -23,12 +23,21 @@ export interface MakerListing {
   tier: ListingTier;
 }
 
+// The roles the database will actually store are constrained by
+// 20260828_tft_permissions_rls.sql:
+//   check (role in ('member','contributor','radio_manager','admin','founder'))
+// That migration also rewrote any existing 'staff'/'presenter' row to
+// 'contributor'. Both are kept in this union only so older code and stored
+// demo fixtures still typecheck; nothing should grant access on them.
+//
 // Roles come from the profiles table (see
 // supabase/migrations/20260826_rls_admin_hardening.sql). They are never read
 // from user_metadata, which the client can write.
 export type UserRole =
   | 'founder'
+  | 'admin'
   | 'radio_manager'
+  | 'contributor'
   | 'staff'
   | 'presenter'
   | 'customer'

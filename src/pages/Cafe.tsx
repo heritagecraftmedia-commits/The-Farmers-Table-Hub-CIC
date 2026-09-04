@@ -1,81 +1,94 @@
 import React from 'react';
-import { Coffee, Clock, Moon, Sun, Utensils, ArrowRight } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Coffee, Moon, Utensils } from 'lucide-react';
+import { EmptyState } from '../components/EmptyState';
 
+/**
+ * Farmers Table Café.
+ *
+ * This page previously described a café that is open and trading. It carried
+ * "Always Open, Always Local", a tagline about "serving local produce around
+ * the clock in the heart of Farnham", Day Menu / Night Menu badges, and three
+ * priced dishes under "Current Specials" — Wild Mushroom Toast £8.50,
+ * Midnight Beef Stew £12.00, Artisan Coffee £3.20, one crediting "Old Mill
+ * sourdough". None of it could be substantiated, and a "View Full Menu"
+ * button led nowhere.
+ *
+ * Of everything found in the fabricated-content audit this was the most
+ * actionable by a member of the public: opening hours and prices are the
+ * things someone travels to a town for. It has been rewritten as the café
+ * concept, clearly marked as in development.
+ *
+ * The stock photograph captioned "Cafe Interior" was also removed. It was an
+ * unrelated random image and implied the premises exist and look like that.
+ *
+ * The three cards below are retained deliberately: they describe what the
+ * café is intended to be, and are now written in the future tense rather
+ * than as services currently on offer. No hours, prices, dishes, suppliers
+ * or staff are stated anywhere on this page.
+ */
 export const Cafe: React.FC = () => {
+  const planned = [
+    {
+      icon: Coffee,
+      title: 'Work Space',
+      text: 'Somewhere to work quietly, with room to spread out and settle in.',
+    },
+    {
+      icon: Utensils,
+      title: 'Community Table',
+      text: 'A large shared table for meeting people over a meal rather than eating alone.',
+    },
+    {
+      icon: Moon,
+      title: 'Night Sanctuary',
+      text: 'A welcoming place for people who work late or keep unusual hours.',
+    },
+  ];
+
   return (
     <div className="py-16 md:py-24 bg-brand-cream min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         <div className="mb-16">
-          <h1 className="text-5xl md:text-7xl font-serif mb-6">24-Hour <span className="italic text-brand-olive">Café</span></h1>
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-brand-olive bg-brand-olive/10 px-4 py-2 rounded-full mb-6">
+            In Development
+          </span>
+          <h1 className="text-5xl md:text-7xl font-serif mb-6">
+            Farmers Table <span className="italic text-brand-olive">Café</span>
+          </h1>
           <p className="text-xl text-brand-ink/70 max-w-2xl">
-            A sanctuary for early birds, night owls, and everyone in between. Serving local produce around the clock in the heart of Farnham.
+            The café is part of the Farmers Table vision — a place built around local
+            producers, open to people who work early, late, or somewhere in between.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-24">
-          <div className="lg:col-span-2 relative h-[500px] rounded-[40px] overflow-hidden shadow-2xl">
-            <img src="https://picsum.photos/seed/cafe/1200/800" alt="Cafe Interior" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-ink/80 to-transparent flex flex-col justify-end p-12">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-white text-sm font-bold">
-                  <Sun size={16} /> Day Menu
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-white text-sm font-bold">
-                  <Moon size={16} /> Night Menu
-                </div>
-              </div>
-              <h2 className="text-4xl font-serif text-white mb-4">Always Open, Always Local</h2>
-              <p className="text-white/70 text-lg max-w-md">
-                From morning sourdough to midnight stews, our menu rotates to reflect the freshest local ingredients.
-              </p>
-            </div>
-          </div>
+        <div className="bg-white rounded-[40px] border border-brand-olive/5 shadow-sm mb-24">
+          <EmptyState
+            icon={Coffee}
+            title="Farmers Table Café — Coming Soon"
+            description="Our café is currently being developed. Opening times, menus, pricing and services will appear here once they have been confirmed."
+            comingSoon
+            note="Nothing on this page is a live menu or a trading commitment yet."
+          />
+        </div>
 
-          <div className="bg-white p-12 rounded-[40px] border border-brand-olive/5 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="w-16 h-16 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-olive mb-8">
-                <Clock size={32} />
-              </div>
-              <h3 className="text-3xl font-serif mb-6">Current Specials</h3>
-              <div className="space-y-6">
-                <div className="border-b border-brand-cream pb-4">
-                  <h4 className="font-bold flex justify-between"><span>Wild Mushroom Toast</span> <span>£8.50</span></h4>
-                  <p className="text-sm opacity-50">Local chanterelles on Old Mill sourdough</p>
-                </div>
-                <div className="border-b border-brand-cream pb-4">
-                  <h4 className="font-bold flex justify-between"><span>Midnight Beef Stew</span> <span>£12.00</span></h4>
-                  <p className="text-sm opacity-50">Slow-cooked Surrey beef with root veg</p>
-                </div>
-                <div>
-                  <h4 className="font-bold flex justify-between"><span>Artisan Coffee</span> <span>£3.20</span></h4>
-                  <p className="text-sm opacity-50">Roasted in small batches locally</p>
-                </div>
-              </div>
-            </div>
-            <button className="w-full py-4 bg-brand-olive text-white rounded-full font-bold mt-12 flex items-center justify-center gap-2">
-              View Full Menu <ArrowRight size={20} />
-            </button>
-          </div>
+        <div className="mb-10">
+          <h2 className="text-3xl font-serif mb-2">What we are planning</h2>
+          <p className="text-brand-ink/50">
+            The intent behind the space. Details will be confirmed as the project develops.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 bg-white rounded-3xl border border-brand-olive/5 text-center">
-            <Coffee size={32} className="mx-auto mb-6 text-brand-olive" />
-            <h4 className="text-xl font-bold mb-2">Work Space</h4>
-            <p className="text-sm opacity-60">High-speed Wi-Fi and quiet corners for focused work.</p>
-          </div>
-          <div className="p-8 bg-white rounded-3xl border border-brand-olive/5 text-center">
-            <Utensils size={32} className="mx-auto mb-6 text-brand-olive" />
-            <h4 className="text-xl font-bold mb-2">Community Table</h4>
-            <p className="text-sm opacity-60">A large table for meeting new people and sharing meals.</p>
-          </div>
-          <div className="p-8 bg-white rounded-3xl border border-brand-olive/5 text-center">
-            <Moon size={32} className="mx-auto mb-6 text-brand-olive" />
-            <h4 className="text-xl font-bold mb-2">Night Sanctuary</h4>
-            <p className="text-sm opacity-60">A safe, welcoming space for those who work or live late.</p>
-          </div>
+          {planned.map(({ icon: Icon, title, text }) => (
+            <div key={title} className="p-8 bg-white rounded-3xl border border-brand-olive/5 text-center">
+              <Icon size={32} className="mx-auto mb-6 text-brand-olive" />
+              <h4 className="text-xl font-bold mb-2">{title}</h4>
+              <p className="text-sm opacity-60 leading-relaxed">{text}</p>
+            </div>
+          ))}
         </div>
+
       </div>
     </div>
   );

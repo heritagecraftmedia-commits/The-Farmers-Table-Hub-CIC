@@ -49,7 +49,7 @@ export const AddTeamMemberModal: React.FC<Props> = ({ onClose, onSave }) => {
                             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/30" />
                             <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                                 className="w-full pl-10 pr-4 py-3 bg-brand-cream/50 rounded-2xl border border-brand-olive/10 focus:outline-none focus:ring-2 focus:ring-brand-olive/20 text-sm"
-                                placeholder="thalia@farmerstable.org" />
+                                placeholder="e.g. your@email.com" />
                         </div>
                     </div>
                     <div>

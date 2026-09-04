@@ -52,7 +52,7 @@ export const AddEventModal: React.FC<Props> = ({ onClose, onSave }) => {
                 <form onSubmit={handle} className="space-y-4">
                     <Field label="Event Title *" icon={Info}>
                         <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                            className={inputCls()} placeholder="Artisan Market Day" />
+                            className={inputCls()} placeholder="e.g. Event name" />
                     </Field>
 
                     <Field label="Description">
@@ -85,7 +85,7 @@ export const AddEventModal: React.FC<Props> = ({ onClose, onSave }) => {
 
                     <Field label="Venue Name">
                         <input value={form.venue} onChange={e => setForm({ ...form, venue: e.target.value })}
-                            className={inputCls(false)} placeholder="Market Square" />
+                            className={inputCls(false)} placeholder="e.g. Venue name" />
                     </Field>
 
                     <Field label="Website URL" icon={Globe}>

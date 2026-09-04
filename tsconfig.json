@@ -23,7 +23,7 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["src", "vite.config.ts", "api", "scripts"],
   // supabase/functions are Deno, not browser TypeScript. They import from URLs
   // and use the Deno global, so type-checking them with the app's config
   // produced 12 spurious errors that buried the real ones.

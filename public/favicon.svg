@@ -1,0 +1,15 @@
+<!--
+  Placeholder favicon.
+
+  The repository contains no logo or icon asset, so this is built ONLY from the
+  brand tokens already defined in src/index.css (brand-cream #f5f5f0,
+  brand-olive #5A5A40) and the existing Cormorant Garamond serif face. It is a
+  stand-in to stop the browser requesting a missing /favicon.ico, not a brand
+  design. Replace it with the real Farmers Table Hub mark when one exists.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="The Farmers Table Hub">
+  <rect width="64" height="64" rx="14" fill="#5A5A40"/>
+  <text x="32" y="45" text-anchor="middle"
+        font-family="Cormorant Garamond, Georgia, serif"
+        font-size="40" font-weight="600" fill="#f5f5f0">F</text>
+</svg>

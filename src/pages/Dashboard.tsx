@@ -8,6 +8,7 @@ import {
   ToggleLeft, ToggleRight, ShieldAlert, Edit, PlayCircle, Check, Circle,
   Layers, Send, Star, Globe, ExternalLink as LinkIcon, Crown, Phone, FileText, AlertTriangle
 } from 'lucide-react';
+import { WhatsOnReview } from '../components/dashboard/WhatsOnReview';
 import { Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFog } from '../context/FogContext';
@@ -654,6 +655,15 @@ export const Dashboard: React.FC = () => {
               <button onClick={() => setShowAddEvent(true)} className="flex items-center gap-2 px-5 py-3 bg-brand-olive text-white rounded-full text-sm font-bold">
                 <Plus size={16} /> Add Event Manually
               </button>
+            </div>
+
+            {/* Discovery review queue. Candidates staged by the weekly run are
+                approved here by a human before they reach the public board. */}
+            <WhatsOnReview onPublished={refreshData} />
+
+            <div className="border-t border-brand-olive/10 pt-6">
+              <h3 className="text-xl font-serif mb-1">Published events</h3>
+              <p className="text-sm text-brand-ink/60 mb-4">Live on the public What's On page.</p>
             </div>
             {events.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-[40px]">

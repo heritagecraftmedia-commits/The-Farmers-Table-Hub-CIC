@@ -111,7 +111,7 @@ export const Apply: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Full Name <span className="text-red-400">*</span></label>
-                  <input type="text" value={form.name} onChange={set('name')} placeholder="Jane Smith" className={inputClass} required />
+                  <input type="text" value={form.name} onChange={set('name')} placeholder="e.g. Your Name" className={inputClass} required />
                 </div>
                 <div>
                   <label className={labelClass}>Email <span className="text-red-400">*</span></label>

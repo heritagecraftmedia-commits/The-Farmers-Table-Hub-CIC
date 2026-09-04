@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, CircleAlert, ClipboardCheck, FileAudio, MapPin, Radio, RefreshCw, Smartphone, Wifi } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, CircleAlert, ClipboardCheck, FileAudio, MapPin, Radio, RefreshCw, Smartphone, Wifi, TriangleAlert } from 'lucide-react';
 import { buildMonthSchedule, getMonthLabel, PLACEHOLDERS, ScheduleEntry } from '../../data/radioSchedule';
 
 const STORAGE_KEY = 'farmers-table-radio-month-notes-v1';
@@ -26,7 +26,10 @@ const TESTS = [
 ];
 
 export const RadioMonthPlanner: React.FC = () => {
-  const schedule = useMemo(() => buildMonthSchedule(2026, 9), []);
+  const today = useMemo(() => new Date(), []);
+  // Follow the current month rather than freezing on a fixed one; the
+  // template is a shape to plan against, not a dated schedule.
+  const schedule = useMemo(() => buildMonthSchedule(today.getFullYear(), today.getMonth() + 1), [today]);
   const [selectedDate, setSelectedDate] = useState('2026-09-01');
   const [notes, setNotes] = useState<Record<string, boolean>>(loadNotes);
   const [showGuide, setShowGuide] = useState(false);
@@ -46,6 +49,18 @@ export const RadioMonthPlanner: React.FC = () => {
   };
 
   return <section className="space-y-6">
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex gap-3">
+      <TriangleAlert className="text-amber-600 shrink-0" size={20} />
+      <div>
+        <strong className="text-amber-950">Planning template — not the live schedule</strong>
+        <p className="text-sm text-amber-900/75 mt-1">
+          This is a worked example of a full day&rsquo;s clock, for thinking about shape and coverage.
+          Nothing here is a confirmed booking. The station&rsquo;s real schedule lives in the Radio
+          Control Centre schedule and is what the public site shows.
+        </p>
+      </div>
+    </div>
+
     <div className="rounded-[28px] bg-brand-ink text-brand-cream p-6 md:p-8">
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
         <div>
